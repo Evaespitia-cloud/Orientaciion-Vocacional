@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Datos Demográficos — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Datos Demográficos</h1>
+        <p>Por favor completa tus datos antes de iniciar la prueba vocacional.</p>
+    </div>
+
+    <div class="card" style="max-width: 700px; margin: 0 auto;">
+        <form method="POST" action="{{ url_for('estudiante.datos_demograficos') }}" id="formDemografico">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            {% for campo in campos %}
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="campo_{{ campo.id }}" style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-primary);">
+                    {{ campo.etiqueta }}
+                    {% if campo.obligatorio %}<span style="color: #ef4444;">*</span>{% endif %}
+                </label>
+
+                {% if campo.tipo_campo == 'texto' %}
+                <input type="text"
+                       id="campo_{{ campo.id }}"
+                       name="campo_{{ campo.id }}"
+                       class="form-control"
+                       value="{{ datos_existentes.get(campo.id, '') }}"
+                       {% if campo.obligatorio %}required{% endif %}
+                       placeholder="Ingresa {{ campo.etiqueta|lower }}">
+
+                {% elif campo.tipo_campo == 'numero' %}
+                <input type="number"
+                       id="campo_{{ campo.id }}"
+                       name="campo_{{ campo.id }}"
+                       class="form-control"
+                       value="{{ datos_existentes.get(campo.id, '') }}"
+                       {% if campo.obligatorio %}required{% endif %}
+                       min="1" max="120"
+                       placeholder="Ingresa {{ campo.etiqueta|lower }}">
+
+                {% elif campo.tipo_campo == 'seleccion' and campo.opciones %}
+                <select id="campo_{{ campo.id }}"
+                        name="campo_{{ campo.id }}"
+                        class="form-control"
+                        {% if campo.obligatorio %}required{% endif %}>
+                    <option value="">— Selecciona —</option>
+                    {% for opcion in campo.opciones %}
+                    <option value="{{ opcion }}" {% if datos_existentes.get(campo.id) == opcion %}selected{% endif %}>
+                        {{ opcion }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                {% elif campo.tipo_campo == 'seleccion_multiple' and campo.opciones %}
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {% for opcion in campo.opciones %}
+                    <label class="option-chip" style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 0.875rem;">
+                        <input type="checkbox"
+                               name="campo_{{ campo.id }}"
+                               value="{{ opcion }}"
+                               {% if opcion in (datos_existentes.get(campo.id, '')).split(',') %}checked{% endif %}>
+                        {{ opcion }}
+                    </label>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                <input type="text"
+                       id="campo_{{ campo.id }}"
+                       name="campo_{{ campo.id }}"
+                       class="form-control"
+                       value="{{ datos_existentes.get(campo.id, '') }}"
+                       {% if campo.obligatorio %}required{% endif %}>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Guardar y Continuar →
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

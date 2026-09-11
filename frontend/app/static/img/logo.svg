@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="OrientaVoc">
+  <defs>
+    <!-- Main hex gradient: indigo → violet → teal -->
+    <linearGradient id="hg" x1="20%" y1="5%" x2="80%" y2="95%">
+      <stop offset="0%"   stop-color="#4338ca"/>
+      <stop offset="50%"  stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+
+    <!-- Ambient top-glow for depth -->
+    <radialGradient id="ig" cx="50%" cy="22%" r="60%">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+
+    <!-- North arrow glow -->
+    <filter id="ag" x="-40%" y="-25%" width="180%" height="150%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Hex drop shadow -->
+    <filter id="hs" x="-12%" y="-12%" width="124%" height="124%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5"
+                    flood-color="#4338ca" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- ── HEXAGON (pointy-top, r=45) ──────────────────────── -->
+  <!-- Vertices: top(50,5) ur(89,27.5) lr(89,72.5) bot(50,95) ll(11,72.5) ul(11,27.5) -->
+  <polygon points="50,5 89,27.5 89,72.5 50,95 11,72.5 11,27.5"
+           fill="url(#hg)" filter="url(#hs)"/>
+
+  <!-- Ambient depth glow (top shine) -->
+  <polygon points="50,5 89,27.5 89,72.5 50,95 11,72.5 11,27.5"
+           fill="url(#ig)"/>
+
+  <!-- ── INNER HEXAGON RING (RIASEC reference, r=32) ─────── -->
+  <!-- Vertices: (50,18)(77.7,34)(77.7,66)(50,82)(22.3,66)(22.3,34) -->
+  <polygon points="50,18 77.7,34 77.7,66 50,82 22.3,66 22.3,34"
+           fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.8"/>
+
+  <!-- 6 dots at inner-hex vertices = 6 RIASEC dimensions -->
+  <circle cx="50"   cy="18"   r="1.9" fill="rgba(255,255,255,0.65)"/>
+  <circle cx="77.7" cy="34"   r="1.9" fill="rgba(255,255,255,0.50)"/>
+  <circle cx="77.7" cy="66"   r="1.9" fill="rgba(255,255,255,0.50)"/>
+  <circle cx="50"   cy="82"   r="1.9" fill="rgba(255,255,255,0.50)"/>
+  <circle cx="22.3" cy="66"   r="1.9" fill="rgba(255,255,255,0.50)"/>
+  <circle cx="22.3" cy="34"   r="1.9" fill="rgba(255,255,255,0.50)"/>
+
+  <!-- ── COMPASS CIRCLE ──────────────────────────────────── -->
+  <circle cx="50" cy="50" r="22"
+          fill="rgba(0,0,0,0.12)"
+          stroke="rgba(255,255,255,0.30)"
+          stroke-width="1.1"/>
+
+  <!-- Faint cross guide -->
+  <line x1="50" y1="29" x2="50" y2="71"
+        stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+  <line x1="29" y1="50" x2="71" y2="50"
+        stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+
+  <!-- Cardinal tick marks -->
+  <line x1="50" y1="29" x2="50" y2="33.5"
+        stroke="rgba(255,255,255,0.65)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="50" y1="66.5" x2="50" y2="71"
+        stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="66.5" y1="50" x2="71" y2="50"
+        stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="29" y1="50" x2="33.5" y2="50"
+        stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/>
+
+  <!-- ── COMPASS NEEDLE ──────────────────────────────────── -->
+
+  <!-- NORTH arrow — white, large, tip pierces into inner-hex ring -->
+  <!-- tip=(50,20) aligns with top inner-hex dot, base width=12 at y=52 -->
+  <polygon points="50,20 44,52 56,52"
+           fill="white" filter="url(#ag)"/>
+
+  <!-- SOUTH arrow — semi-transparent, narrower -->
+  <polygon points="50,71 46.5,48 53.5,48"
+           fill="rgba(255,255,255,0.30)"/>
+
+  <!-- EAST / WEST arrows — very subtle -->
+  <polygon points="71,50 48,45.5 48,54.5"   fill="rgba(255,255,255,0.18)"/>
+  <polygon points="29,50 52,45.5 52,54.5"   fill="rgba(255,255,255,0.18)"/>
+
+  <!-- ── CENTER PIVOT ────────────────────────────────────── -->
+  <circle cx="50" cy="50" r="5.2" fill="white" opacity="0.96"/>
+  <circle cx="50" cy="50" r="2.6" fill="url(#hg)"/>
+</svg>

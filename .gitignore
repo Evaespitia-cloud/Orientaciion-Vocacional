@@ -1,0 +1,28 @@
+# Secrets and local configuration
+backend/.env
+.env
+
+# Database backups and local databases
+backups/
+*.dump
+*.sql
+*.db
+
+# Python and test artifacts
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Generated reports
+backend/reportes/
+
+# Seguridad / secretos
+.env
+.env.*
+!.env.example
+backend/instance/
+frontend/instance/
+backups/
+backend/reportes/*.pdf
+*.dump

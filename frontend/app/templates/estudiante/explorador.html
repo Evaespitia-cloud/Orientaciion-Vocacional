@@ -1,0 +1,656 @@
+{% extends "base.html" %}
+{% block title %}Mapa Vocacional — Orientación Vocacional{% endblock %}
+
+{% block head %}
+<style>
+/* ── Explorador layout ─────────────────────────────── */
+.expl-wrap { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.expl-header { margin-bottom: 1.75rem; }
+.expl-header h1 { font-size: 1.6rem; font-weight: 800; color: var(--primary); margin-bottom: 0.3rem; }
+.expl-header p  { color: var(--text-secondary); font-size: 0.9rem; }
+
+.riasec-badge {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.85rem; border-radius: 20px; font-size: 0.8rem;
+  font-weight: 700; letter-spacing: 1.5px;
+  background: linear-gradient(135deg, #4f46e5, #0d9488);
+  color: #fff; margin-left: 0.5rem;
+}
+
+/* ── Controls ──────────────────────────────────────── */
+.expl-controls {
+  display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+  background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+  padding: 0.9rem 1.1rem; margin-bottom: 1.5rem;
+}
+.filter-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+.area-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.area-btn {
+  padding: 0.25rem 0.7rem; border-radius: 20px; border: 1.5px solid currentColor;
+  font-size: 0.73rem; font-weight: 600; cursor: pointer; transition: all 0.18s;
+  background: transparent;
+}
+.area-btn.active { color: #fff !important; }
+.compat-filter { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.compat-filter input[type=range] { width: 100px; accent-color: var(--accent); }
+#compatLabel { font-size: 0.82rem; font-weight: 700; color: var(--accent); width: 36px; }
+.search-filter input {
+  padding: 0.3rem 0.75rem; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 0.8rem; outline: none; transition: border-color 0.2s;
+}
+.search-filter input:focus { border-color: var(--accent); }
+
+/* ── Main grid ─────────────────────────────────────── */
+.expl-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .expl-grid { grid-template-columns: 1fr; }
+}
+
+/* ── SVG hex panel ─────────────────────────────────── */
+.hex-panel {
+  background: #0f1629; border-radius: 16px; padding: 1rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+.hex-panel svg { width: 100%; height: auto; display: block; touch-action: none; }
+
+/* ── Info panel ────────────────────────────────────── */
+.info-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+.panel-card {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.25rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.career-detail { display: none; }
+.career-detail.visible { display: block; }
+
+.career-name {
+  font-size: 1.2rem; font-weight: 800; color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+.career-compat {
+  font-size: 2rem; font-weight: 800; margin: 0.5rem 0;
+  line-height: 1;
+}
+.career-compat small { font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); }
+.career-code-badges { display: flex; gap: 0.35rem; flex-wrap: wrap; margin: 0.5rem 0; }
+.r-badge {
+  padding: 0.15rem 0.6rem; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 700; color: #fff;
+}
+.career-desc { font-size: 0.87rem; color: var(--text-secondary); line-height: 1.6; margin: 0.75rem 0; }
+.career-unis { font-size: 0.78rem; color: var(--text-light); }
+.career-unis strong { color: var(--primary); font-size: 0.82rem; display: block; margin-bottom: 0.3rem; }
+.career-unis span {
+  display: inline-block; background: #eef2ff; color: #4338ca;
+  padding: 0.2rem 0.6rem; border-radius: 20px; margin: 0.15rem 0.15rem 0 0;
+  font-size: 0.72rem;
+}
+.why-text {
+  font-size: 0.8rem; color: #059669; background: #f0fdf4;
+  padding: 0.5rem 0.75rem; border-radius: 8px; margin-top: 0.6rem;
+  line-height: 1.5;
+}
+
+/* placeholder state */
+.panel-placeholder {
+  text-align: center; padding: 2rem 1rem;
+  color: var(--text-secondary); font-size: 0.85rem;
+}
+.panel-placeholder svg { opacity: 0.25; margin-bottom: 0.75rem; }
+
+/* ── Legend ────────────────────────────────────────── */
+.legend-grid {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; color: var(--text-secondary);
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Career list (mobile) ──────────────────────────── */
+.career-list { margin-top: 1.5rem; display: none; }
+@media (max-width: 900px) { .career-list { display: block; } }
+.career-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.6rem 0.75rem; border-radius: 10px; cursor: pointer;
+  transition: background 0.15s; border-bottom: 1px solid var(--border);
+}
+.career-row:hover { background: #f8fafc; }
+.career-row-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.career-row-name { font-size: 0.85rem; font-weight: 600; color: var(--primary); flex: 1; }
+.career-row-compat { font-size: 0.8rem; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="expl-wrap">
+
+  <!-- Header -->
+  <div class="expl-header">
+    <h1>
+      Mapa Vocacional Interactivo
+      {% if perfil.get('datos_json', {}).get('codigo_riasec') %}
+      <span class="riasec-badge">{{ perfil['datos_json']['codigo_riasec'] }}</span>
+      {% endif %}
+    </h1>
+    <p>
+      Explora dónde se ubican ~45 carreras colombianas en el hexágono Holland según tu perfil.
+      Haz clic en cualquier círculo para ver detalles y compatibilidad.
+    </p>
+  </div>
+
+  <!-- Controls -->
+  <div class="expl-controls">
+    <span class="filter-label">Área:</span>
+    <div class="area-filters" id="areaFilters">
+      <button class="area-btn active" data-area="all" style="color:#4f46e5; border-color:#4f46e5;">Todas</button>
+      <button class="area-btn" data-area="salud"        style="color:#10b981; border-color:#10b981;">Salud</button>
+      <button class="area-btn" data-area="ingenieria"   style="color:#6366f1; border-color:#6366f1;">Ingeniería</button>
+      <button class="area-btn" data-area="ciencias"     style="color:#06b6d4; border-color:#06b6d4;">Ciencias</button>
+      <button class="area-btn" data-area="arte_cultura" style="color:#f59e0b; border-color:#f59e0b;">Arte y Diseño</button>
+      <button class="area-btn" data-area="social"       style="color:#f43f5e; border-color:#f43f5e;">Social / Hum.</button>
+      <button class="area-btn" data-area="negocios"     style="color:#8b5cf6; border-color:#8b5cf6;">Negocios</button>
+      <button class="area-btn" data-area="comunicacion" style="color:#fb923c; border-color:#fb923c;">Comunicación</button>
+      <button class="area-btn" data-area="juridica"     style="color:#ef4444; border-color:#ef4444;">Jurídica</button>
+    </div>
+    <div class="compat-filter">
+      <span class="filter-label">Afinidad min.:</span>
+      <input type="range" id="compatRange" min="0" max="80" value="0" step="5">
+      <span id="compatLabel">0%</span>
+    </div>
+    <div class="search-filter">
+      <input type="text" id="searchInput" placeholder="Buscar carrera…" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="expl-grid">
+    <!-- Hexagon canvas -->
+    <div class="hex-panel">
+      <svg id="hollandSvg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+        <!-- Rendered by JS -->
+      </svg>
+    </div>
+
+    <!-- Info panel -->
+    <div class="info-panel">
+      <!-- Career detail -->
+      <div class="panel-card" id="careerPanel">
+        <div class="panel-placeholder" id="panelPlaceholder">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="6"/>
+            <circle cx="12" cy="12" r="2"/>
+          </svg>
+          <p>Haz clic en un círculo del mapa para ver los detalles de esa carrera.</p>
+        </div>
+        <div class="career-detail" id="careerDetail">
+          <div class="career-compat" id="cdCompat"></div>
+          <div class="career-name" id="cdName"></div>
+          <div class="career-code-badges" id="cdBadges"></div>
+          <p class="career-desc" id="cdDesc"></p>
+          <div class="why-text" id="cdWhy"></div>
+          <div class="career-unis" id="cdUnis"></div>
+        </div>
+      </div>
+
+      <!-- Student profile summary -->
+      <div class="panel-card">
+        <p style="font-size:0.75rem; font-weight:700; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">Tu perfil RIASEC</p>
+        {% set areas_map = {
+          'Realista': ('R', '#f97316'),
+          'Investigador': ('I', '#6366f1'),
+          'Artístico': ('A', '#f59e0b'),
+          'Social': ('S', '#10b981'),
+          'Emprendedor': ('E', '#ef4444'),
+          'Convencional': ('C', '#0ea5e9')
+        } %}
+        {% for area_name, (code, color) in areas_map.items() %}
+        {% set score = (puntajes.get(area_name, {}) or {}).get('normalizado', 0) | round(0) | int %}
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+          <span style="font-size:0.75rem; font-weight:700; color:{{ color }}; width:18px;">{{ code }}</span>
+          <span style="font-size:0.73rem; color:var(--text-secondary); width:90px; flex-shrink:0;">{{ area_name }}</span>
+          <div style="flex:1; height:7px; background:#eef2ff; border-radius:4px; overflow:hidden;">
+            <div style="width:{{ score }}%; height:100%; background:{{ color }}; border-radius:4px;"></div>
+          </div>
+          <span style="font-size:0.73rem; font-weight:700; color:var(--text-secondary); width:30px; text-align:right;">{{ score }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <a href="{{ url_for('estudiante.resultados', aplicacion_id=aplicacion_id) }}"
+         class="btn btn-secondary btn-sm" style="text-align:center;">
+        ← Volver a Resultados
+      </a>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend-grid">
+    <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div>Salud</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6366f1;"></div>Ingeniería</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div>Ciencias</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div>Arte y Diseño</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f43f5e;"></div>Social / Humanidades</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div>Negocios</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fb923c;"></div>Comunicación</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>Jurídica / Política</div>
+    <div class="legend-item">
+      <div style="width:14px;height:14px;border-radius:50%;border:2px dashed #4f46e5;flex-shrink:0;"></div>
+      Tu perfil
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Student scores from backend ─────────────────────
+const RAW_SCORES = {
+  R: {{ (puntajes.get('Realista',     {}) or {}).get('normalizado', 0) | round(2) }},
+  I: {{ (puntajes.get('Investigador', {}) or {}).get('normalizado', 0) | round(2) }},
+  A: {{ (puntajes.get('Artístico',    {}) or {}).get('normalizado', 0) | round(2) }},
+  S: {{ (puntajes.get('Social',       {}) or {}).get('normalizado', 0) | round(2) }},
+  E: {{ (puntajes.get('Emprendedor',  {}) or {}).get('normalizado', 0) | round(2) }},
+  C: {{ (puntajes.get('Convencional', {}) or {}).get('normalizado', 0) | round(2) }},
+};
+
+// ── Hexagon constants ───────────────────────────────
+const CX = 250, CY = 250, HEX_R = 185;
+const KEYS = ['R','I','A','S','E','C'];
+const LABELS = { R:'Realista', I:'Investigador', A:'Artístico', S:'Social', E:'Emprendedor', C:'Convencional' };
+const ANGLES_DEG = { R:-90, I:-30, A:30, S:90, E:150, C:210 };
+const RIASEC_COLORS = { R:'#f97316', I:'#6366f1', A:'#f59e0b', S:'#10b981', E:'#ef4444', C:'#0ea5e9' };
+
+const rad = d => d * Math.PI / 180;
+const VERTS = {};
+KEYS.forEach(k => {
+  VERTS[k] = { x: Math.cos(rad(ANGLES_DEG[k])), y: Math.sin(rad(ANGLES_DEG[k])) };
+});
+
+// ── Career database ─────────────────────────────────
+// scores: {R,I,A,S,E,C} 0-10 | area | desc | unis
+const CAREERS = [
+  // ── Salud ───────────────────────────────────────
+  { id:1,  name:'Medicina',             area:'salud',        scores:{R:4,I:9,A:3,S:8,E:4,C:6}, unis:['U. Nacional','U. de los Andes','U. Javeriana','U. del Valle'], desc:'Diagnóstico, tratamiento y prevención de enfermedades. Alta demanda en todo el país.' },
+  { id:2,  name:'Enfermería',           area:'salud',        scores:{R:5,I:6,A:2,S:9,E:3,C:6}, unis:['U. Nacional','U. del Bosque','U. CES'], desc:'Cuidado integral de pacientes y gestión en salud pública.' },
+  { id:3,  name:'Odontología',          area:'salud',        scores:{R:7,I:6,A:4,S:7,E:3,C:6}, unis:['U. Javeriana','U. Nacional','U. Antonio Nariño'], desc:'Diagnóstico y tratamiento de enfermedades orales con alto componente manual.' },
+  { id:4,  name:'Fisioterapia',         area:'salud',        scores:{R:7,I:6,A:3,S:8,E:2,C:5}, unis:['U. Nacional','Manuela Beltrán','U. del Rosario'], desc:'Rehabilitación funcional a través del movimiento y técnicas físicas.' },
+  { id:5,  name:'Nutrición',            area:'salud',        scores:{R:3,I:7,A:2,S:8,E:2,C:6}, unis:['U. Nacional','Javeriana','U. de Antioquia'], desc:'Estudio de la alimentación para prevenir enfermedades y promover salud.' },
+  { id:6,  name:'Ing. Biomédica',       area:'salud',        scores:{R:7,I:9,A:3,S:5,E:3,C:6}, unis:['EAFIT','U. de los Andes','CES'], desc:'Aplicación de la ingeniería a dispositivos y tecnologías médicas.' },
+  // ── Ingeniería ──────────────────────────────────
+  { id:7,  name:'Ing. Civil',           area:'ingenieria',   scores:{R:9,I:7,A:3,S:2,E:4,C:7}, unis:['U. Nacional','U. de los Andes','U. del Valle','EAFIT'], desc:'Diseño, construcción y supervisión de infraestructura urbana y rural.' },
+  { id:8,  name:'Ing. Mecánica',        area:'ingenieria',   scores:{R:9,I:8,A:3,S:2,E:3,C:6}, unis:['U. Nacional','UPB','EAFIT','U. del Valle'], desc:'Diseño y análisis de sistemas mecánicos, máquinas y equipos industriales.' },
+  { id:9,  name:'Ing. Eléctrica',       area:'ingenieria',   scores:{R:8,I:8,A:2,S:2,E:3,C:7}, unis:['U. Nacional','U. de Antioquia','U. del Valle'], desc:'Generación, transmisión y uso de energía eléctrica y sistemas de control.' },
+  { id:10, name:'Ing. de Sistemas',     area:'ingenieria',   scores:{R:6,I:9,A:4,S:2,E:4,C:7}, unis:['U. de los Andes','UNAL','Javeriana','Uninorte'], desc:'Diseño de software, arquitecturas de datos y soluciones tecnológicas.' },
+  { id:11, name:'Ciberseguridad',       area:'ingenieria',   scores:{R:6,I:9,A:2,S:2,E:4,C:8}, unis:['U. de los Andes','EAN','Unisabana'], desc:'Protección de sistemas y redes frente a amenazas digitales.' },
+  { id:12, name:'Ing. Ambiental',       area:'ingenieria',   scores:{R:7,I:8,A:3,S:5,E:3,C:5}, unis:['U. Nacional','EAN','U. del Valle'], desc:'Gestión ambiental, sostenibilidad y control de contaminación.' },
+  // ── Ciencias ────────────────────────────────────
+  { id:13, name:'Biología',             area:'ciencias',     scores:{R:5,I:9,A:4,S:4,E:2,C:5}, unis:['U. Nacional','U. de los Andes','U. del Rosario'], desc:'Estudio de la vida en sus distintos niveles: molecular, celular, ecológico.' },
+  { id:14, name:'Química',              area:'ciencias',     scores:{R:6,I:9,A:2,S:2,E:2,C:6}, unis:['U. Nacional','U. Industrial de Santander','U. de Antioquia'], desc:'Composición, estructura y transformación de la materia.' },
+  { id:15, name:'Física',               area:'ciencias',     scores:{R:4,I:10,A:3,S:2,E:2,C:6}, unis:['U. Nacional','U. de los Andes','U. del Valle'], desc:'Estudio fundamental de las leyes que rigen el universo.' },
+  { id:16, name:'Matemáticas',          area:'ciencias',     scores:{R:3,I:10,A:3,S:2,E:2,C:7}, unis:['U. Nacional','U. de los Andes','Javeriana'], desc:'Estructuras abstractas, modelos y demostraciones formales.' },
+  { id:17, name:'Estadística',          area:'ciencias',     scores:{R:2,I:9,A:2,S:3,E:4,C:8}, unis:['U. Nacional','U. del Valle','U. del Rosario'], desc:'Recolección, análisis e interpretación de datos para tomar decisiones.' },
+  { id:18, name:'Geología',             area:'ciencias',     scores:{R:8,I:9,A:3,S:2,E:3,C:5}, unis:['U. Nacional','U. de Caldas','U. Industrial de Santander'], desc:'Estudio de la composición y estructura terrestre. Minería y petróleo.' },
+  // ── Arte y diseño ────────────────────────────────
+  { id:19, name:'Diseño Gráfico',       area:'arte_cultura', scores:{R:3,I:4,A:10,S:4,E:5,C:3}, unis:['UNAL','U. Jorge Tadeo Lozano','Bellas Artes','EAFIT'], desc:'Creación de piezas visuales para comunicar ideas con impacto estético.' },
+  { id:20, name:'Arquitectura',         area:'arte_cultura', scores:{R:7,I:6,A:9,S:3,E:4,C:5}, unis:['U. Nacional','U. de los Andes','Javeriana','U. del Valle'], desc:'Diseño de espacios habitables combinando función, estética y técnica.' },
+  { id:21, name:'Artes Plásticas',      area:'arte_cultura', scores:{R:4,I:4,A:10,S:5,E:2,C:2}, unis:['Bellas Artes','U. Nacional','U. de Antioquia'], desc:'Expresión a través de pintura, escultura, fotografía y artes visuales.' },
+  { id:22, name:'Música',               area:'arte_cultura', scores:{R:4,I:5,A:10,S:6,E:3,C:3}, unis:['Conservatorio Nacional','Javeriana','EAFIT'], desc:'Interpretación, composición y teoría musical en distintos géneros.' },
+  { id:23, name:'Cine y TV',            area:'arte_cultura', scores:{R:4,I:5,A:9,S:5,E:5,C:3}, unis:['U. Nacional','U. del Valle','U. Jorge Tadeo Lozano'], desc:'Producción, dirección y realización audiovisual.' },
+  { id:24, name:'Gastronomía',          area:'arte_cultura', scores:{R:7,I:3,A:8,S:6,E:5,C:4}, unis:['U. del Bosque','Mariana','Bellas Artes'], desc:'Técnicas culinarias, gestión gastronómica y cultura alimentaria.' },
+  // ── Social / Humanidades ─────────────────────────
+  { id:25, name:'Psicología',           area:'social',       scores:{R:2,I:7,A:5,S:9,E:4,C:4}, unis:['U. de los Andes','UNAL','Javeriana','UNAD'], desc:'Comprensión del comportamiento humano para el bienestar individual y colectivo.' },
+  { id:26, name:'Trabajo Social',       area:'social',       scores:{R:3,I:4,A:4,S:9,E:5,C:3}, unis:['U. de Caldas','UNAL','Minuto de Dios','U. del Valle'], desc:'Intervención en comunidades para mejorar condiciones sociales y de bienestar.' },
+  { id:27, name:'Educación',            area:'social',       scores:{R:2,I:5,A:5,S:9,E:5,C:4}, unis:['U. Pedagógica Nacional','U. de Antioquia','Javeriana'], desc:'Formación de ciudadanos a través de la enseñanza en distintos niveles.' },
+  { id:28, name:'Filosofía',            area:'social',       scores:{R:1,I:9,A:6,S:5,E:3,C:3}, unis:['U. Nacional','U. de Antioquia','Javeriana'], desc:'Análisis crítico de la realidad, el conocimiento y la ética.' },
+  { id:29, name:'Sociología',           area:'social',       scores:{R:1,I:7,A:5,S:8,E:4,C:3}, unis:['U. Nacional','U. de Antioquia','U. del Valle'], desc:'Estudio de las estructuras sociales, grupos y fenómenos colectivos.' },
+  { id:30, name:'Historia',             area:'social',       scores:{R:2,I:8,A:6,S:5,E:3,C:4}, unis:['U. Nacional','U. del Valle','U. de Antioquia'], desc:'Análisis de los procesos del pasado para comprender el presente.' },
+  // ── Negocios ────────────────────────────────────
+  { id:31, name:'Administración',       area:'negocios',     scores:{R:2,I:5,A:3,S:5,E:9,C:7}, unis:['U. del Rosario','U. de los Andes','EAFIT','Uninorte'], desc:'Gestión estratégica de organizaciones, recursos y personas.' },
+  { id:32, name:'Contaduría',           area:'negocios',     scores:{R:2,I:6,A:1,S:3,E:5,C:9}, unis:['U. Nacional','U. del Valle','U. de Antioquia'], desc:'Registro, análisis y control financiero de organizaciones.' },
+  { id:33, name:'Economía',             area:'negocios',     scores:{R:2,I:8,A:2,S:4,E:7,C:7}, unis:['U. de los Andes','U. del Rosario','Javeriana'], desc:'Análisis de producción, distribución y consumo de bienes y servicios.' },
+  { id:34, name:'Finanzas',             area:'negocios',     scores:{R:2,I:7,A:2,S:3,E:8,C:8}, unis:['U. del Rosario','EAFIT','U. de los Andes'], desc:'Gestión de activos, mercados de capitales e inversión.' },
+  { id:35, name:'Marketing',            area:'negocios',     scores:{R:2,I:5,A:6,S:6,E:9,C:4}, unis:['U. del Rosario','EAFIT','Uninorte'], desc:'Estrategias de comunicación, marca y comportamiento del consumidor.' },
+  { id:36, name:'Logística',            area:'negocios',     scores:{R:5,I:5,A:2,S:3,E:5,C:8}, unis:['EAN','U. del Norte','UNAD'], desc:'Gestión de cadenas de suministro, transporte y distribución.' },
+  // ── Comunicación ────────────────────────────────
+  { id:37, name:'Comunicación Social',  area:'comunicacion', scores:{R:2,I:4,A:7,S:7,E:7,C:3}, unis:['Javeriana','U. del Norte','U. Minuto de Dios','U. de Antioquia'], desc:'Producción de contenidos, periodismo y estrategias comunicativas.' },
+  { id:38, name:'Publicidad',           area:'comunicacion', scores:{R:2,I:4,A:9,S:5,E:7,C:3}, unis:['U. Jorge Tadeo Lozano','U. del Norte','Javeriana'], desc:'Creación de mensajes persuasivos para marcas y organizaciones.' },
+  { id:39, name:'Periodismo',           area:'comunicacion', scores:{R:2,I:5,A:7,S:6,E:7,C:3}, unis:['Javeriana','U. del Norte','U. de Antioquia'], desc:'Investigación y difusión de información periodística y editorial.' },
+  // ── Jurídica / Política ──────────────────────────
+  { id:40, name:'Derecho',              area:'juridica',     scores:{R:1,I:5,A:4,S:7,E:9,C:5}, unis:['U. de los Andes','U. del Rosario','Javeriana','Externado'], desc:'Interpretación y aplicación de normas para la resolución de conflictos.' },
+  { id:41, name:'Ciencias Políticas',   area:'juridica',     scores:{R:1,I:6,A:4,S:6,E:9,C:4}, unis:['U. de los Andes','U. Nacional','Javeriana'], desc:'Análisis del poder, instituciones y procesos políticos nacionales e internacionales.' },
+  { id:42, name:'Relaciones Internac.', area:'juridica',     scores:{R:1,I:5,A:4,S:6,E:8,C:5}, unis:['U. del Rosario','Javeriana','U. Externado'], desc:'Diplomacia, política exterior y organismos internacionales.' },
+  // ── Agro / Deportes ─────────────────────────────
+  { id:43, name:'Medicina Veterinaria', area:'salud',        scores:{R:8,I:7,A:3,S:7,E:3,C:4}, unis:['U. Nacional','U. de la Salle','CES'], desc:'Prevención y tratamiento de enfermedades en animales domésticos y silvestres.' },
+  { id:44, name:'Agronomía',            area:'ingenieria',   scores:{R:9,I:7,A:2,S:4,E:3,C:5}, unis:['U. Nacional','U. de Caldas','U. del Tolima'], desc:'Producción agrícola sostenible, suelos y gestión de cultivos.' },
+  { id:45, name:'Deportes y Ed. Física',area:'social',       scores:{R:9,I:3,A:4,S:7,E:6,C:3}, unis:['U. del Valle','U. de Antioquia','UDCA'], desc:'Entrenamiento deportivo, salud física y educación corporal.' },
+];
+
+// ── Area colors ─────────────────────────────────────
+const AREA_COLORS = {
+  salud:        '#10b981',
+  ingenieria:   '#6366f1',
+  ciencias:     '#06b6d4',
+  arte_cultura: '#f59e0b',
+  social:       '#f43f5e',
+  negocios:     '#8b5cf6',
+  comunicacion: '#fb923c',
+  juridica:     '#ef4444',
+};
+
+// ── Hexagon position of a career ─────────────────────
+function careerPos(scores) {
+  const sorted = KEYS.map(k => [k, scores[k] || 0]).sort((a,b) => b[1]-a[1]);
+  const top3 = sorted.slice(0, 3);
+  const total = top3.reduce((s,[,v]) => s+v, 0);
+  if (!total) return { x: CX, y: CY };
+  let px = 0, py = 0;
+  top3.forEach(([k, v]) => {
+    px += (v/total) * VERTS[k].x;
+    py += (v/total) * VERTS[k].y;
+  });
+  return { x: CX + px * HEX_R * 0.88, y: CY + py * HEX_R * 0.88 };
+}
+
+// ── Compatibility (cosine similarity 0-100) ──────────
+function compatibility(career) {
+  let dot=0, ns=0, nc=0;
+  KEYS.forEach(k => {
+    const s = RAW_SCORES[k] / 100;
+    const c = (career.scores[k] || 0) / 10;
+    dot += s*c; ns += s*s; nc += c*c;
+  });
+  return (ns && nc) ? Math.round(dot / Math.sqrt(ns*nc) * 100) : 0;
+}
+
+// ── Top RIASEC codes of student ──────────────────────
+function topCodes(n) {
+  return KEYS.map(k => [k, RAW_SCORES[k]]).sort((a,b) => b[1]-a[1]).slice(0,n).map(([k]) => k);
+}
+
+// ── Why compatible text ──────────────────────────────
+function whyText(career, compat) {
+  const studentTop = new Set(topCodes(3));
+  const careerTop  = new Set(KEYS.map(k=>[k,career.scores[k]]).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>k));
+  const shared = KEYS.filter(k => studentTop.has(k) && careerTop.has(k));
+  if (compat >= 70) return `Alta afinidad: comparten las dimensiones ${shared.map(k=>LABELS[k]).join(', ')}.`;
+  if (shared.length >= 2) return `Áreas en común: ${shared.map(k=>LABELS[k]).join(', ')}.`;
+  if (shared.length === 1) return `Tienen en común el área ${LABELS[shared[0]]}.`;
+  return 'Esta carrera complementa tu perfil con áreas distintas a las tuyas.';
+}
+
+// ── Compute compatibility for all careers ────────────
+CAREERS.forEach(c => { c._compat = compatibility(c); });
+
+// ── SVG helpers ──────────────────────────────────────
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(SVG_NS, tag);
+  Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k, v));
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+// ── Render hexagon ───────────────────────────────────
+function renderHex(svg) {
+  // Background
+  el('rect', { x:0, y:0, width:500, height:500, fill:'#0f1629' }, svg);
+
+  // Grid rings at 25%, 50%, 75%
+  [0.25, 0.5, 0.75, 1.0].forEach((frac, i) => {
+    const pts = KEYS.map(k => `${CX + VERTS[k].x*HEX_R*frac},${CY + VERTS[k].y*HEX_R*frac}`).join(' ');
+    el('polygon', {
+      points: pts,
+      fill: 'none',
+      stroke: i === 3 ? '#2d3a5f' : '#1e2a44',
+      'stroke-width': i === 3 ? 1.5 : 0.8,
+      'stroke-dasharray': i < 3 ? '4,4' : 'none',
+    }, svg);
+  });
+
+  // Radial lines
+  KEYS.forEach(k => {
+    el('line', {
+      x1: CX, y1: CY,
+      x2: CX + VERTS[k].x * HEX_R,
+      y2: CY + VERTS[k].y * HEX_R,
+      stroke: '#1e2a44', 'stroke-width': 0.8,
+    }, svg);
+  });
+
+  // Vertex labels (colored)
+  KEYS.forEach(k => {
+    const vx = CX + VERTS[k].x * (HEX_R + 22);
+    const vy = CY + VERTS[k].y * (HEX_R + 22);
+
+    // Circle behind label
+    el('circle', { cx: vx, cy: vy, r: 14, fill: RIASEC_COLORS[k], opacity: 0.15 }, svg);
+
+    // Letter
+    const t = el('text', {
+      x: vx, y: vy + 1, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      fill: RIASEC_COLORS[k], 'font-size': 13, 'font-weight': 700, 'font-family': 'Inter, sans-serif',
+    }, svg);
+    t.textContent = k;
+
+    // Full name below
+    const labelOffset = 17;
+    const t2 = el('text', {
+      x: vx + (VERTS[k].x > 0.1 ? 0 : VERTS[k].x < -0.1 ? 0 : 0),
+      y: vy + (ANGLES_DEG[k] > 0 ? labelOffset : -labelOffset),
+      'text-anchor': 'middle',
+      fill: '#6b7db3', 'font-size': 9, 'font-family': 'Inter, sans-serif',
+    }, svg);
+    t2.textContent = LABELS[k];
+  });
+}
+
+// ── Render student polygon ───────────────────────────
+function renderStudent(svg) {
+  const pts = KEYS.map(k => {
+    const frac = RAW_SCORES[k] / 100;
+    return `${CX + VERTS[k].x * HEX_R * frac},${CY + VERTS[k].y * HEX_R * frac}`;
+  }).join(' ');
+
+  // Fill
+  el('polygon', {
+    points: pts, fill: '#4f46e5', opacity: 0.15,
+    stroke: 'none',
+  }, svg);
+
+  // Outline (dashed)
+  el('polygon', {
+    points: pts, fill: 'none',
+    stroke: '#818cf8', 'stroke-width': 1.5, 'stroke-dasharray': '5,3', opacity: 0.8,
+  }, svg);
+
+  // Score dots
+  KEYS.forEach(k => {
+    const frac = RAW_SCORES[k] / 100;
+    const dx = CX + VERTS[k].x * HEX_R * frac;
+    const dy = CY + VERTS[k].y * HEX_R * frac;
+    el('circle', { cx: dx, cy: dy, r: 3.5, fill: '#818cf8' }, svg);
+  });
+}
+
+// ── Render career dots ───────────────────────────────
+let currentFilter = 'all';
+let currentCompat = 0;
+let currentSearch = '';
+let selectedId = null;
+
+function renderCareers(svg) {
+  // Remove existing dots
+  svg.querySelectorAll('.career-dot').forEach(e => e.remove());
+
+  const visible = CAREERS.filter(c => {
+    if (currentFilter !== 'all' && c.area !== currentFilter) return false;
+    if (c._compat < currentCompat) return false;
+    if (currentSearch && !c.name.toLowerCase().includes(currentSearch.toLowerCase())) return false;
+    return true;
+  });
+
+  visible.forEach(career => {
+    const pos = careerPos(career.scores);
+    const color = AREA_COLORS[career.area] || '#94a3b8';
+    const isSelected = career.id === selectedId;
+    const r = isSelected ? 9 : 7;
+    const opacity = career._compat < 30 ? 0.4 : 0.85;
+
+    const g = el('g', { class: 'career-dot', style: 'cursor:pointer;' }, svg);
+
+    // Glow for selected
+    if (isSelected) {
+      el('circle', { cx: pos.x, cy: pos.y, r: 16, fill: color, opacity: 0.2 }, g);
+    }
+
+    el('circle', {
+      cx: pos.x, cy: pos.y, r,
+      fill: color, opacity,
+      stroke: isSelected ? '#fff' : 'none',
+      'stroke-width': isSelected ? 2 : 0,
+    }, g);
+
+    // Compatibility label for selected
+    if (isSelected) {
+      const t = el('text', {
+        x: pos.x, y: pos.y - 14,
+        'text-anchor': 'middle', fill: '#fff',
+        'font-size': 9, 'font-weight': 700, 'font-family': 'Inter, sans-serif',
+      }, g);
+      t.textContent = career._compat + '%';
+    }
+
+    g.addEventListener('click', () => selectCareer(career));
+    g.addEventListener('mouseenter', e => showTooltip(career, e));
+    g.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// ── Select career (panel) ────────────────────────────
+function selectCareer(career) {
+  selectedId = career.id;
+  const compat = career._compat;
+
+  document.getElementById('panelPlaceholder').style.display = 'none';
+  const detail = document.getElementById('careerDetail');
+  detail.classList.add('visible');
+
+  const compatEl = document.getElementById('cdCompat');
+  compatEl.innerHTML = `<span style="color:${compat>=70?'#059669':compat>=45?'#f59e0b':'#ef4444'}">${compat}%</span><small> compatibilidad</small>`;
+
+  document.getElementById('cdName').textContent = career.name;
+
+  // Badges — top 3 RIASEC of career
+  const badges = document.getElementById('cdBadges');
+  badges.innerHTML = '';
+  const top3 = KEYS.map(k=>[k,career.scores[k]]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  top3.forEach(([k]) => {
+    const b = document.createElement('span');
+    b.className = 'r-badge';
+    b.style.background = RIASEC_COLORS[k];
+    b.textContent = `${k} · ${LABELS[k]}`;
+    badges.appendChild(b);
+  });
+
+  document.getElementById('cdDesc').textContent = career.desc;
+  document.getElementById('cdWhy').textContent = whyText(career, compat);
+
+  const unisEl = document.getElementById('cdUnis');
+  unisEl.innerHTML = `<strong>Universidades en Colombia</strong>${career.unis.map(u=>`<span>${u}</span>`).join('')}`;
+
+  // Re-render to show selection
+  renderAll();
+}
+
+// ── Tooltip (SVG) ────────────────────────────────────
+let tooltipEl = null;
+function showTooltip(career, e) {
+  hideTooltip();
+  const svg = document.getElementById('hollandSvg');
+  const pos = careerPos(career.scores);
+  const color = AREA_COLORS[career.area] || '#94a3b8';
+
+  const g = el('g', { id: 'svgTooltip' }, svg);
+  const tx = pos.x > 350 ? pos.x - 90 : pos.x + 12;
+  const ty = pos.y > 400 ? pos.y - 35 : pos.y - 10;
+
+  el('rect', { x:tx-4, y:ty-14, width:88, height:32, rx:6,
+    fill:'#1e2a44', stroke: color, 'stroke-width':1, opacity:0.95 }, g);
+  const t1 = el('text', { x:tx+40, y:ty+2, 'text-anchor':'middle', fill:'#e2e8f0',
+    'font-size':10, 'font-weight':700, 'font-family':'Inter, sans-serif' }, g);
+  t1.textContent = career.name;
+  const t2 = el('text', { x:tx+40, y:ty+14, 'text-anchor':'middle',
+    fill: career._compat>=70?'#34d399':career._compat>=45?'#fbbf24':'#f87171',
+    'font-size':9, 'font-weight':600, 'font-family':'Inter, sans-serif' }, g);
+  t2.textContent = career._compat + '% afinidad';
+
+  tooltipEl = g;
+}
+function hideTooltip() {
+  if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+}
+
+// ── Full render ──────────────────────────────────────
+function renderAll() {
+  const svg = document.getElementById('hollandSvg');
+  svg.innerHTML = '';
+  renderHex(svg);
+  renderStudent(svg);
+  renderCareers(svg);
+}
+
+// ── Controls wiring ──────────────────────────────────
+document.querySelectorAll('.area-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentFilter = btn.dataset.area;
+    document.querySelectorAll('.area-btn').forEach(b => {
+      b.classList.remove('active');
+      b.style.background = 'transparent';
+      b.style.color = b.style.borderColor; // restore original
+    });
+    btn.classList.add('active');
+    const col = btn.dataset.area === 'all' ? '#4f46e5' : btn.style.borderColor;
+    btn.style.background = col;
+    btn.style.color = '#fff';
+    renderAll();
+  });
+});
+
+document.getElementById('compatRange').addEventListener('input', function() {
+  currentCompat = +this.value;
+  document.getElementById('compatLabel').textContent = this.value + '%';
+  renderAll();
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  currentSearch = this.value;
+  renderAll();
+});
+
+// ── Initial render (animated) ────────────────────────
+renderAll();
+
+// Animate career dots in (scale from 0)
+const svg = document.getElementById('hollandSvg');
+svg.querySelectorAll('.career-dot circle').forEach((c, i) => {
+  c.style.transformOrigin = `${c.getAttribute('cx')}px ${c.getAttribute('cy')}px`;
+  c.style.transform = 'scale(0)';
+  c.style.transition = `transform 0.4s cubic-bezier(0.34,1.56,0.64,1) ${i * 18}ms`;
+  requestAnimationFrame(() => { c.style.transform = 'scale(1)'; });
+});
+</script>
+{% endblock %}

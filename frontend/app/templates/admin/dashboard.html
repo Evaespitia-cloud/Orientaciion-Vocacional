@@ -1,0 +1,673 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Panel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if rol == 'directivo' %}
+        <!-- 💼 ROL DIRECTIVO: ESTRATÉGICO Y DE GESTIÓN -->
+        <div class="page-header">
+            <h1>Panel de Control Directivo</h1>
+            <p>Gestión estratégica, indicadores institucionales y cobertura general de procesos</p>
+        </div>
+        
+        <!-- Stats Cards Estratégicos -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+            <div class="stat-card">
+                <div class="stat-icon blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('total_estudiantes', 0) }}</h3>
+                    <p>Estudiantes matriculados</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ participacion.get('tasa_completacion', 0) }}%</h3>
+                    <p>Tasa de participación</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('aplicaciones_completadas', 0) }}</h3>
+                    <p>Pruebas completadas</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('configuraciones_activas', 0) }}</h3>
+                    <p>Frentes de orientación activos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 1: Cobertura por Institución y Distribución Global RIASEC -->
+        <div class="grid-2" style="margin-top: 1.5rem;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Cobertura y Participación por Institución / Sede</h2>
+                </div>
+                {% if instituciones %}
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Institución / Sede</th>
+                                <th>Estudiantes Asignados</th>
+                                <th>Evaluaciones Listas</th>
+                                <th>Tasa de Cobertura</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in instituciones %}
+                            <tr>
+                                <td>{{ f.institucion or 'Sede Principal' }}</td>
+                                <td>{{ f.total }}</td>
+                                <td>{{ f.completadas }}</td>
+                                <td><span class="badge badge-success">{{ f.tasa_completacion }}%</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 2rem;">
+                    <p>No se encontraron datos institucionales</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Tendencias Vocacionales Globales (Distribución RIASEC)</h2>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartPerfiles"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Cohortes de Seguimiento -->
+        {% if por_instrumento %}
+        <div class="page-header" style="margin-top: 2.5rem;">
+            <h2>Seguimiento de Cohortes y Aplicación Transversal</h2>
+            <p>Eficacia en la participación y avances a través de los periodos de seguimiento</p>
+        </div>
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+            {% for inst in por_instrumento %}
+            <div class="card" style="border-top: 4px solid {% if inst.get('obligatoria') %}var(--primary){% else %}var(--accent){% endif %};">
+                <div class="card-header">
+                    <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); flex:1;">
+                        {{ inst.config_nombre }}
+                    </h3>
+                    <span class="badge {% if inst.get('obligatoria') %}badge-info{% else %}badge-success{% endif %}">
+                        {% if inst.get('obligatoria') %}Obligatoria{% else %}Seguimiento{% endif %}
+                    </span>
+                </div>
+                <div style="text-align: center; padding: 0.75rem 0 0.5rem;">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">
+                        {{ inst.tasa_completacion }}%
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Tasa de completación</p>
+                </div>
+                <div class="progress-bar" style="height: 10px; border-radius: 5px; margin: 0.5rem 0;">
+                    <div class="progress-fill" style="width: {{ inst.tasa_completacion }}%; border-radius: 5px; background: var(--primary);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-around; padding: 0.5rem 0; font-size: 0.82rem;">
+                    <div style="text-align: center;">
+                        <div style="font-weight: 700; color: var(--primary);">{{ inst.total }}</div>
+                        <div style="color: var(--text-light);">Asignados</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-weight: 700; color: #059669;">{{ inst.completadas }}</div>
+                        <div style="color: var(--text-light);">Finalizados</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-weight: 700; color: #f59e0b;">{{ inst.en_progreso }}</div>
+                        <div style="color: var(--text-light);">Activos</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    {% elif rol == 'investigador' %}
+        <!-- 🔬 ROL INVESTIGADOR: ANÁLISIS CIENTÍFICO Y PSICOMÉTRICO -->
+        <div class="page-header">
+            <h1>Módulo de Investigación y Análisis Psicométrico</h1>
+            <p>Monitoreo científico de fiabilidad, promedio dimensional y correlaciones tipológicas</p>
+        </div>
+
+        <!-- Stats Cards Científicos -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+            <div class="stat-card">
+                <div class="stat-icon teal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('aplicaciones_completadas', 0) }}</h3>
+                    <p>Casos válidos (Muestra analizada)</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ dimensiones | length }}</h3>
+                    <p>Dimensiones psicométricas activas</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83M22 12A10 10 0 0 0 12 2v10z"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ perfiles | length }}</h3>
+                    <p>Clasificaciones tipológicas</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <div class="stat-info">
+                    <h3>Anónima</h3>
+                    <p>Datos anonimizados para investigación</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 1: Promedios por Dimensión Psicométrica y Distribución Frecuencial -->
+        <div class="grid-2" style="margin-top: 1.5rem;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Análisis Psicométrico (Puntuaciones Promedio por Dimensión)</h2>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartDimensiones"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Distribución Científica Holland (Frecuencia RIASEC)</h2>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartPerfiles"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Segmentaciones Correlacionales Stacked (Género y Edad por RIASEC) -->
+        <div class="page-header" style="margin-top: 2.5rem;">
+            <h2>Análisis Correlacional Demográfico RIASEC</h2>
+            <p>Modelamiento de perfiles vocacionales dominantes según variables de segmentación científica</p>
+        </div>
+        <div class="grid-2">
+            {% if seg_genero_perfiles %}
+            <div class="card">
+                <div class="card-header">
+                    <h2>Distribución de Perfiles Vocacionales por Género</h2>
+                </div>
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="chartPerfilesGenero"></canvas>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if seg_edad_perfiles %}
+            <div class="card">
+                <div class="card-header">
+                    <h2>Distribución de Perfiles Vocacionales por Rango de Edad</h2>
+                </div>
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="chartPerfilesEdad"></canvas>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <!-- 🏥 ROL BIENESTAR Y OTROS: OPERATIVO Y DE ACOMPAÑAMIENTO -->
+        <div class="page-header">
+            <h1>Panel Operativo de Bienestar Institucional</h1>
+            <p>Acompañamiento integral, monitoreo de pruebas y segmentación demográfica</p>
+        </div>
+
+        <!-- Stats Cards Operacionales -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('total_estudiantes', 0) }}</h3>
+                    <p>Estudiantes registrados</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('total_aplicaciones', 0) }}</h3>
+                    <p>Total aplicaciones</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('aplicaciones_completadas', 0) }}</h3>
+                    <p>Completadas</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon teal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('perfiles_generados', 0) }}</h3>
+                    <p>Perfiles generados</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+                <div class="stat-info">
+                    <h3>{{ resumen.get('configuraciones_activas', 0) }}</h3>
+                    <p>Configuraciones activas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participación y Distribución -->
+        <div class="grid-2" style="margin-top: 1.5rem;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Tasa de Participación General</h2>
+                </div>
+                <div style="text-align: center; padding: 1rem 0;">
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--accent);">
+                        {{ participacion.get('tasa_completacion', 0) }}%
+                    </div>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Tasa de completación</p>
+                    <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.85rem;">
+                        <div>
+                            <span style="color: #059669; font-weight: 700;">{{ participacion.get('completadas', 0) }}</span>
+                            <br><span style="color: var(--text-light);">Completadas</span>
+                        </div>
+                        <div>
+                            <span style="color: #f59e0b; font-weight: 700;">{{ participacion.get('en_progreso', 0) }}</span>
+                            <br><span style="color: var(--text-light);">En progreso</span>
+                        </div>
+                        <div>
+                            <span style="color: #ef4444; font-weight: 700;">{{ participacion.get('abandonadas', 0) }}</span>
+                            <br><span style="color: var(--text-light);">Abandonadas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Frecuencia de Perfiles Vocacionales</h2>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartPerfiles"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por facultad y dimensiones -->
+        <div class="grid-2" style="margin-top: 1.5rem;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Participación por Facultad / Institución</h2>
+                </div>
+                {% if instituciones %}
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Institución</th>
+                                <th>Total</th>
+                                <th>Completadas</th>
+                                <th>Tasa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in instituciones %}
+                            <tr>
+                                <td>{{ f.institucion or 'Sin especificar' }}</td>
+                                <td>{{ f.total }}</td>
+                                <td>{{ f.completadas }}</td>
+                                <td><span class="badge badge-info">{{ f.tasa_completacion }}%</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 2rem;">
+                    <p>Sin datos disponibles</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Promedios por Dimensión</h2>
+                </div>
+                {% if dimensiones %}
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartDimensiones"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 2rem;">
+                    <p>Sin datos disponibles</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Estadísticas por instrumento -->
+        {% if por_instrumento %}
+        <div class="page-header" style="margin-top: 2.5rem;">
+            <h2>Detalle de Instrumentos Obligatorios y Seguimiento Activo</h2>
+            <p>Participación y tasas de completación agregadas por instrumento</p>
+        </div>
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+            {% for inst in por_instrumento %}
+            <div class="card" style="border-top: 4px solid {% if inst.get('obligatoria') %}#4f46e5{% else %}#0d9488{% endif %};">
+                <div class="card-header">
+                    <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); flex:1;">
+                        {{ inst.config_nombre }}
+                    </h3>
+                    <div style="display:flex; gap:0.35rem; flex-shrink:0;">
+                        {% if inst.get('obligatoria') %}
+                        <span class="badge badge-info" style="font-size: 0.68rem;">Obligatoria</span>
+                        {% elif inst.get('seguimiento') %}
+                        <span class="badge" style="font-size:0.68rem; background:#f0fdf4; color:#15803d; border:1px solid #86efac;">Seguimiento</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 0.75rem 0 0.5rem;">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">
+                        {{ inst.tasa_completacion }}%
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Tasa de completación</p>
+                </div>
+                <div class="progress-bar" style="height: 10px; border-radius: 5px; margin: 0.5rem 0;">
+                    <div class="progress-fill" style="width: {{ inst.tasa_completacion }}%; border-radius: 5px; background: var(--primary);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-around; padding: 0.5rem 0; font-size: 0.82rem;">
+                    <div style="text-align: center;">
+                        <div style="font-weight: 700; color: var(--primary);">{{ inst.total }}</div>
+                        <div style="color: var(--text-light);">Total</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-weight: 700; color: #059669;">{{ inst.completadas }}</div>
+                        <div style="color: var(--text-light);">Completadas</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-weight: 700; color: #f59e0b;">{{ inst.en_progreso }}</div>
+                        <div style="color: var(--text-light);">En progreso</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Distribución de perfiles por instrumento -->
+        {% if perfiles_por_instrumento %}
+        <div class="grid-2" style="margin-top: 1.5rem;">
+            {% for inst_perf in perfiles_por_instrumento %}
+            <div class="card">
+                <div class="card-header">
+                    <h2>Perfiles — {{ inst_perf.instrumento_nombre }}</h2>
+                </div>
+                {% if inst_perf.perfiles %}
+                <div class="chart-container" style="height: 230px;">
+                    <canvas id="chartPerfilesInst{{ loop.index }}"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 2rem;">
+                    <p>Sin perfiles generados aún</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Segmentación Demográfica -->
+        <div class="page-header" style="margin-top: 2.5rem;">
+            <h2>Segmentación Demográfica</h2>
+            <p>Análisis de perfiles vocacionales segmentados por género y edad</p>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Perfiles Vocacionales por Género</h2>
+                </div>
+                {% if seg_genero_perfiles %}
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="chartPerfilesGenero"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding:2rem;"><p>Sin datos de género disponibles</p></div>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Perfiles Vocacionales por Rango de Edad</h2>
+                </div>
+                {% if seg_edad_perfiles %}
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="chartPerfilesEdad"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding:2rem;"><p>Sin datos de edad disponibles</p></div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const RIASEC_COLORS = ['#4f46e5','#0d9488','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+
+// 1. Gráfico de perfiles (global - active for all roles)
+{% if perfiles %}
+const perfilesPorcentajes = [{% for p in perfiles %}{{ p.porcentaje }}{% if not loop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('chartPerfiles'), {
+    type: 'doughnut',
+    data: {
+        labels: [{% for p in perfiles %}'{{ p.perfil }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for p in perfiles %}{{ p.cantidad }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: RIASEC_COLORS,
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` ${ctx.label}: ${ctx.parsed} (${perfilesPorcentajes[ctx.dataIndex]}%)`
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+// 2. Gráfico de dimensiones (Investigador and Bienestar/TI)
+{% if dimensiones and (rol == 'investigador' or rol == 'bienestar' or rol == 'ti' or not rol) %}
+new Chart(document.getElementById('chartDimensiones'), {
+    type: 'bar',
+    data: {
+        labels: [{% for d in dimensiones %}'{{ d.dimension }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Promedio (%)',
+            data: [{% for d in dimensiones %}{{ d.promedio }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: RIASEC_COLORS,
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
+});
+{% endif %}
+
+// 3. Gráficos específicos para Bienestar/TI (tasas por instrumento, demografía)
+{% if rol == 'bienestar' or rol == 'ti' or not rol %}
+    {% for inst_perf in perfiles_por_instrumento %}
+    {% if inst_perf.perfiles %}
+    new Chart(document.getElementById('chartPerfilesInst{{ loop.index }}'), {
+        type: 'doughnut',
+        data: {
+            labels: [{% for p in inst_perf.perfiles %}'{{ p.perfil }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for p in inst_perf.perfiles %}{{ p.porcentaje }}{% if not loop.last %},{% endif %}{% endfor %}],
+                backgroundColor: RIASEC_COLORS,
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed}% (${[{% for p in inst_perf.perfiles %}{{ p.cantidad }}{% if not loop.last %},{% endif %}{% endfor %}][ctx.dataIndex]} estudiantes)`
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    {% endfor %}
+
+    {% if seg_genero_perfiles %}
+    (function() {
+        const raw = {{ seg_genero_perfiles | tojson }};
+        const generos = raw.map(g => g.genero);
+        const allPerfiles = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+        const datasets = allPerfiles.map((perfil, i) => ({
+            label: perfil,
+            data: generos.map(gen => {
+                const grupo = raw.find(g => g.genero === gen);
+                if (!grupo) return 0;
+                const p = grupo.perfiles.find(p => p.perfil === perfil);
+                return p ? p.cantidad : 0;
+            }),
+            backgroundColor: RIASEC_COLORS[i],
+            borderRadius: 4,
+        }));
+        new Chart(document.getElementById('chartPerfilesGenero'), {
+            type: 'bar',
+            data: { labels: generos, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+            }
+        });
+    })();
+    {% endif %}
+
+    {% if seg_edad_perfiles %}
+    (function() {
+        const raw = {{ seg_edad_perfiles | tojson }};
+        const rangos = raw.map(r => r.rango_edad);
+        const allPerfiles = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+        const datasets = allPerfiles.map((perfil, i) => ({
+            label: perfil,
+            data: rangos.map(rango => {
+                const grupo = raw.find(r => r.rango_edad === rango);
+                if (!grupo) return 0;
+                const p = grupo.perfiles.find(p => p.perfil === perfil);
+                return p ? p.cantidad : 0;
+            }),
+            backgroundColor: RIASEC_COLORS[i],
+            borderRadius: 4,
+        }));
+        new Chart(document.getElementById('chartPerfilesEdad'), {
+            type: 'bar',
+            data: { labels: rangos, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+            }
+        });
+    })();
+    {% endif %}
+{% endif %}
+
+// 4. Gráficos específicos para Investigador (stacked bar demográficos por RIASEC)
+{% if rol == 'investigador' %}
+    {% if seg_genero_perfiles %}
+    (function() {
+        const raw = {{ seg_genero_perfiles | tojson }};
+        const generos = raw.map(g => g.genero);
+        const allPerfiles = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+        const datasets = allPerfiles.map((perfil, i) => ({
+            label: perfil,
+            data: generos.map(gen => {
+                const grupo = raw.find(g => g.genero === gen);
+                if (!grupo) return 0;
+                const p = grupo.perfiles.find(p => p.perfil === perfil);
+                return p ? p.cantidad : 0;
+            }),
+            backgroundColor: RIASEC_COLORS[i],
+            borderRadius: 4,
+        }));
+        new Chart(document.getElementById('chartPerfilesGenero'), {
+            type: 'bar',
+            data: { labels: generos, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+            }
+        });
+    })();
+    {% endif %}
+
+    {% if seg_edad_perfiles %}
+    (function() {
+        const raw = {{ seg_edad_perfiles | tojson }};
+        const rangos = raw.map(r => r.rango_edad);
+        const allPerfiles = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+        const datasets = allPerfiles.map((perfil, i) => ({
+            label: perfil,
+            data: rangos.map(rango => {
+                const grupo = raw.find(r => r.rango_edad === rango);
+                if (!grupo) return 0;
+                const p = grupo.perfiles.find(p => p.perfil === perfil);
+                return p ? p.cantidad : 0;
+            }),
+            backgroundColor: RIASEC_COLORS[i],
+            borderRadius: 4,
+        }));
+        new Chart(document.getElementById('chartPerfilesEdad'), {
+            type: 'bar',
+            data: { labels: rangos, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+            }
+        });
+    })();
+    {% endif %}
+{% endif %}
+</script>
+{% endblock %}

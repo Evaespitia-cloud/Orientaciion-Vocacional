@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Mi Perfil — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 700px;">
+    <div class="page-header">
+        <h1>Mi Perfil</h1>
+        <p>Consulta y actualiza tus datos personales.</p>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+            <h2>Información de la cuenta</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem; padding: 0.5rem 0 1.5rem;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: #fff; flex-shrink: 0;">
+                {{ usuario.get('nombres', 'U')[0] | upper }}
+            </div>
+            <div>
+                <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);">{{ usuario.get('nombres', '') }} {{ usuario.get('apellidos', '') }}</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">{{ usuario.get('email', '') }}</div>
+                <span style="display: inline-block; margin-top: 0.4rem; background: #eef2ff; color: #4338ca; padding: 0.2rem 0.75rem; border-radius: 12px; font-size: 0.78rem; font-weight: 600; text-transform: capitalize;">
+                    {{ usuario.get('rol', {}).get('nombre', session.get('rol', '')) }}
+                </span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('main.perfil') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Nombres</label>
+                    <input type="text" name="nombres" class="form-control"
+                           value="{{ usuario.get('nombres', '') }}" required minlength="2">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Apellidos</label>
+                    <input type="text" name="apellidos" class="form-control"
+                           value="{{ usuario.get('apellidos', '') }}" required minlength="2">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" name="telefono" class="form-control"
+                       value="{{ usuario.get('telefono', '') }}" placeholder="Ej. 3001234567">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control" value="{{ usuario.get('email', '') }}" disabled
+                       style="background: var(--bg-secondary); cursor: not-allowed;">
+                <small style="color: var(--text-light); font-size: 0.78rem;">El correo no puede modificarse desde aquí.</small>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Cambiar contraseña <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-light)">(opcional)</span></h3>
+
+            <div class="form-group">
+                <label class="form-label">Contraseña actual</label>
+                <input type="password" name="password_actual" class="form-control"
+                       placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nueva contraseña</label>
+                <input type="password" name="password_nueva" class="form-control"
+                       placeholder="Mínimo 8 caracteres" minlength="8" autocomplete="new-password">
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+
+    {% if usuario.get('documento') %}
+    <div class="card">
+        <div class="card-header">
+            <h2>Datos de identificación</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+            <div>
+                <span style="color: var(--text-light); display: block; margin-bottom: 0.2rem;">Tipo de documento</span>
+                <strong>{{ usuario.get('tipo_documento', 'CC') }}</strong>
+            </div>
+            <div>
+                <span style="color: var(--text-light); display: block; margin-bottom: 0.2rem;">Número de documento</span>
+                <strong>{{ usuario.get('documento', '—') }}</strong>
+            </div>
+        </div>
+        <small style="color: var(--text-light); font-size: 0.78rem; display: block; margin-top: 1rem;">Estos datos solo pueden ser modificados por un administrador.</small>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

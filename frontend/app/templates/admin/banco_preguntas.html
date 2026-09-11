@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% block title %}Banco de Preguntas — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1>Banco de Preguntas</h1>
+            <p>Preguntas vocacionales de todos los instrumentos — agrega, edita o elimina ítems.</p>
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nueva Pregunta</button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card" style="margin-bottom:1.5rem;">
+        <form method="GET" action="{{ url_for('admin.banco_preguntas') }}" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:2; min-width:200px;">
+                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:0.3rem;">Buscar texto</label>
+                <input type="text" name="buscar" class="form-control" placeholder="Escribe parte de la pregunta..." value="{{ buscar }}">
+            </div>
+            <div style="flex:1; min-width:160px;">
+                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:0.3rem;">Área RIASEC</label>
+                <select name="area" class="form-control">
+                    <option value="">Todas las áreas</option>
+                    {% for a in areas %}
+                    <option value="{{ a }}" {% if filtro_area == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex:1; min-width:160px;">
+                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:0.3rem;">Instrumento</label>
+                <select name="instrumento_id" class="form-control">
+                    <option value="">Todos</option>
+                    {% for inst in instrumentos %}
+                    <option value="{{ inst.id }}" {% if filtro_instrumento == inst.id|string %}selected{% endif %}>{{ inst.nombre[:35] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="{{ url_for('admin.banco_preguntas') }}" class="btn btn-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Contador -->
+    <div style="margin-bottom:1rem; color:var(--text-secondary); font-size:0.9rem;">
+        <strong>{{ total }}</strong> pregunta{{ 's' if total != 1 }} encontrada{{ 's' if total != 1 }}
+        {% if buscar %} con texto <em>"{{ buscar }}"</em>{% endif %}
+        {% if filtro_area %} en área <strong>{{ filtro_area }}</strong>{% endif %}
+    </div>
+
+    <!-- Tabla de preguntas -->
+    <div class="card">
+        {% if items %}
+        <div class="table-container" style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>Pregunta</th>
+                        <th style="width:130px;">Área</th>
+                        <th style="width:120px;">Tipo</th>
+                        <th style="width:180px;">Instrumento</th>
+                        <th style="width:110px; text-align:center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td style="color:var(--text-light); font-size:0.8rem;">{{ item.id }}</td>
+                        <td style="font-size:0.875rem; line-height:1.5;">{{ item.texto }}</td>
+                        <td>
+                            <span class="badge" style="background:{{ {
+                                'Realista':'#e74c3c','Investigador':'#3498db','Artístico':'#9b59b6',
+                                'Social':'#27ae60','Emprendedor':'#f39c12','Convencional':'#1abc9c'
+                            }.get(item.escala_nombre, '#64748b') }}; color:#fff; font-size:0.72rem;">
+                                {{ item.escala_nombre }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if item.tipo == 'eleccion_forzada' %}badge-info{% else %}badge-warning{% endif %}" style="font-size:0.72rem;">
+                                {% if item.tipo == 'comparacion_binaria' %}Comparación A / B
+                                {% elif item.tipo == 'juicio_situacional' %}Juicio situacional
+                                {% elif item.tipo == 'eleccion_forzada' %}Sí / No
+                                {% else %}Opción múltiple{% endif %}
+                            </span>
+                        </td>
+                        <td style="font-size:0.78rem; color:var(--text-secondary);">
+                            {{ item.instrumento_nombre[:30] }}<br>
+                            <span style="font-size:0.72rem; color:var(--text-light);">{{ item.dimension_nombre[:30] }}</span>
+                        </td>
+                        <td style="text-align:center;">
+                            <div style="display:flex; gap:0.35rem; justify-content:center; flex-wrap:wrap;">
+                                <button class="btn btn-secondary" style="font-size:0.72rem; padding:0.25rem 0.6rem;"
+                                        onclick="abrirEditar({{ item.id }})">
+                                    Editar
+                                </button>
+                                <form method="POST" action="{{ url_for('admin.toggle_activo_pregunta', item_id=item.id) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn" style="font-size:0.72rem; padding:0.25rem 0.6rem; background:#e0f2fe; color:#075985; border:1px solid #7dd3fc;">
+                                        {{ 'Desactivar' if item.activo else 'Activar' }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin.eliminar_pregunta', item_id=item.id) }}"
+                                      onsubmit="return confirm('¿Eliminar esta pregunta? Esta acción no se puede deshacer.');">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn" style="font-size:0.72rem; padding:0.25rem 0.6rem; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:3rem; color:var(--text-secondary);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:1rem; opacity:0.4;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <p>No se encontraron preguntas con los filtros aplicados.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Crear pregunta -->
+<div id="modalCrear" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:600px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <h2 style="margin-bottom:1.5rem;">Nueva Pregunta</h2>
+        <form method="POST" action="{{ url_for('admin.crear_pregunta') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Escala (Instrumento › Prueba › Área)</label>
+                <select name="escala_id" class="form-control" required>
+                    <option value="">Seleccionar...</option>
+                    {% for esc in escalas %}
+                    <option value="{{ esc.id }}">{{ esc.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Tipo de pregunta</label>
+                <select name="tipo" class="form-control">
+                    <option value="eleccion_forzada">Sí / No (Elección forzada)</option>
+                    <option value="opcion_multiple">Opción múltiple</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Texto de la pregunta</label>
+                <textarea name="texto" class="form-control" rows="4" required placeholder="Escribe la pregunta vocacional aquí..."></textarea>
+            </div>
+            <div style="display:flex; gap:0.75rem;">
+                <button type="submit" class="btn btn-primary">Crear Pregunta</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModales()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Editar pregunta -->
+<div id="modalEditar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:760px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <h2 style="margin-bottom:1.5rem;">Editar Pregunta</h2>
+        <form method="POST" id="formEditar">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="tipo" id="editTipo">
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Texto de la pregunta</label>
+                <textarea name="texto" id="editTexto" class="form-control" rows="4" required></textarea>
+            </div>
+            <div id="editRespuestas"></div>
+            <div style="display:flex; gap:0.75rem;">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModales()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var ITEMS_DATA = {{ items | tojson }};
+
+function abrirModalCrear() {
+    document.getElementById('modalCrear').style.display = 'flex';
+}
+
+function abrirEditar(id) {
+    var item = ITEMS_DATA.find(function(x){ return x.id === id; });
+    if (!item) return;
+    document.getElementById('editTexto').value = item.texto || '';
+    document.getElementById('editTipo').value = item.tipo || '';
+    renderRespuestas(item);
+    document.getElementById('formEditar').action = '/admin/banco-preguntas/' + id + '/editar';
+    document.getElementById('modalEditar').style.display = 'flex';
+}
+
+function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function(character) {
+        return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'}[character];
+    });
+}
+
+function renderRespuestas(item) {
+    var container = document.getElementById('editRespuestas');
+    var opciones = item.opciones || {};
+    var html = '<h3 style="margin:0 0 0.75rem;">Respuestas</h3>';
+
+    if (item.tipo === 'comparacion_binaria') {
+        ['a', 'b'].forEach(function(letra) {
+            var opcion = opciones['opcion_' + letra] || {};
+            html += '<div style="display:grid; grid-template-columns:150px 1fr; gap:0.5rem; margin-bottom:0.75rem;">' +
+                '<input class="form-control" name="campo_' + letra + '" value="' + escapeHtml(opcion.campo) + '" placeholder="Campo RIASEC" required>' +
+                '<input class="form-control" name="opcion_' + letra + '" value="' + escapeHtml(opcion.texto) + '" placeholder="Texto de la respuesta" required></div>';
+        });
+    } else if (item.tipo === 'juicio_situacional') {
+        (opciones.opciones || []).forEach(function(opcion) {
+            var letra = String(opcion.letra || '').toLowerCase();
+            html += '<div style="display:grid; grid-template-columns:42px 1fr 110px; gap:0.5rem; margin-bottom:0.75rem; align-items:center;">' +
+                '<strong>' + escapeHtml(opcion.letra) + '</strong>' +
+                '<input class="form-control" name="opcion_' + letra + '" value="' + escapeHtml(opcion.texto) + '" placeholder="Texto de la respuesta" required>' +
+                '<input class="form-control" type="number" min="1" max="4" name="puntaje_' + letra + '" value="' + escapeHtml(opcion.puntaje) + '" required title="Puntaje de 1 a 4">' +
+                '</div>';
+        });
+    } else if (item.tipo === 'opcion_multiple') {
+        (opciones.opciones || opciones || []).forEach(function(opcion) {
+            var texto = typeof opcion === 'object' ? opcion.texto : opcion;
+            html += '<input class="form-control" name="opciones_multiple" value="' + escapeHtml(texto) + '" placeholder="Texto de la respuesta" required style="margin-bottom:0.75rem;">';
+        });
+    } else {
+        html += '<p style="color:var(--text-secondary);">Este tipo de pregunta no tiene respuestas editables.</p>';
+    }
+    container.innerHTML = html;
+}
+
+function cerrarModales() {
+    document.getElementById('modalCrear').style.display = 'none';
+    document.getElementById('modalEditar').style.display = 'none';
+}
+
+['modalCrear', 'modalEditar'].forEach(function(id) {
+    document.getElementById(id).addEventListener('click', function(e) {
+        if (e.target === this) cerrarModales();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plataforma de Orientación Vocacional para Bachilleres — Descubre tu perfil Holland y explora tu futuro profesional.">
+    <title>Orientación Vocacional — Descubre tu Camino</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+    <style>
+        /* ── Landing overrides ───────────────────────── */
+        body { background: #0d0f1a; color: white; }
+
+        /* ── NAVBAR LANDING ─────────────────────────── */
+        .lp-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2.5rem; height: 68px;
+            background: rgba(13, 15, 26, 0.7);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: background 0.3s;
+        }
+        .lp-nav.scrolled { background: rgba(13, 15, 26, 0.95); }
+        .lp-nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.05rem; color: white; text-decoration: none; }
+        .lp-nav-brand .lp-logo { width: 36px; height: 36px; background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .lp-nav-links { display: flex; align-items: center; gap: 0.5rem; }
+        .lp-btn-outline { padding: 8px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); color: white; font-size: 0.875rem; font-weight: 600; background: transparent; text-decoration: none; transition: all 0.2s; cursor: pointer; display: inline-flex; align-items: center; }
+        .lp-btn-outline:hover { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.4); }
+        .lp-btn-solid { padding: 8px 20px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: all 0.2s; display: inline-flex; align-items: center; box-shadow: 0 4px 15px rgba(79,70,229,0.4); }
+        .lp-btn-solid:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(79,70,229,0.55); color: white; }
+
+        /* ── HERO ───────────────────────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 8rem 1.5rem 4rem;
+            position: relative; overflow: hidden;
+            background: radial-gradient(ellipse 120% 80% at 50% -10%, #1e1b4b 0%, #0d0f1a 60%);
+        }
+        .hero-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+        .hero-orb-1 { width: 600px; height: 600px; top: -150px; left: -150px; background: radial-gradient(circle, rgba(79,70,229,0.25) 0%, transparent 70%); }
+        .hero-orb-2 { width: 500px; height: 500px; bottom: -100px; right: -100px; background: radial-gradient(circle, rgba(13,148,136,0.2) 0%, transparent 70%); }
+        .hero-orb-3 { width: 350px; height: 350px; top: 30%; left: 60%; background: radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%); }
+
+        /* Floating shapes */
+        .hero-shapes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .shape { position: absolute; border-radius: 50%; opacity: 0.06; animation: float 8s ease-in-out infinite; }
+        .shape:nth-child(1) { width: 80px; height: 80px; background: #4f46e5; top: 15%; left: 8%; animation-delay: 0s; }
+        .shape:nth-child(2) { width: 50px; height: 50px; background: #0d9488; top: 70%; left: 15%; animation-delay: 1.5s; }
+        .shape:nth-child(3) { width: 100px; height: 100px; background: #7c3aed; top: 25%; right: 10%; animation-delay: 3s; border-radius: 20px; transform: rotate(20deg); }
+        .shape:nth-child(4) { width: 60px; height: 60px; background: #4f46e5; bottom: 20%; right: 20%; animation-delay: 2s; }
+        .shape:nth-child(5) { width: 40px; height: 40px; background: #0d9488; top: 50%; left: 50%; animation-delay: 4s; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-22px) rotate(8deg); }
+        }
+
+        .hero-content { position: relative; z-index: 1; max-width: 780px; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(79,70,229,0.15); border: 1px solid rgba(79,70,229,0.35); border-radius: 50px; padding: 6px 18px; font-size: 0.8rem; font-weight: 600; color: #a5b4fc; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 1.75rem; }
+        .hero-badge .dot { width: 7px; height: 7px; background: #6366f1; border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.4); opacity:0.6; } }
+
+        .hero-title { font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; letter-spacing: -1px; }
+        .hero-title .highlight { background: linear-gradient(135deg, #818cf8, #a78bfa, #67e8f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero-subtitle { font-size: 1.15rem; color: rgba(255,255,255,0.65); line-height: 1.7; max-width: 580px; margin: 0 auto 2.5rem; }
+
+        .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3.5rem; }
+        .cta-primary { padding: 16px 36px; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; font-size: 1rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 8px 30px rgba(79,70,229,0.45); transition: all 0.25s; }
+        .cta-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(79,70,229,0.6); color: white; }
+        .cta-secondary { padding: 16px 36px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.2); color: white; font-size: 1rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); transition: all 0.25s; }
+        .cta-secondary:hover { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.1); color: white; transform: translateY(-2px); }
+
+        .hero-stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat .num { font-size: 1.9rem; font-weight: 900; background: linear-gradient(135deg, #a5b4fc, #67e8f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero-stat .lbl { font-size: 0.8rem; color: rgba(255,255,255,0.45); font-weight: 500; margin-top: 2px; }
+        .hero-divider { width: 1px; background: rgba(255,255,255,0.12); align-self: stretch; }
+
+        /* ── HOW IT WORKS ────────────────────────────── */
+        .section { padding: 6rem 1.5rem; }
+        .section-inner { max-width: 1100px; margin: 0 auto; }
+        .section-label { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #818cf8; margin-bottom: 0.75rem; }
+        .section-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 900; color: white; line-height: 1.2; margin-bottom: 1rem; }
+        .section-subtitle { color: rgba(255,255,255,0.55); font-size: 1rem; max-width: 560px; line-height: 1.7; }
+        .section-header { margin-bottom: 3.5rem; }
+
+        .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .step-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px; padding: 2rem;
+            position: relative; overflow: hidden; transition: all 0.3s;
+        }
+        .step-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(79,70,229,0.4); transform: translateY(-4px); }
+        .step-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #4f46e5, #7c3aed); opacity: 0; transition: opacity 0.3s; }
+        .step-card:hover::before { opacity: 1; }
+        .step-num { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 900; margin-bottom: 1.25rem; box-shadow: 0 6px 20px rgba(79,70,229,0.35); }
+        .step-card h3 { font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 0.6rem; }
+        .step-card p { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.7; }
+
+        /* ── FEATURES ────────────────────────────────── */
+        .features-section { background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .feature-card {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 20px; padding: 2rem; transition: all 0.3s;
+        }
+        .feature-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(99,102,241,0.35); transform: translateY(-4px); }
+        .feature-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.25rem; }
+        .fi-purple { background: linear-gradient(135deg, rgba(79,70,229,0.25), rgba(124,58,237,0.25)); }
+        .fi-teal { background: linear-gradient(135deg, rgba(13,148,136,0.25), rgba(20,184,166,0.25)); }
+        .fi-orange { background: linear-gradient(135deg, rgba(234,88,12,0.25), rgba(249,115,22,0.25)); }
+        .fi-blue { background: linear-gradient(135deg, rgba(29,78,216,0.25), rgba(59,130,246,0.25)); }
+        .fi-pink { background: linear-gradient(135deg, rgba(219,39,119,0.25), rgba(236,72,153,0.25)); }
+        .fi-green { background: linear-gradient(135deg, rgba(5,150,105,0.25), rgba(16,185,129,0.25)); }
+        .feature-card h3 { font-size: 1.05rem; font-weight: 700; color: white; margin-bottom: 0.6rem; }
+        .feature-card p { font-size: 0.85rem; color: rgba(255,255,255,0.5); line-height: 1.7; }
+
+        /* ── RIASEC VISUAL ───────────────────────────── */
+        .riasec-section { padding: 6rem 1.5rem; }
+        .riasec-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+        .riasec-types { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .riasec-chip { padding: 0.85rem 1rem; border-radius: 14px; text-align: center; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s; cursor: default; }
+        .riasec-chip:hover { transform: scale(1.06); }
+        .rc-r { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+        .rc-i { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
+        .rc-a { background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); color: #d8b4fe; }
+        .rc-s { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+        .rc-e { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+        .rc-c { background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); color: #7dd3fc; }
+        .riasec-chip .chip-letter { font-size: 1.5rem; font-weight: 900; display: block; margin-bottom: 2px; }
+        .riasec-chip .chip-name { font-size: 0.7rem; font-weight: 600; opacity: 0.85; }
+
+        /* ── CTA BANNER ──────────────────────────────── */
+        .cta-section {
+            padding: 6rem 1.5rem; text-align: center;
+            background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(79,70,229,0.18) 0%, transparent 70%);
+        }
+        .cta-box { max-width: 680px; margin: 0 auto; }
+        .cta-box h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 1rem; color: white; }
+        .cta-box p { color: rgba(255,255,255,0.55); font-size: 1rem; margin-bottom: 2.5rem; line-height: 1.7; }
+        .cta-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+        /* ── FOOTER LANDING ──────────────────────────── */
+        .lp-footer { padding: 2.5rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); font-size: 0.825rem; }
+        .lp-footer a { color: rgba(255,255,255,0.45); text-decoration: none; }
+        .lp-footer a:hover { color: white; }
+
+        /* ── RESPONSIVE ──────────────────────────────── */
+        @media (max-width: 768px) {
+            .lp-nav { padding: 0 1.25rem; }
+            .hero-stats { gap: 1.5rem; }
+            .hero-divider { display: none; }
+            .riasec-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+            .riasec-types { grid-template-columns: repeat(3, 1fr); }
+            .hero-title { font-size: 2.2rem; }
+            .lp-nav-links .lp-btn-outline { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────── -->
+<nav class="lp-nav" id="lpNav">
+    <a href="/" class="lp-nav-brand">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="36" height="36">
+        OrientaVoc
+    </a>
+    <div class="lp-nav-links">
+        <a href="{{ url_for('auth.login') }}" class="lp-btn-outline">Iniciar sesión</a>
+        <a href="{{ url_for('auth.registro') }}" class="lp-btn-solid">Registrarse</a>
+    </div>
+</nav>
+
+<!-- ── HERO ────────────────────────────────────────── -->
+<section class="hero">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+    <div class="hero-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            Plataforma de Orientación Vocacional
+        </div>
+
+        <h1 class="hero-title">
+            Descubre tu<br>
+            <span class="highlight">camino vocacional</span><br>
+            con ciencia
+        </h1>
+
+        <p class="hero-subtitle">
+            Usa el modelo Holland RIASEC para conocer tus fortalezas,
+            intereses y aptitudes. Toma decisiones informadas sobre tu
+            futuro profesional con respaldo psicométrico.
+        </p>
+
+        <div class="hero-cta">
+            <a href="{{ url_for('auth.registro') }}" class="cta-primary">
+                Comenzar gratis →
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="cta-secondary">
+                Ya tengo cuenta
+            </a>
+        </div>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="num">6</div>
+                <div class="lbl">Dimensiones RIASEC</div>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <div class="num">100%</div>
+                <div class="lbl">Basado en ciencia</div>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <div class="num">Gratis</div>
+                <div class="lbl">Para bachilleres</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── CÓMO FUNCIONA ────────────────────────────────── -->
+<section class="section">
+    <div class="section-inner">
+        <div class="section-header">
+            <span class="section-label">Proceso</span>
+            <h2 class="section-title">¿Cómo funciona?</h2>
+            <p class="section-subtitle">En tres pasos simples obtienes tu perfil vocacional completo.</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <h3>Crea tu cuenta</h3>
+                <p>Regístrate con tu correo institucional y completa tus datos básicos. El proceso toma menos de 2 minutos.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <h3>Responde el cuestionario</h3>
+                <p>Contesta el test psicométrico Holland RIASEC. Es breve, sin respuestas incorrectas — solo tu opinión honesta.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <h3>Recibe tu perfil</h3>
+                <p>Obtén un informe detallado con tus dimensiones dominantes, áreas de afinidad y carreras afines a tu perfil.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── MODELO RIASEC ────────────────────────────────── -->
+<section class="riasec-section">
+    <div class="riasec-inner">
+        <div>
+            <span class="section-label">Psicometría</span>
+            <h2 class="section-title">El modelo Holland RIASEC</h2>
+            <p style="color:rgba(255,255,255,0.55); font-size:0.95rem; line-height:1.8; margin-top:1rem;">
+                El modelo de John Holland clasifica los intereses vocacionales en seis dimensiones.
+                Cada persona tiene un perfil único que combina estas dimensiones, orientando
+                hacia ambientes laborales y carreras donde puede desarrollarse plenamente.
+            </p>
+            <p style="color:rgba(255,255,255,0.4); font-size:0.85rem; line-height:1.7; margin-top:1rem;">
+                Es uno de los modelos más validados científicamente en orientación vocacional,
+                utilizado en instituciones educativas a nivel mundial.
+            </p>
+            <a href="{{ url_for('auth.registro') }}" class="cta-primary" style="margin-top:2rem; display:inline-flex;">
+                Descubrir mi perfil →
+            </a>
+        </div>
+        <div>
+            <div class="riasec-types">
+                <div class="riasec-chip rc-r">
+                    <span class="chip-letter">R</span>
+                    <span class="chip-name">Realista</span>
+                </div>
+                <div class="riasec-chip rc-i">
+                    <span class="chip-letter">I</span>
+                    <span class="chip-name">Investigador</span>
+                </div>
+                <div class="riasec-chip rc-a">
+                    <span class="chip-letter">A</span>
+                    <span class="chip-name">Artístico</span>
+                </div>
+                <div class="riasec-chip rc-s">
+                    <span class="chip-letter">S</span>
+                    <span class="chip-name">Social</span>
+                </div>
+                <div class="riasec-chip rc-e">
+                    <span class="chip-letter">E</span>
+                    <span class="chip-name">Emprendedor</span>
+                </div>
+                <div class="riasec-chip rc-c">
+                    <span class="chip-letter">C</span>
+                    <span class="chip-name">Convencional</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── FEATURES ─────────────────────────────────────── -->
+<section class="section features-section">
+    <div class="section-inner">
+        <div class="section-header">
+            <span class="section-label">Funcionalidades</span>
+            <h2 class="section-title">Todo lo que necesitas</h2>
+            <p class="section-subtitle">Herramientas pensadas para estudiantes, orientadores e instituciones.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon fi-purple"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="m9 14 2 2 4-4"/></svg></div>
+                <h3>Test psicométrico validado</h3>
+                <p>Cuestionario basado en el modelo Holland con guardado automático. Continúa donde lo dejaste sin perder el avance.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-teal"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+                <h3>Resultados visuales</h3>
+                <p>Gráficas interactivas de tu perfil RIASEC con nivel por dimensión y comparativa respecto al promedio.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-orange"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+                <h3>Informe PDF personalizado</h3>
+                <p>Descarga tu informe completo con perfil, interpretación y recomendaciones para compartir con tu orientador.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-blue"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22V12h6v10"/><line x1="9" y1="6" x2="9.01" y2="6"/><line x1="15" y1="6" x2="15.01" y2="6"/><line x1="9" y1="10" x2="9.01" y2="10"/><line x1="15" y1="10" x2="15.01" y2="10"/></svg></div>
+                <h3>Panel institucional</h3>
+                <p>Los orientadores y directivos acceden a estadísticas agregadas, informes generales y datos demográficos.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-pink"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <h3>Seguridad y privacidad</h3>
+                <p>Tus datos son confidenciales. Acceso con consentimiento informado, tokens JWT y contraseñas cifradas.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-green"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+                <h3>Exportación de datos</h3>
+                <p>Los administradores pueden exportar resultados en CSV o Excel para análisis e investigación institucional.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── CTA FINAL ─────────────────────────────────────── -->
+<section class="cta-section">
+    <div class="cta-box">
+        <h2>¿Listo para conocer<br>tu perfil vocacional?</h2>
+        <p>Únete a la plataforma, responde el test y descubre las áreas profesionales que más se alinean contigo. Es gratis y toma solo unos minutos.</p>
+        <div class="cta-row">
+            <a href="{{ url_for('auth.registro') }}" class="cta-primary">
+                Crear cuenta gratis →
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="cta-secondary">
+                Iniciar sesión
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ── FOOTER ────────────────────────────────────────── -->
+<footer class="lp-footer">
+    <p>© 2026 Plataforma de Orientación Vocacional · Bienestar Institucional</p>
+</footer>
+
+<script>
+    // Navbar scroll effect
+    const nav = document.getElementById('lpNav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // Animate stats on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.style.opacity = '1';
+                e.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.step-card, .feature-card, .riasec-chip').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(28px)';
+        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(el);
+    });
+</script>
+</body>
+</html>

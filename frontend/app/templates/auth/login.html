@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Sesión — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('main.index') }}" style="position:fixed; top:1.2rem; left:1.4rem; display:inline-flex; align-items:center; gap:0.45rem; color:#fff; background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.2); padding:0.45rem 1rem 0.45rem 0.75rem; border-radius:999px; font-size:0.85rem; font-weight:600; text-decoration:none; z-index:100; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    Inicio
+</a>
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="72" height="72" style="filter:drop-shadow(0 6px 18px rgba(79,70,229,0.45)); margin-bottom:1rem;">
+            <h1>Bienvenido</h1>
+            <p>Orientación Vocacional para Bachilleres</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="correo@ejemplo.com" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Contraseña</span>
+                    <a href="#" onclick="alert('Contacta al administrador del sistema para restablecer tu contraseña.'); return false;" style="font-size:0.8rem; font-weight:500;">¿Olvidaste tu contraseña?</a>
+                </label>
+                <div style="position:relative;">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="padding-right:2.8rem;">
+                    <button type="button" onclick="toggleVer('password','eyeLogin')" tabindex="-1" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;" aria-label="Mostrar contraseña">
+                        <svg id="eyeLogin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg" id="btnLogin">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                ¿No tienes cuenta?
+                <a href="{{ url_for('auth.registro') }}" style="font-weight: 600;">Regístrate aquí</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleVer(inputId, iconId) {
+    const inp = document.getElementById(inputId);
+    const ico = document.getElementById(iconId);
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+        inp.type = 'password';
+        ico.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+}
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        e.preventDefault();
+        return;
+    }
+
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true;
+    btn.textContent = 'Iniciando sesión...';
+});
+</script>
+{% endblock %}

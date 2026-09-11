@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% block title %}Módulos ML / PLN — Panel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>Módulos ML / PLN</h1>
+    <p>Clustering de perfiles vocacionales y Análisis de Lenguaje Natural</p>
+  </div>
+
+  <!-- Resumen ML -->
+  <div class="stats-grid" id="mlStats">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><line x1="4" y1="8" x2="10" y2="10"/><line x1="14" y1="10" x2="20" y2="8"/><line x1="4" y1="16" x2="10" y2="14"/><line x1="14" y1="14" x2="20" y2="16"/></svg>
+      </div>
+      <div class="stat-info">
+        <h3 id="statClusteringEjec">—</h3>
+        <p>Ejecuciones Clustering</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div class="stat-info">
+        <h3 id="statPlnAnalisis">—</h3>
+        <p>Análisis PLN realizados</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SECCIÓN 1: CLUSTERING ─────────────────────────────────────────── -->
+  <div id="backendAlert" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:0.9rem 1.2rem;margin-top:1rem;color:#b91c1c;font-size:0.875rem;">
+    ⚠️ <strong>No se pudo conectar al servidor backend.</strong>
+    Asegúrate de que el backend esté corriendo en <code>http://localhost:5000</code> y recarga la página.
+  </div>
+  <div class="card" style="margin-top:2rem;">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <h2>Clustering de Estudiantes (K-Means)</h2>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+          Agrupa estudiantes por similitud de perfil RIASEC usando K-Means con selección automática de k.
+        </p>
+      </div>
+      <button class="btn btn-primary" onclick="ejecutarClustering()">Ejecutar clustering</button>
+    </div>
+
+    <div style="display:flex;gap:1rem;padding:1rem 0;flex-wrap:wrap;align-items:flex-end;">
+      <div>
+        <label style="font-size:0.8rem;color:var(--text-secondary);">N° clusters (vacío = automático)</label>
+        <input type="number" id="nClusters" min="2" max="10" placeholder="Auto"
+               style="width:140px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;">
+      </div>
+      <div>
+        <label style="font-size:0.8rem;color:var(--text-secondary);">Configuración (opcional)</label>
+        <select id="configId" style="width:200px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;">
+          <option value="">Todas las configuraciones</option>
+          {% for c in configuraciones %}
+          <option value="{{ c.id }}">{{ c.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div id="clusteringLoading" style="display:none;padding:1rem;text-align:center;color:var(--text-secondary);">
+      Procesando… puede tomar algunos segundos.
+    </div>
+    <div id="clusteringResultado" style="display:none;"></div>
+
+    <div style="background:var(--bg-secondary);border-radius:8px;padding:1rem;margin-top:1rem;">
+      <h4 style="margin:0 0 0.65rem;">Combinaciones de perfiles RIASEC</h4>
+      <div id="combinacionesRiasec" class="combination-grid">Cargando combinaciones…</div>
+    </div>
+
+    <!-- Historial -->
+    <h3 style="margin-top:1.5rem;">Historial de ejecuciones</h3>
+    <div id="clusteringHistorial">
+      <p style="color:var(--text-secondary);font-size:0.875rem;">Cargando historial…</p>
+    </div>
+  </div>
+
+  <!-- ─── SECCIÓN 2: PLN ────────────────────────────────────────────────── -->
+  <div class="card" style="margin-top:2rem;">
+    <div class="card-header">
+      <h2>Análisis de Lenguaje Natural (PLN)</h2>
+      <p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+        Clasifica texto libre según las 6 áreas RIASEC usando un diccionario semántico en español.
+        Enriquece el perfil vocacional cuando el instrumento incluye preguntas abiertas.
+      </p>
+    </div>
+
+    <!-- Playground de análisis -->
+    <div style="margin-top:1rem;">
+      <h4>Probar análisis de texto</h4>
+      <textarea id="plnTexto" rows="4"
+        placeholder="Escribe aquí intereses, actividades favoritas o metas del estudiante…"
+        style="width:100%;padding:0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;resize:vertical;"></textarea>
+      <button class="btn btn-primary" style="margin-top:0.5rem;" onclick="analizarTexto()">Analizar texto</button>
+    </div>
+    <div id="plnResultado" style="display:none;margin-top:1rem;"></div>
+
+    <div style="background:var(--bg-secondary);border-radius:8px;padding:1.2rem;margin-top:1.5rem;">
+      <h4 style="margin:0 0 0.5rem;">Cómo funciona</h4>
+      <ul style="font-size:0.85rem;color:var(--text-secondary);margin:0;padding-left:1.2rem;line-height:1.8;">
+        <li>Normalización del texto (minúsculas, eliminación de tildes y stopwords).</li>
+        <li>Coincidencia contra un diccionario de <strong>+300 términos RIASEC</strong> en español colombiano.</li>
+        <li>Detección de sentimiento (positivo / negativo) para ajustar el peso de las menciones.</li>
+        <li>El PLN aporta un <strong>15% de ajuste</strong> sobre los puntajes cuantitativos del cuestionario.</li>
+        <li>Se activa automáticamente al procesar aplicaciones con ítems de tipo <em>abierta</em>.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+.cluster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.cluster-card { background: var(--bg-secondary); border-radius: 10px; padding: 1rem; border: 1px solid var(--border); }
+.cluster-card h4 { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--accent); }
+.cluster-bar { height: 6px; border-radius: 3px; margin: 4px 0; }
+.bar-r { background: #ef4444; } .bar-i { background: #3b82f6; } .bar-a { background: #a855f7; }
+.bar-s { background: #22c55e; } .bar-e { background: #f59e0b; } .bar-c { background: #6b7280; }
+.badge-cluster { display: inline-block; background: var(--accent); color: white; border-radius: 12px; padding: 0.15rem 0.6rem; font-size: 0.75rem; }
+.combination-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:0.45rem; }
+.combination-chip { border:1px solid var(--border); border-radius:6px; padding:0.45rem 0.6rem; font-size:0.78rem; background:#fff; }
+.combination-chip strong { color:var(--accent); margin-right:0.35rem; }
+.pln-bar-row { display: flex; align-items: center; gap: 0.5rem; margin: 4px 0; font-size: 0.82rem; }
+.pln-bar-label { width: 100px; color: var(--text-secondary); }
+.pln-bar-fill { height: 10px; border-radius: 5px; background: var(--accent); min-width: 2px; }
+.pln-bar-val { color: var(--text-secondary); font-size: 0.78rem; }
+</style>
+
+<script>
+// Todas las llamadas van al frontend Flask (/admin/api/ml/*), no al backend directamente.
+// Esto evita problemas de CORS, JWT expirado y tokens expuestos en el HTML.
+
+async function apiFetch(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/admin/api/ml' + path, opts);  // proxy frontend
+  return { data: await res.json(), ok: res.ok, status: res.status };
+}
+
+// ── Cargar resumen ──────────────────────────────────────────────────────────
+async function cargarResumen() {
+  let data, ok, status;
+  try {
+    ({ data, ok, status } = await apiFetch('GET', '/resumen'));
+  } catch (e) {
+    // Solo error de red real (backend apagado)
+    document.getElementById('backendAlert').style.display = 'block';
+    document.getElementById('backendAlert').innerHTML =
+      '⚠️ <strong>No se pudo conectar al servidor backend.</strong> ' +
+      'Asegúrate de que el backend esté corriendo en <code>http://localhost:5000</code> y recarga la página.';
+    return;
+  }
+  document.getElementById('backendAlert').style.display = 'none';
+  if (!ok) return;
+  document.getElementById('statClusteringEjec').textContent = data.clustering?.total_ejecuciones ?? 0;
+  document.getElementById('statPlnAnalisis').textContent = data.pln?.total_analisis ?? 0;
+  cargarCombinacionesRiasec();
+}
+
+async function cargarCombinacionesRiasec() {
+  const { data, ok } = await apiFetch('GET', '/clustering/combinaciones');
+  const el = document.getElementById('combinacionesRiasec');
+  if (!ok) { el.textContent = 'No fue posible cargar las combinaciones.'; return; }
+  el.innerHTML = (data.combinaciones || []).map(function(combinacion) {
+    return '<div class="combination-chip"><strong>' + combinacion.codigo + '</strong>' + combinacion.nombre + '</div>';
+  }).join('');
+}
+
+// ── Clustering ─────────────────────────────────────────────────────────────
+async function ejecutarClustering() {
+  const n = document.getElementById('nClusters').value;
+  const cfgId = document.getElementById('configId').value;
+  const body = {};
+  if (n) body.n_clusters = parseInt(n);
+  if (cfgId) body.configuracion_id = parseInt(cfgId);
+
+  document.getElementById('clusteringLoading').style.display = 'block';
+  document.getElementById('clusteringResultado').style.display = 'none';
+
+  const { data, ok } = await apiFetch('POST', '/clustering/ejecutar', body);
+  document.getElementById('clusteringLoading').style.display = 'none';
+
+  if (!ok) {
+    showResultado('clusteringResultado', `<div class="alert alert-error">${data.error || 'Error al ejecutar clustering'}</div>`);
+    return;
+  }
+  const r = data.resultado;
+  renderClusteringResultado(r);
+  cargarHistorialClustering();
+  cargarResumen();
+}
+
+function renderClusteringResultado(r) {
+  const colores = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#a855f7','#14b8a6','#f97316','#8b5cf6'];
+  const html = `
+    <div style="background:var(--bg-secondary);border-radius:10px;padding:1.2rem;margin-top:1rem;">
+      <div style="display:flex;gap:1.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <span>✅ <strong>${r.n_clusters} clusters</strong> identificados</span>
+        <span>📊 <strong>Silhouette:</strong> ${r.silhouette_score?.toFixed(3) ?? '—'}</span>
+        <span>👥 <strong>${r.n_aplicaciones}</strong> estudiantes analizados</span>
+      </div>
+      <div class="cluster-grid">
+        ${(r.descripcion_clusters || []).map((dc, i) => `
+          <div class="cluster-card">
+            <span class="badge-cluster" style="background:${colores[i % colores.length]}">Grupo ${dc.cluster + 1}</span>
+            <h4>${dc.nombre}</h4>
+            <p style="font-size:0.75rem;color:var(--accent);margin:0.15rem 0;">Pareja RIASEC: ${dc.combinacion_riasec?.codigo || '—'}</p>
+            <p style="font-size:0.78rem;color:var(--text-secondary);margin:0.25rem 0;">
+              ${dc.n_estudiantes} estudiante${dc.n_estudiantes !== 1 ? 's' : ''}
+            </p>
+            <p style="font-size:0.75rem;color:var(--text-light);margin:0.5rem 0 0.75rem;">
+              ${dc.interpretacion || ''}
+            </p>
+            ${Object.entries(dc.centroide || {}).map(([area, val]) => `
+              <div style="font-size:0.75rem;display:flex;align-items:center;gap:0.4rem;margin:2px 0;">
+                <span style="width:90px;color:var(--text-secondary);">${area}</span>
+                <div style="flex:1;background:var(--border);border-radius:3px;height:6px;">
+                  <div style="width:${Math.min(val,100)}%;height:100%;background:${colores[i % colores.length]};border-radius:3px;"></div>
+                </div>
+                <span style="width:32px;text-align:right;">${val}%</span>
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  showResultado('clusteringResultado', html);
+}
+
+async function cargarHistorialClustering() {
+  const { data, ok } = await apiFetch('GET', '/clustering/historial');
+  const el = document.getElementById('clusteringHistorial');
+  if (!ok || !data.historial?.length) {
+    el.innerHTML = '<p style="color:var(--text-secondary);font-size:0.875rem;">No hay ejecuciones anteriores.</p>';
+    return;
+  }
+  el.innerHTML = `<div class="table-container"><table>
+    <thead><tr><th>#</th><th>Fecha</th><th>Clusters</th><th>Estudiantes</th><th>Silhouette</th><th>Acciones</th></tr></thead>
+    <tbody>
+      ${data.historial.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${new Date(r.created_at).toLocaleString('es-CO')}</td>
+          <td><span class="badge-cluster">${r.n_clusters} grupos</span></td>
+          <td>${r.n_aplicaciones}</td>
+          <td><span style="color:${r.silhouette_score > 0.5 ? '#22c55e' : r.silhouette_score > 0.25 ? '#f59e0b' : '#ef4444'}">${r.silhouette_score?.toFixed(3) ?? '—'}</span></td>
+          <td><button class="btn btn-sm" onclick="verDetalleClustering(${r.id})">Ver grupos</button></td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+async function verDetalleClustering(id) {
+  const { data, ok } = await apiFetch('GET', `/clustering/${id}`);
+  if (!ok) return alert('Error al cargar detalle');
+  renderClusteringResultado(data.detalle);
+  document.getElementById('clusteringResultado').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── PLN Playground ─────────────────────────────────────────────────────────
+async function analizarTexto() {
+  const texto = document.getElementById('plnTexto').value.trim();
+  if (!texto) return;
+  const { data, ok } = await apiFetch('POST', '/pln/analizar-texto', { texto });
+  if (!ok) {
+    showResultado('plnResultado', `<div class="alert alert-error">${data.error || 'Error'}</div>`);
+    return;
+  }
+  const a = data.analisis;
+  const colores = { Realista: '#ef4444', Investigador: '#3b82f6', 'Artístico': '#a855f7', Social: '#22c55e', Emprendedor: '#f59e0b', Convencional: '#6b7280' };
+  const sorted = Object.entries(a.scores_riasec).sort((x, y) => y[1] - x[1]);
+  const domArea = a.area_dominante;
+  const sentBadge = a.sentimiento === 'positivo' ? '🟢 Positivo' : a.sentimiento === 'negativo' ? '🔴 Negativo' : '⚪ Neutro';
+
+  const html = `
+    <div style="background:var(--bg-secondary);border-radius:10px;padding:1.2rem;">
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <span>🏆 <strong>Área dominante:</strong> ${domArea || 'Sin coincidencias'}</span>
+        <span>🎯 <strong>Confianza:</strong> ${((a.confianza || 0) * 100).toFixed(0)}%</span>
+        <span>${sentBadge}</span>
+      </div>
+      <div>
+        ${sorted.map(([area, val]) => `
+          <div class="pln-bar-row">
+            <span class="pln-bar-label">${area}</span>
+            <div style="flex:1;background:var(--border);border-radius:5px;height:10px;">
+              <div style="width:${Math.min(val, 100)}%;height:100%;background:${colores[area] || '#6b7280'};border-radius:5px;transition:width 0.5s;"></div>
+            </div>
+            <span class="pln-bar-val">${val.toFixed(1)}%</span>
+          </div>
+        `).join('')}
+      </div>
+      ${domArea && a.palabras_clave?.[domArea]?.length ? `
+        <div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-secondary);">
+          <strong>Palabras clave encontradas (${domArea}):</strong>
+          ${a.palabras_clave[domArea].slice(0,12).map(p => `<span style="background:var(--border);padding:0.1rem 0.4rem;border-radius:4px;margin:2px;display:inline-block;">${p}</span>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+  showResultado('plnResultado', html);
+}
+
+function showResultado(id, html) {
+  const el = document.getElementById(id);
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  cargarResumen();
+  cargarHistorialClustering();
+});
+</script>
+{% endblock %}

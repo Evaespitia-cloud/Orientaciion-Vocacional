@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Instrumento Psicométrico{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1>Instrumento Psicométrico</h1>
+            <p>Gestión del instrumento y configuraciones de aplicación</p>
+        </div>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            {% if session.get('rol') == 'ti' %}
+            <button class="btn btn-secondary" onclick="document.getElementById('modalNuevoInstrumento').style.display='flex'">+ Nuevo Instrumento</button>
+            {% endif %}
+            <a href="{{ url_for('admin.nueva_configuracion') }}" class="btn btn-primary">+ Nueva Configuración</a>
+        </div>
+    </div>
+
+    <!-- Instrumentos -->
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;">Instrumentos Disponibles</h2>
+    {% for inst in instrumentos %}
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div style="flex: 1;">
+                <h3 class="card-title" style="margin-bottom: 0.5rem;">{{ inst.nombre }}</h3>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; line-height: 1.5;">{{ inst.descripcion or '' }}</p>
+                <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <span class="badge badge-info">v{{ inst.version }}</span>
+                    <span class="badge badge-success">Activo</span>
+                    {% if inst.dimensiones %}
+                    <span class="badge badge-purple">{{ inst.dimensiones|length }} pruebas</span>
+                    {% endif %}
+                </div>
+            </div>
+            <a href="{{ url_for('admin.detalle_instrumento', id=inst.id) }}" class="btn btn-sm btn-secondary">Ver Detalle →</a>
+        </div>
+
+        {% if inst.dimensiones %}
+        <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+            {% for dim in inst.dimensiones %}
+            <div style="padding: 1rem; background: {% if loop.index == 1 %}#eef2ff{% else %}#fef3f2{% endif %}; border-radius: 10px; border-left: 4px solid {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %};">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %}; margin-bottom: 0.5rem;">
+                    Prueba {{ loop.index }}: {{ dim.nombre }}
+                </h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">{{ dim.descripcion or '' }}</p>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; font-size: 0.8rem;">
+                    <span style="color: var(--text-secondary);">
+                        <strong>{{ dim.escalas|length if dim.escalas else 0 }}</strong> escalas RIASEC
+                    </span>
+                    <span style="color: var(--text-secondary);">
+                        {% set total_items = [] %}
+                        {% if dim.escalas %}
+                            {% for e in dim.escalas %}
+                                {% for _ in e.get('items', []) %}
+                                    {% if total_items.append(1) %}{% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% endif %}
+                        <strong>{{ total_items|length }}</strong> preguntas
+                    </span>
+                    {% if dim.escalas %}
+                    <span style="color: var(--text-secondary);">
+                        {% set first_items = dim.escalas[0].get('items', []) %}
+                        Tipo: <strong>{% if first_items and first_items[0].tipo == 'eleccion_forzada' %}Elección forzada (Sí/No){% elif first_items and first_items[0].tipo == 'opcion_multiple' %}Opción múltiple{% else %}—{% endif %}</strong>
+                    </span>
+                    {% endif %}
+                </div>
+                {% if dim.escalas %}
+                <div style="margin-top: 0.75rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    {% for e in dim.escalas %}
+                    <span class="badge" style="background: {% if loop.index == 1 %}#e74c3c{% elif loop.index == 2 %}#3498db{% elif loop.index == 3 %}#9b59b6{% elif loop.index == 4 %}#27ae60{% elif loop.index == 5 %}#f39c12{% else %}#1abc9c{% endif %}; color: white; font-size: 0.7rem;">{{ e.nombre }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Configuraciones -->
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin: 2rem 0 1rem;">Configuraciones de Aplicación</h2>
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Fin</th>
+                        <th>Obligatoria</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in configuraciones %}
+                    <tr>
+                        <td><strong>{{ c.nombre }}</strong></td>
+                        <td>{{ c.fecha_inicio[:10] if c.fecha_inicio else '' }}</td>
+                        <td>{{ c.fecha_fin[:10] if c.fecha_fin else '' }}</td>
+                        <td>{{ 'Sí' if c.obligatoria else 'No' }}</td>
+                        <td>
+                            <button
+                                class="btn-toggle-activa"
+                                data-id="{{ c.id }}"
+                                data-activa="{{ 'true' if c.activa else 'false' }}"
+                                style="
+                                    border: none; cursor: pointer; border-radius: 20px;
+                                    padding: 4px 14px; font-size: 0.78rem; font-weight: 600;
+                                    transition: background 0.2s, color 0.2s;
+                                    background: {{ '#d4edda' if c.activa else '#f8d7da' }};
+                                    color: {{ '#155724' if c.activa else '#721c24' }};
+                                ">
+                                {{ 'Activa' if c.activa else 'Inactiva' }}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not configuraciones %}
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-light); padding: 2rem;">No hay configuraciones creadas</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.btn-toggle-activa').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var id = this.dataset.id;
+        var self = this;
+        self.disabled = true;
+        self.style.opacity = '0.6';
+
+        fetch('/admin/configuraciones/' + id + '/toggle-activa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.activa !== undefined) {
+                var activa = data.activa;
+                self.dataset.activa = activa ? 'true' : 'false';
+                self.textContent = activa ? 'Activa' : 'Inactiva';
+                self.style.background = activa ? '#d4edda' : '#f8d7da';
+                self.style.color      = activa ? '#155724' : '#721c24';
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo actualizar'));
+            }
+        })
+        .catch(function() { alert('Error de conexión al cambiar estado.'); })
+        .finally(function() {
+            self.disabled = false;
+            self.style.opacity = '1';
+        });
+    });
+});
+</script>
+
+{% if session.get('rol') == 'ti' %}
+<!-- Modal: Nuevo Instrumento -->
+<div id="modalNuevoInstrumento" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:460px; width:94%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2 style="margin:0; font-size:1.2rem;">Nuevo Instrumento</h2>
+            <button onclick="document.getElementById('modalNuevoInstrumento').style.display='none'"
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.crear_instrumento') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label>Nombre del instrumento *</label>
+                <input type="text" name="nombre" class="form-control" required
+                       placeholder="ej. Inventario Holland RIASEC">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea name="descripcion" class="form-control" rows="3"
+                          placeholder="Descripción breve del instrumento…"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Versión</label>
+                <input type="text" name="version" class="form-control" value="1.0" placeholder="1.0">
+            </div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;">
+                <button type="button"
+                        onclick="document.getElementById('modalNuevoInstrumento').style.display='none'"
+                        class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Instrumento</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+document.getElementById('modalNuevoInstrumento').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+});
+</script>
+{% endif %}
+{% endblock %}

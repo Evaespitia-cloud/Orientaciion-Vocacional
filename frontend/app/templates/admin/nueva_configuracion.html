@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Nueva Configuración{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px;">
+    <div class="page-header">
+        <h1>Nueva Configuración de Aplicación</h1>
+        <p>Configurar un periodo de aplicación del instrumento</p>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="instrumento_id">Instrumento *</label>
+                <select name="instrumento_id" id="instrumento_id" class="form-control" required>
+                    <option value="">Seleccionar instrumento...</option>
+                    {% for inst in instrumentos %}
+                    <option value="{{ inst.id }}">{{ inst.nombre }} (v{{ inst.version }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="nombre">Nombre de la configuración *</label>
+                <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Aplicación 2026-1 Cohorte A" required>
+            </div>
+
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción opcional..."></textarea>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="fecha_inicio">Fecha de inicio *</label>
+                    <input type="datetime-local" id="fecha_inicio" name="fecha_inicio" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="fecha_fin">Fecha de fin *</label>
+                    <input type="datetime-local" id="fecha_fin" name="fecha_fin" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="cohorte">Cohorte (opcional)</label>
+                <input type="text" id="cohorte" name="cohorte" class="form-control" placeholder="Ej: 2026-1">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="obligatoria" name="obligatoria">
+                <label for="obligatoria">Aplicación obligatoria para los estudiantes</label>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">Crear Configuración</button>
+                <a href="{{ url_for('admin.instrumento') }}" class="btn btn-secondary btn-lg">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

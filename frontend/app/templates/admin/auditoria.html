@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Auditoría{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        {% if solo_estudiantes %}
+        <h1>Auditoría de Estudiantes</h1>
+        <p>Historial de acciones realizadas por estudiantes en el sistema</p>
+        {% else %}
+        <h1>Registro de Auditoría</h1>
+        <p>Trazabilidad de todas las acciones realizadas en el sistema</p>
+        {% endif %}
+    </div>
+
+    <!-- Filtros -->
+    <div class="card" style="margin-bottom:1.5rem;">
+        <form method="GET" style="display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;">
+            <div class="form-group" style="margin-bottom:0; flex:1; min-width:160px;">
+                <label>Usuario (nombre)</label>
+                <input type="text" name="usuario_nombre" class="form-control" placeholder="Buscar por nombre…"
+                       value="{{ filtro_usuario_nombre or '' }}">
+            </div>
+            {% if not solo_estudiantes %}
+            <div class="form-group" style="margin-bottom:0; flex:1; min-width:160px;">
+                <label>Módulo</label>
+                <input type="text" name="modulo" class="form-control" placeholder="ej. auth, usuarios…"
+                       value="{{ filtro_modulo }}">
+            </div>
+            {% endif %}
+            <div class="form-group" style="margin-bottom:0; flex:1; min-width:160px;">
+                <label>Acción</label>
+                <input type="text" name="accion" class="form-control" placeholder="ej. LOGIN, EXPORTAR…"
+                       value="{{ filtro_accion }}">
+            </div>
+            <button type="submit" class="btn btn-secondary">Filtrar</button>
+            {% if filtro_usuario_nombre or filtro_modulo or filtro_accion %}
+            {% if solo_estudiantes %}
+            <a href="{{ url_for('admin.auditoria_estudiantes') }}" class="btn" style="border:1px solid var(--border); background:#fff;">Limpiar</a>
+            {% else %}
+            <a href="{{ url_for('admin.auditoria') }}" class="btn" style="border:1px solid var(--border); background:#fff;">Limpiar</a>
+            {% endif %}
+            {% endif %}
+            <span style="color:var(--text-secondary); font-size:0.85rem; align-self:center;">{{ total }} registro{{ 's' if total != 1 }}</span>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Módulo</th>
+                        <th>Descripción</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="font-size: 0.8rem; white-space: nowrap;">{{ log.created_at[:16] if log.created_at else '' }}</td>
+                        <td>{{ log.usuario_nombre }}</td>
+                        <td><span class="badge badge-info">{{ log.accion }}</span></td>
+                        <td>{{ log.modulo }}</td>
+                        <td style="font-size: 0.85rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                            {{ log.descripcion or '' }}
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-light);">{{ log.ip_address or '' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not logs %}
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-light); padding: 2rem;">No hay registros de auditoría</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if paginas > 1 %}
+        <div class="pagination">
+            {% set audit_route = 'admin.auditoria_estudiantes' if solo_estudiantes else 'admin.auditoria' %}
+            {% for p in range(1, paginas + 1) %}
+                {% if p == pagina_actual %}
+                    <span class="active">{{ p }}</span>
+                {% else %}
+                    <a href="?page={{ p }}{% if filtro_modulo %}&modulo={{ filtro_modulo }}{% endif %}{% if filtro_accion %}&accion={{ filtro_accion }}{% endif %}{% if filtro_usuario_nombre %}&usuario_nombre={{ filtro_usuario_nombre }}{% endif %}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Políticas de Retención -->
+    {% if session.get('rol') == 'ti' %}
+    <div style="margin-top:2.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h2 style="font-size:1.1rem; font-weight:700; color:var(--primary); margin:0;">Políticas de Retención de Datos</h2>
+            <button class="btn btn-primary" onclick="document.getElementById('modalCrearPolitica').style.display='flex'">+ Nueva Política</button>
+        </div>
+        <div class="card">
+            {% if politicas %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Retención (días)</th>
+                            <th>Tabla afectada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pol in politicas %}
+                        <tr>
+                            <td><strong>{{ pol.nombre }}</strong></td>
+                            <td style="font-size:0.85rem; color:var(--text-secondary);">{{ pol.descripcion or '—' }}</td>
+                            <td>{{ pol.tiempo_retencion_dias }} días</td>
+                            <td><code>{{ pol.tabla_afectada }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="text-align:center; color:var(--text-secondary); padding:1.5rem;">No hay políticas de retención configuradas.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal: Nueva Política -->
+    <div id="modalCrearPolitica" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:12px; padding:2rem; max-width:480px; width:94%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h2 style="margin:0; font-size:1.2rem;">Nueva Política de Retención</h2>
+                <button onclick="document.getElementById('modalCrearPolitica').style.display='none'"
+                        style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.crear_politica_retencion') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label>Nombre *</label>
+                    <input type="text" name="nombre" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Período de retención (días) *</label>
+                    <input type="number" name="tiempo_retencion_dias" class="form-control" required min="1" value="365">
+                </div>
+                <div class="form-group">
+                    <label>Tabla afectada *</label>
+                    <select name="tabla_afectada" class="form-control" required>
+                        <option value="auditoria">auditoria (logs de auditoría)</option>
+                        <option value="respuestas">respuestas (respuestas de pruebas)</option>
+                        <option value="reportes">reportes (reportes generados)</option>
+                        <option value="aplicaciones">aplicaciones (sesiones de prueba)</option>
+                        <option value="consentimientos">consentimientos</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;">
+                    <button type="button" onclick="document.getElementById('modalCrearPolitica').style.display='none'"
+                            class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Política</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('modalCrearPolitica').addEventListener('click', function(e) {
+        if (e.target === this) this.style.display = 'none';
+    });
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

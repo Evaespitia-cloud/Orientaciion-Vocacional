@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Campos Demográficos — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1>Campos Demográficos</h1>
+            <p>Configura los campos del formulario demográfico que deben completar los estudiantes.</p>
+        </div>
+        <a href="{{ url_for('admin.datos_estudiantes') }}" class="btn btn-primary">Ver datos de estudiantes</a>
+    </div>
+
+    <div class="grid-2">
+        <!-- Formulario para crear campo -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Nuevo Campo</h2>
+            </div>
+            <form method="POST" action="{{ url_for('admin.crear_campo_demografico') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.3rem;">Nombre (identificador)</label>
+                    <input type="text" name="nombre" class="form-control" required placeholder="ej: ciudad_origen" pattern="[a-z_]+">
+                    <small style="color: var(--text-light);">Solo letras minúsculas y guiones bajos</small>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.3rem;">Etiqueta (visible al usuario)</label>
+                    <input type="text" name="etiqueta" class="form-control" required placeholder="ej: Ciudad de Origen">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.3rem;">Tipo de campo</label>
+                    <select name="tipo_campo" class="form-control" id="tipoCampo" onchange="toggleOpciones()">
+                        <option value="texto">Texto libre</option>
+                        <option value="numero">Número</option>
+                        <option value="seleccion">Selección (desplegable)</option>
+                        <option value="seleccion_multiple">Selección múltiple</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem; display: none;" id="opcionesGroup">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.3rem;">Opciones (separadas por coma)</label>
+                    <input type="text" name="opciones" class="form-control" placeholder="ej: Público, Privado, Mixto">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.3rem;">Orden de visualización</label>
+                    <input type="number" name="orden" class="form-control" value="{{ (campos|length) + 1 }}" min="1">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="obligatorio" checked>
+                        <span style="font-weight: 600;">Campo obligatorio</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">Crear Campo</button>
+            </form>
+        </div>
+
+        <!-- Lista de campos existentes -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Campos Configurados</h2>
+            </div>
+            {% if campos %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Orden</th>
+                            <th>Nombre</th>
+                            <th>Etiqueta</th>
+                            <th>Tipo</th>
+                            <th>Obligatorio</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campo in campos|sort(attribute='orden') %}
+                        <tr style="{% if not campo.activo %}opacity: 0.5;{% endif %}">
+                            <td>{{ campo.orden }}</td>
+                            <td><code>{{ campo.nombre }}</code></td>
+                            <td>{{ campo.etiqueta }}</td>
+                            <td>
+                                {% if campo.tipo_campo == 'texto' %}Texto
+                                {% elif campo.tipo_campo == 'numero' %}Número
+                                {% elif campo.tipo_campo == 'seleccion' %}Selección
+                                {% elif campo.tipo_campo == 'seleccion_multiple' %}Múltiple
+                                {% endif %}
+                            </td>
+                            <td>{{ 'Sí' if campo.obligatorio else 'No' }}</td>
+                            <td>
+                                {% if campo.activo %}
+                                <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                <span class="badge badge-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.toggle_campo_demografico', id=campo.id) }}" style="display: inline;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="activo" value="{{ 'false' if campo.activo else 'true' }}">
+                                    <button type="submit" class="btn btn-sm {{ 'btn-secondary' if campo.activo else 'btn-primary' }}">
+                                        {{ 'Desactivar' if campo.activo else 'Activar' }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No hay campos configurados.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleOpciones() {
+    const tipo = document.getElementById('tipoCampo').value;
+    const group = document.getElementById('opcionesGroup');
+    group.style.display = (tipo === 'seleccion' || tipo === 'seleccion_multiple') ? 'block' : 'none';
+}
+</script>
+{% endblock %}

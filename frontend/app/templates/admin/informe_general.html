@@ -1,0 +1,766 @@
+{% extends "base.html" %}
+{% block title %}Informe General — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        {% if rol == 'investigador' %}
+        <h1>Informe de Investigación</h1>
+        <p>Análisis de patrones agregados, segmentación demográfica y tendencias vocacionales anónimas.</p>
+        {% elif rol == 'ti' %}
+        <h1>Informe Completo del Sistema</h1>
+        <p>Vista integral: segmentación demográfica, comparativas institucionales, perfiles Holland, áreas de interés y evolución vocacional.</p>
+        {% elif rol == 'directivo' %}
+        <h1>Informe Institucional</h1>
+        <p>Resumen de participación, distribución de perfiles por tipo de colegio y evolución vocacional general.</p>
+        {% elif rol == 'bienestar' %}
+        <h1>Informe de Bienestar Estudiantil</h1>
+        <p>Estado general de los estudiantes: distribución de perfiles Holland, áreas de interés y evolución vocacional.</p>
+        {% else %}
+        <h1>Informe General</h1>
+        <p>Estadísticas comparativas por tipo de colegio, distribución de perfiles Holland y áreas de interés.</p>
+        {% endif %}
+    </div>
+
+    <!-- Resumen rápido -->
+    {% if resumen %}
+    <div class="stats-grid" style="margin-bottom: 2rem;">
+        <div class="card">
+            <div class="stat-icon blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="stat-value">{{ resumen.get('total_estudiantes', 0) }}</div>
+            <div class="stat-label">Estudiantes registrados</div>
+        </div>
+        <div class="card">
+            <div class="stat-icon green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="stat-value">{{ resumen.get('aplicaciones_completadas', 0) }}</div>
+            <div class="stat-label">Pruebas completadas</div>
+        </div>
+        <div class="card">
+            <div class="stat-icon purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+            <div class="stat-value">{{ resumen.get('tasa_participacion', '0') }}%</div>
+            <div class="stat-label">Tasa de participación</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if rol in ('investigador', 'ti', 'bienestar') or not rol %}
+    <!-- Radar del perfil RIASEC institucional (investigador y TI) -->
+    {% if areas_interes %}
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+            <h2>Perfil RIASEC Institucional</h2>
+            <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Distribución agregada de las 6 dimensiones Holland como perfil colectivo de la institución</p>
+        </div>
+        <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap; padding:0.5rem 0;">
+            <div style="flex:0 0 280px; height:280px; position:relative;"><canvas id="chartRadarRIASEC"></canvas></div>
+            <div style="flex:1; min-width:200px; padding-top:0.5rem;">
+                {% set max_area = areas_interes|sort(attribute='cantidad',reverse=true)|first %}
+                {% set total_a = areas_interes|sum(attribute='cantidad') %}
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.4rem;">Área con mayor representación:</p>
+                <div style="font-size:1.6rem; font-weight:800; color:var(--accent); margin-bottom:0.2rem;">{{ max_area.area }}</div>
+                <p style="color:var(--text-secondary); font-size:0.82rem; margin-bottom:1.5rem;">{{ max_area.cantidad }} estudiante(s) tienen este perfil como dominante.</p>
+                <div>
+                    {% for a in areas_interes|sort(attribute='cantidad',reverse=true) %}
+                    <div style="display:flex; align-items:center; margin-bottom:0.45rem; font-size:0.82rem; gap:0.5rem;">
+                        <span style="width:115px; flex-shrink:0;">{{ a.area }}</span>
+                        <div style="flex:1; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+                            <div style="width:{{ ((a.cantidad / total_a * 100) if total_a else 0)|round(0)|int }}%; height:100%; background:var(--accent); border-radius:4px;"></div>
+                        </div>
+                        <span style="font-weight:600; width:38px; text-align:right;">{{ ((a.cantidad / total_a * 100) if total_a else 0)|round(1) }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid-2">
+        <!-- Distribución por tipo de colegio -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Comparativa por Tipo de Colegio</h2>
+            </div>
+            {% if tipo_colegio %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Estudiantes</th>
+                            <th>Pruebas</th>
+                            <th>Completadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tc in tipo_colegio %}
+                        <tr>
+                            <td><strong>{{ tc.tipo }}</strong></td>
+                            <td>{{ tc.estudiantes }}</td>
+                            <td>{{ tc.aplicaciones }}</td>
+                            <td>{{ tc.completadas }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="chart-container" style="margin-top: 1rem;">
+                <canvas id="chartTipoColegio"></canvas>
+            </div>
+            {% else %}
+            <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No hay datos demográficos registrados aún.</p>
+            {% endif %}
+        </div>
+
+        <!-- Distribución general de perfiles Holland -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Distribución de Perfiles Holland</h2>
+            </div>
+            {% if perfiles %}
+            <div class="chart-container">
+                <canvas id="chartPerfiles"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 1rem;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Perfil</th>
+                            <th>Cantidad</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set total_perfiles = perfiles|sum(attribute='cantidad') %}
+                        {% for p in perfiles %}
+                        <tr>
+                            <td><strong>{{ p.perfil }}</strong></td>
+                            <td>{{ p.cantidad }}</td>
+                            <td>{{ ((p.cantidad / total_perfiles * 100) if total_perfiles else 0)|round(1) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No hay perfiles procesados aún.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── DIRECTIVO: Vista institucional ejecutiva ── #}
+    {% elif rol == 'directivo' %}
+    <!-- Fila 1: Participación (donut + KPIs) + Evolución vocacional (línea hero) -->
+    <div class="grid-2" style="margin-bottom: 1.5rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2>Estado de Participación</h2>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Proporción de pruebas completadas vs. pendientes</p>
+            </div>
+            <div style="text-align:center; padding: 0.5rem 0;">
+                <div style="font-size:3rem; font-weight:800; color:var(--accent);">{{ resumen.get('tasa_participacion','0') }}%</div>
+                <p style="color:var(--text-secondary); margin-bottom:1rem; font-size:0.9rem;">Tasa de completación institucional</p>
+                <div class="chart-container" style="height:200px;"><canvas id="chartParticipacionDir"></canvas></div>
+                <div style="display:flex; justify-content:center; gap:2.5rem; margin-top:1rem; font-size:0.85rem;">
+                    <div>
+                        <span style="color:#059669; font-weight:700; font-size:1.4rem;">{{ resumen.get('aplicaciones_completadas',0) }}</span><br>
+                        <span style="color:var(--text-secondary);">Completadas</span>
+                    </div>
+                    <div>
+                        <span style="color:#94a3b8; font-weight:700; font-size:1.4rem;">{{ (resumen.get('total_aplicaciones',0)|int - resumen.get('aplicaciones_completadas',0)|int) }}</span><br>
+                        <span style="color:var(--text-secondary);">Pendientes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Evolución Vocacional por Período</h2>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Cambio en perfiles Holland a lo largo del tiempo</p>
+            </div>
+            {% if evolucion_agregada %}
+            <div class="chart-container" style="height:300px;"><canvas id="chartEvolucionDir"></canvas></div>
+            {% else %}
+            <div style="text-align:center; padding:2.5rem; color:var(--text-secondary);">
+                <p>Se necesitan pruebas en múltiples períodos para visualizar la evolución.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Fila 2: Perfiles por tipo de colegio + Áreas de interés (horizontal) -->
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <h2>Perfiles Holland por Tipo de Colegio</h2>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Comparativa institucional por modalidad educativa</p>
+            </div>
+            {% if perfiles_colegio %}
+            <div class="chart-container"><canvas id="chartPerfilesColegioDir"></canvas></div>
+            {% elif tipo_colegio %}
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Tipo de Colegio</th><th>Estudiantes</th><th>Completadas</th></tr></thead>
+                    <tbody>
+                        {% for tc in tipo_colegio %}
+                        <tr>
+                            <td><strong>{{ tc.tipo }}</strong></td>
+                            <td>{{ tc.estudiantes }}</td>
+                            <td>{{ tc.completadas }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin datos demográficos registrados.</p>
+            {% endif %}
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Áreas de Mayor Interés Institucional</h2>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Distribución de áreas vocacionales dominantes</p>
+            </div>
+            {% if areas_interes %}
+            <div class="chart-container"><canvas id="chartAreasDir"></canvas></div>
+            {% else %}
+            <p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin datos disponibles.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── BIENESTAR: Vista simplificada ── #}
+    {% else %}
+    {% if perfiles %}
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header"><h2>Distribución de Perfiles Holland</h2></div>
+        <div class="chart-container"><canvas id="chartPerfiles"></canvas></div>
+        <div class="table-container" style="margin-top:1rem;">
+            <table>
+                <thead><tr><th>Perfil</th><th>Cantidad</th><th>%</th></tr></thead>
+                <tbody>
+                    {% set total_p = perfiles|sum(attribute='cantidad') %}
+                    {% for p in perfiles %}
+                    <tr>
+                        <td><strong>{{ p.perfil }}</strong></td>
+                        <td>{{ p.cantidad }}</td>
+                        <td>{{ ((p.cantidad / total_p * 100) if total_p else 0)|round(1) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}{# end role-based sections #}
+
+    <!-- Perfiles por tipo de colegio (investigador y TI) -->
+    {% if rol in ('investigador', 'ti', 'bienestar') or not rol %}
+    {% if perfiles_colegio %}
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+            <h2>Perfiles Holland por Tipo de Colegio</h2>
+        </div>
+        <div class="chart-container">
+            <canvas id="chartPerfilesColegio"></canvas>
+        </div>
+        <div class="table-container" style="margin-top: 1rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo Colegio</th>
+                        <th>Perfil</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in perfiles_colegio %}
+                    <tr>
+                        <td>{{ item.tipo_colegio }}</td>
+                        <td><strong>{{ item.perfil }}</strong></td>
+                        <td>{{ item.cantidad }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+    <!-- Distribución por áreas de interés (investigador y TI) -->
+    {% if areas_interes and (rol in ('investigador', 'ti', 'bienestar') or not rol) %}
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+            <h2>Distribución por Áreas de Interés</h2>
+        </div>
+        <div class="chart-container">
+            <canvas id="chartAreas"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if rol in ('investigador', 'ti', 'bienestar') or not rol %}
+    <!-- ── Segmentación por Género ────────────────────────────────────────── -->
+    <div class="page-header" style="margin-top: 2.5rem;">
+        <h2 style="font-size: 1.25rem;">Segmentación por Género</h2>
+        <p>Distribución de estudiantes y perfiles vocacionales según género</p>
+    </div>
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header"><h2>Estudiantes por Género</h2></div>
+            {% if seg_genero %}
+            <div class="chart-container" style="height:240px;"><canvas id="chartGeneroInforme"></canvas></div>
+            {% else %}
+            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            {% endif %}
+        </div>
+        <div class="card">
+            <div class="card-header"><h2>Perfiles Vocacionales por Género</h2></div>
+            {% if seg_genero_perfiles %}
+            <div class="chart-container" style="height:240px;"><canvas id="chartPerfilesGeneroInforme"></canvas></div>
+            {% else %}
+            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Segmentación por Edad ──────────────────────────────────────────── -->
+    <div class="page-header" style="margin-top: 2rem;">
+        <h2 style="font-size: 1.25rem;">Segmentación por Edad</h2>
+        <p>Distribución de estudiantes y perfiles vocacionales según rango de edad</p>
+    </div>
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header"><h2>Estudiantes por Rango de Edad</h2></div>
+            {% if seg_edad %}
+            <div class="chart-container" style="height:240px;"><canvas id="chartEdadInforme"></canvas></div>
+            {% else %}
+            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            {% endif %}
+        </div>
+        <div class="card">
+            <div class="card-header"><h2>Perfiles Vocacionales por Edad</h2></div>
+            {% if seg_edad_perfiles %}
+            <div class="chart-container" style="height:240px;"><canvas id="chartPerfilesEdadInforme"></canvas></div>
+            {% else %}
+            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% endif %}{# end investigador-only segmentation #}
+
+    <!-- ── Evolución Vocacional (investigador y bienestar; directivo la ve arriba) ── -->
+    {% if rol != 'directivo' %}
+    <div class="page-header" style="margin-top: 2.5rem;">
+        <h2 style="font-size: 1.25rem;">Evolución Vocacional Institucional</h2>
+        <p>Cómo han cambiado los perfiles Holland en la institución a lo largo del tiempo</p>
+    </div>
+    <div class="card" style="margin-bottom: 2rem;">
+        {% if evolucion_agregada %}
+        <div class="chart-container" style="height: 320px;">
+            <canvas id="chartEvolucionAgregada"></canvas>
+        </div>
+        <div class="table-container" style="margin-top:1rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Realista</th>
+                        <th>Investigador</th>
+                        <th>Artístico</th>
+                        <th>Social</th>
+                        <th>Emprendedor</th>
+                        <th>Convencional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in evolucion_agregada %}
+                    <tr>
+                        <td><strong>{{ p.periodo }}</strong></td>
+                        {% for area in ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'] %}
+                        <td>{{ p.perfiles.get(area, 0) }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:2rem; text-align:center;">
+            <p>Se necesitan pruebas completadas para mostrar la evolución vocacional.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}{# end no-directivo evolution #}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const colores = ['#4f46e5', '#059669', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+
+{% if tipo_colegio and (rol in ('investigador', 'ti', 'bienestar') or not rol) %}
+new Chart(document.getElementById('chartTipoColegio').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: [{% for tc in tipo_colegio %}'{{ tc.tipo }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Estudiantes',
+            data: [{% for tc in tipo_colegio %}{{ tc.estudiantes }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: ['#4f46e5', '#059669', '#f59e0b', '#ef4444'],
+        }, {
+            label: 'Completadas',
+            data: [{% for tc in tipo_colegio %}{{ tc.completadas }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: ['#818cf8', '#34d399', '#fcd34d', '#fca5a5'],
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+{% endif %}
+
+{% if perfiles and rol != 'directivo' %}
+new Chart(document.getElementById('chartPerfiles').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+        labels: [{% for p in perfiles %}'{{ p.perfil }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for p in perfiles %}{{ p.cantidad }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: colores.slice(0, {{ perfiles|length }}),
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+{% endif %}
+
+{% if perfiles_colegio and (rol in ('investigador', 'ti', 'bienestar') or not rol) %}
+(function() {
+    const raw = {{ perfiles_colegio | tojson }};
+    const tipos = [...new Set(raw.map(r => r.tipo_colegio))];
+    const allPerfiles = [...new Set(raw.map(r => r.perfil))];
+    const datasets = tipos.map((tipo, i) => ({
+        label: tipo,
+        data: allPerfiles.map(p => {
+            const found = raw.find(r => r.tipo_colegio === tipo && r.perfil === p);
+            return found ? found.cantidad : 0;
+        }),
+        backgroundColor: colores[i],
+    }));
+    new Chart(document.getElementById('chartPerfilesColegio').getContext('2d'), {
+        type: 'bar',
+        data: { labels: allPerfiles, datasets },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+})();
+{% endif %}
+
+{% if areas_interes and (rol in ('investigador', 'ti', 'bienestar') or not rol) %}
+new Chart(document.getElementById('chartAreas').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: [{% for a in areas_interes %}'{{ a.area }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Cantidad de estudiantes',
+            data: [{% for a in areas_interes %}{{ a.cantidad }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: colores.slice(0, {{ areas_interes|length }}),
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
+{% endif %}
+
+{% if rol in ('investigador', 'ti', 'bienestar') or not rol %}
+// ── Segmentación por Género ────────────────────────────────────────────── //
+{% if seg_genero %}
+new Chart(document.getElementById('chartGeneroInforme'), {
+    type: 'pie',
+    data: {
+        labels: [{% for g in seg_genero %}'{{ g.genero }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for g in seg_genero %}{{ g.cantidad }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: ['#4f46e5','#ec4899','#06b6d4','#f59e0b'],
+            borderWidth: 2, borderColor: '#fff',
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } }
+    }
+});
+{% endif %}
+
+{% if seg_genero_perfiles %}
+(function() {
+    const raw = {{ seg_genero_perfiles | tojson }};
+    const generos = raw.map(g => g.genero);
+    const allP = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+    const datasets = allP.map((p, i) => ({
+        label: p,
+        data: generos.map(gen => { const gr = raw.find(g => g.genero === gen); if (!gr) return 0; const f = gr.perfiles.find(x => x.perfil === p); return f ? f.cantidad : 0; }),
+        backgroundColor: colores[i], borderRadius: 4,
+    }));
+    new Chart(document.getElementById('chartPerfilesGeneroInforme'), {
+        type: 'bar',
+        data: { labels: generos, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+        }
+    });
+})();
+{% endif %}
+
+// ── Segmentación por Edad ──────────────────────────────────────────────── //
+{% if seg_edad %}
+new Chart(document.getElementById('chartEdadInforme'), {
+    type: 'bar',
+    data: {
+        labels: [{% for e in seg_edad %}'{{ e.rango_edad }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Estudiantes',
+            data: [{% for e in seg_edad %}{{ e.cantidad }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: colores,
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+{% endif %}
+
+{% if seg_edad_perfiles %}
+(function() {
+    const raw = {{ seg_edad_perfiles | tojson }};
+    const rangos = raw.map(r => r.rango_edad);
+    const allP = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+    const datasets = allP.map((p, i) => ({
+        label: p,
+        data: rangos.map(r => { const gr = raw.find(x => x.rango_edad === r); if (!gr) return 0; const f = gr.perfiles.find(x => x.perfil === p); return f ? f.cantidad : 0; }),
+        backgroundColor: colores[i], borderRadius: 4,
+    }));
+    new Chart(document.getElementById('chartPerfilesEdadInforme'), {
+        type: 'bar',
+        data: { labels: rangos, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+        }
+    });
+})();
+{% endif %}
+
+{% endif %}{# end investigador-only segmentation JS #}
+
+// ── Evolución Vocacional General (investigador y bienestar) ──────────── //
+{% if evolucion_agregada and rol != 'directivo' %}
+(function() {
+    const raw = {{ evolucion_agregada | tojson }};
+    const periodos = raw.map(p => p.periodo);
+    const areas = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+    const coloresRIASEC = ['#e74c3c','#3498db','#9b59b6','#27ae60','#f39c12','#1abc9c'];
+    const datasets = areas.map((area, i) => ({
+        label: area,
+        data: periodos.map(per => {
+            const found = raw.find(p => p.periodo === per);
+            return found ? (found.perfiles[area] || 0) : 0;
+        }),
+        borderColor: coloresRIASEC[i],
+        backgroundColor: coloresRIASEC[i] + '22',
+        tension: 0.4,
+        fill: false,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        borderWidth: 2,
+    }));
+    new Chart(document.getElementById('chartEvolucionAgregada'), {
+        type: 'line',
+        data: { labels: periodos, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+                tooltip: { callbacks: { title: (items) => 'Período: ' + items[0].label } }
+            },
+            scales: {
+                x: { grid: { display: false }, title: { display: true, text: 'Período (Año-Mes)' } },
+                y: { beginAtZero: true, title: { display: true, text: 'Número de estudiantes' },
+                     ticks: { precision: 0 } }
+            }
+        }
+    });
+})();
+{% endif %}
+
+{% if rol in ('investigador', 'ti', 'bienestar') or not rol %}
+// ── Radar RIASEC institucional (investigador) ────────────────────────── //
+{% if areas_interes %}
+(function() {
+    const areasRaw = {{ areas_interes | tojson }};
+    new Chart(document.getElementById('chartRadarRIASEC'), {
+        type: 'radar',
+        data: {
+            labels: areasRaw.map(a => a.area),
+            datasets: [{
+                label: 'Distribución RIASEC',
+                data: areasRaw.map(a => a.cantidad),
+                backgroundColor: 'rgba(79, 70, 229, 0.15)',
+                borderColor: '#4f46e5',
+                borderWidth: 2,
+                pointBackgroundColor: '#4f46e5',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#4f46e5',
+                pointRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, font: { size: 10 } },
+                    pointLabels: { font: { size: 12 } },
+                    grid: { color: 'rgba(0,0,0,0.08)' },
+                }
+            }
+        }
+    });
+})();
+{% endif %}
+{% endif %}
+
+{% if rol == 'directivo' %}
+// ── Directivo: donut de participación ────────────────────────────────── //
+(function() {
+    const completadas = {{ resumen.get('aplicaciones_completadas', 0) }};
+    const total = {{ resumen.get('total_aplicaciones', 0) }};
+    const pendientes = Math.max(0, total - completadas);
+    new Chart(document.getElementById('chartParticipacionDir'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Completadas', 'Pendientes'],
+            datasets: [{
+                data: [completadas, pendientes],
+                backgroundColor: ['#059669', '#e2e8f0'],
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16 } },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const val = ctx.parsed;
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                            return ` ${ctx.label}: ${val} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+})();
+
+// ── Directivo: línea de evolución vocacional ─────────────────────────── //
+{% if evolucion_agregada %}
+(function() {
+    const raw = {{ evolucion_agregada | tojson }};
+    const periodos = raw.map(p => p.periodo);
+    const areas = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+    const coloresRIASEC = ['#e74c3c','#3498db','#9b59b6','#27ae60','#f39c12','#1abc9c'];
+    const datasets = areas.map((area, i) => ({
+        label: area,
+        data: periodos.map(per => { const f = raw.find(p => p.periodo === per); return f ? (f.perfiles[area] || 0) : 0; }),
+        borderColor: coloresRIASEC[i],
+        backgroundColor: coloresRIASEC[i] + '18',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        borderWidth: 2.5,
+    }));
+    new Chart(document.getElementById('chartEvolucionDir'), {
+        type: 'line',
+        data: { labels: periodos, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 10 } } },
+            scales: {
+                x: { grid: { display: false }, title: { display: true, text: 'Período' } },
+                y: { beginAtZero: true, title: { display: true, text: 'Estudiantes' }, ticks: { precision: 0 } }
+            }
+        }
+    });
+})();
+{% endif %}
+
+// ── Directivo: perfiles por tipo de colegio (grouped bar) ────────────── //
+{% if perfiles_colegio %}
+(function() {
+    const raw = {{ perfiles_colegio | tojson }};
+    const tipos = [...new Set(raw.map(r => r.tipo_colegio))];
+    const allP  = [...new Set(raw.map(r => r.perfil))];
+    const coloresBar = ['#4f46e5','#059669','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+    const datasets = tipos.map((tipo, i) => ({
+        label: tipo,
+        data: allP.map(p => { const f = raw.find(r => r.tipo_colegio === tipo && r.perfil === p); return f ? f.cantidad : 0; }),
+        backgroundColor: coloresBar[i % coloresBar.length],
+        borderRadius: 4,
+    }));
+    new Chart(document.getElementById('chartPerfilesColegioDir'), {
+        type: 'bar',
+        data: { labels: allP, datasets },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+})();
+{% endif %}
+
+// ── Directivo: áreas de interés (barras horizontales) ────────────────── //
+{% if areas_interes %}
+(function() {
+    const areasRaw = {{ areas_interes | tojson }};
+    const sorted = [...areasRaw].sort((a, b) => b.cantidad - a.cantidad);
+    const coloresAreas = ['#4f46e5','#059669','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+    new Chart(document.getElementById('chartAreasDir'), {
+        type: 'bar',
+        data: {
+            labels: sorted.map(a => a.area),
+            datasets: [{
+                label: 'Estudiantes',
+                data: sorted.map(a => a.cantidad),
+                backgroundColor: coloresAreas,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+})();
+{% endif %}
+{% endif %}
+</script>
+{% endblock %}

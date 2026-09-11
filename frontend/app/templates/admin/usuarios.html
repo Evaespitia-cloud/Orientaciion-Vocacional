@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1>Gestión de Usuarios</h1>
+            <p>Administración de usuarios y roles del sistema</p>
+        </div>
+        {% if session.get('rol') == 'ti' %}
+        <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nuevo Usuario</button>
+        {% endif %}
+    </div>
+
+    <!-- Filtros -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <form method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div class="form-group" style="margin-bottom: 0; flex:1; min-width:180px;">
+                <label>Buscar por nombre o correo</label>
+                <input type="text" name="buscar" class="form-control" placeholder="Nombre o correo…"
+                       value="{{ buscar }}">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Filtrar por rol</label>
+                <select name="rol" class="form-control">
+                    <option value="">Todos los roles</option>
+                    <option value="estudiante" {% if rol_filtro == 'estudiante' %}selected{% endif %}>Estudiante</option>
+                    <option value="bienestar" {% if rol_filtro == 'bienestar' %}selected{% endif %}>Bienestar</option>
+                    <option value="directivo" {% if rol_filtro == 'directivo' %}selected{% endif %}>Directivo</option>
+                    <option value="ti" {% if rol_filtro == 'ti' %}selected{% endif %}>TI</option>
+                    <option value="investigador" {% if rol_filtro == 'investigador' %}selected{% endif %}>Investigador</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Buscar</button>
+            {% if buscar or rol_filtro %}
+            <a href="{{ url_for('admin.usuarios') }}" class="btn" style="border:1px solid var(--border); background:#fff;">Limpiar</a>
+            {% endif %}
+            <span style="color: var(--text-secondary); font-size: 0.85rem; align-self:center;">{{ total }} usuario{{ 's' if total != 1 }}</span>
+        </form>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Documento</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Registrado</th>
+                        {% if session.get('rol') == 'ti' %}
+                        <th>Acciones</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td><strong>{{ u.nombre_completo }}</strong></td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.documento or 'N/A' }}</td>
+                        <td><span class="badge badge-purple">{{ u.rol.nombre if u.rol else '—' }}</span></td>
+                        <td>
+                            <button
+                                class="btn-toggle-activo"
+                                data-id="{{ u.id }}"
+                                data-activo="{{ 'true' if u.activo else 'false' }}"
+                                title="Haz clic para {{ 'desactivar' if u.activo else 'activar' }}"
+                                style="
+                                    border: none; cursor: pointer; border-radius: 20px;
+                                    padding: 4px 14px; font-size: 0.78rem; font-weight: 600;
+                                    transition: background 0.2s, color 0.2s;
+                                    background: {{ '#d4edda' if u.activo else '#f8d7da' }};
+                                    color: {{ '#155724' if u.activo else '#721c24' }};
+                                ">
+                                {{ 'Activo' if u.activo else 'Inactivo' }}
+                            </button>
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-light);">
+                            {{ u.created_at[:10] if u.created_at else '—' }}
+                        </td>
+                        {% if session.get('rol') == 'ti' %}
+                        <td>
+                            <button class="btn btn-sm btn-secondary"
+                                    onclick="abrirModalEditar({{ u.id }})">Editar</button>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% if not usuarios %}
+                    <tr><td colspan="8" style="text-align: center; color: var(--text-light); padding: 2rem;">No se encontraron usuarios</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if paginas > 1 %}
+        <div class="pagination">
+            {% for p in range(1, paginas + 1) %}
+                {% if p == pagina_actual %}
+                    <span class="active">{{ p }}</span>
+                {% else %}
+                    <a href="?page={{ p }}{% if rol_filtro %}&rol={{ rol_filtro }}{% endif %}{% if buscar %}&buscar={{ buscar }}{% endif %}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Nuevo Usuario -->
+{% if session.get('rol') == 'ti' %}
+<div id="modalCrearUsuario" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:500px; width:94%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2 style="margin:0; font-size:1.2rem;">Nuevo Usuario</h2>
+            <button onclick="cerrarModalCrear()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.crear_usuario') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label>Nombres *</label>
+                <input type="text" name="nombres" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Apellidos *</label>
+                <input type="text" name="apellidos" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Correo electrónico *</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña * <small style="color:var(--text-secondary)">(mín. 8 chars, 1 mayúscula, 1 número)</small></label>
+                <input type="password" name="password" class="form-control" required minlength="8">
+            </div>
+            <div class="form-group">
+                <label>Rol *</label>
+                <select name="rol" class="form-control" required>
+                    {% for r in roles %}
+                    <option value="{{ r.nombre }}">{{ r.nombre | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <select name="activo" class="form-control">
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;">
+                <button type="button" onclick="cerrarModalCrear()" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Usuario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Editar Usuario -->
+<div id="modalEditarUsuario" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:500px; width:94%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2 style="margin:0; font-size:1.2rem;">Editar Usuario</h2>
+            <button onclick="cerrarModalEditar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+        </div>
+        <form id="formEditar" method="POST" action="">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label>Nombres *</label>
+                <input type="text" name="nombres" id="edit_nombres" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Apellidos *</label>
+                <input type="text" name="apellidos" id="edit_apellidos" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Correo electrónico *</label>
+                <input type="email" name="email" id="edit_email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Rol *</label>
+                <select name="rol" id="edit_rol" class="form-control" required>
+                    {% for r in roles %}
+                    <option value="{{ r.nombre }}">{{ r.nombre | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <select name="activo" id="edit_activo" class="form-control">
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;">
+                <button type="button" onclick="cerrarModalEditar()" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+var USUARIOS_DATA = {{ usuarios | tojson }};
+
+/* Toggle activo/inactivo */
+document.querySelectorAll('.btn-toggle-activo').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var id = this.dataset.id;
+        var activo = this.dataset.activo === 'true';
+        if (!confirm('¿Está seguro de ' + (activo ? 'desactivar' : 'activar') + ' este usuario?')) return;
+        var self = this;
+        self.disabled = true;
+        self.style.opacity = '0.6';
+        fetch('/admin/usuarios/' + id + '/toggle-activo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.activo !== undefined) {
+                var a = data.activo;
+                self.dataset.activo = a ? 'true' : 'false';
+                self.textContent   = a ? 'Activo' : 'Inactivo';
+                self.style.background = a ? '#d4edda' : '#f8d7da';
+                self.style.color      = a ? '#155724' : '#721c24';
+                self.title = 'Haz clic para ' + (a ? 'desactivar' : 'activar');
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo actualizar'));
+            }
+        })
+        .catch(function() { alert('Error de conexión al cambiar estado.'); })
+        .finally(function() {
+            self.disabled = false;
+            self.style.opacity = '1';
+        });
+    });
+});
+
+/* Modal Crear */
+function abrirModalCrear() {
+    var m = document.getElementById('modalCrearUsuario');
+    if (m) m.style.display = 'flex';
+}
+function cerrarModalCrear() {
+    var m = document.getElementById('modalCrearUsuario');
+    if (m) m.style.display = 'none';
+}
+var mc = document.getElementById('modalCrearUsuario');
+if (mc) mc.addEventListener('click', function(e) { if (e.target === this) cerrarModalCrear(); });
+
+/* Modal Editar */
+function abrirModalEditar(id) {
+    var u = USUARIOS_DATA.find(function(x) { return x.id === id; });
+    if (!u) return;
+    var form = document.getElementById('formEditar');
+    form.action = '/admin/usuarios/' + u.id + '/editar';
+    document.getElementById('edit_nombres').value   = u.nombres   || '';
+    document.getElementById('edit_apellidos').value = u.apellidos || '';
+    document.getElementById('edit_email').value     = u.email     || '';
+    document.getElementById('edit_rol').value       = (u.rol && u.rol.nombre) ? u.rol.nombre : '';
+    document.getElementById('edit_activo').value    = u.activo ? 'true' : 'false';
+    document.getElementById('modalEditarUsuario').style.display = 'flex';
+}
+function cerrarModalEditar() {
+    var m = document.getElementById('modalEditarUsuario');
+    if (m) m.style.display = 'none';
+}
+var me = document.getElementById('modalEditarUsuario');
+if (me) me.addEventListener('click', function(e) { if (e.target === this) cerrarModalEditar(); });
+</script>
+{% endblock %}

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% block title %}Fórmulas de Cálculo — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Fórmulas de Cálculo de Ítems</h1>
+        <p>Configura cómo se calculan los puntajes de las pruebas. La fórmula activa se usará para todos los nuevos procesamientos.</p>
+    </div>
+
+    <div class="grid-2">
+        <!-- Formulario para nueva fórmula -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Nueva Fórmula</h2>
+            </div>
+            <form method="POST" action="{{ url_for('admin.crear_formula') }}" id="formNueva">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="formato" id="formatoNuevo" value="json">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" required placeholder="ej: Holland Ponderado">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Descripción</label>
+                    <textarea name="descripcion" class="form-control" rows="2" placeholder="Descripción del método de cálculo..."></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Tipo</label>
+                    <select name="tipo" class="form-control">
+                        <option value="holland_riasec">Holland RIASEC</option>
+                        <option value="likert">Escala Likert</option>
+                        <option value="ponderado">Ponderado personalizado</option>
+                    </select>
+                </div>
+                <!-- Tabs selector de formato -->
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label style="font-weight:600; display:block; margin-bottom:0.5rem;">Formato de fórmula</label>
+                    <div style="display:flex; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden;">
+                        <button type="button" class="tab-btn tab-btn-nueva active" data-fmt="json"
+                                style="flex:1; padding:0.5rem; border:none; background:#0d9488; color:#fff; font-weight:600; cursor:pointer; font-size:0.82rem;">
+                            { } JSON
+                        </button>
+                        <button type="button" class="tab-btn tab-btn-nueva" data-fmt="codigo"
+                                style="flex:1; padding:0.5rem; border:none; border-left:1px solid #cbd5e1; background:#f8fafc; color:#374151; font-weight:600; cursor:pointer; font-size:0.82rem;">
+                            &lt;/&gt; Código
+                        </button>
+                        <button type="button" class="tab-btn tab-btn-nueva" data-fmt="csv"
+                                style="flex:1; padding:0.5rem; border:none; border-left:1px solid #cbd5e1; background:#f8fafc; color:#374151; font-weight:600; cursor:pointer; font-size:0.82rem;">
+                            ⊞ CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panel JSON -->
+                <div id="panelNuevo-json" class="panel-nueva" style="margin-bottom:1.25rem;">
+                    <textarea name="parametros" id="paramNuevo" class="form-control" rows="9"
+                              style="font-family:monospace; font-size:0.85rem;">{
+  "metodo": "suma_binaria",
+  "valor_positivo": 1,
+  "valor_negativo": 0,
+  "areas": ["Realista","Investigador","Artístico","Social","Emprendedor","Convencional"],
+  "criterio_dominante": "puntaje_maximo",
+  "umbral_afinidad": 0.6
+}</textarea>
+                    <small id="jsonErrorNuevo" style="color:#ef4444; display:none;">JSON inválido — revise la sintaxis.</small>
+                </div>
+
+                <!-- Panel Código -->
+                <div id="panelNuevo-codigo" class="panel-nueva" style="display:none; margin-bottom:1.25rem;">
+                    <textarea name="codigo_contenido" id="codigoNuevo" class="form-control" rows="9"
+                              style="font-family:monospace; font-size:0.85rem;"
+                              placeholder="# Expresión de cálculo por área RIASEC
+# Variables disponibles: respuestas (lista), items (lista), area (str)
+# Ejemplo:
+
+puntaje = sum(1 for r in respuestas if r == 'SI')
+total    = len(respuestas)
+score    = puntaje / total if total > 0 else 0"></textarea>
+                    <small style="color:var(--text-light);">Pseudocódigo Python. El motor de procesamiento interpretará este algoritmo.</small>
+                </div>
+
+                <!-- Panel CSV -->
+                <div id="panelNuevo-csv" class="panel-nueva" style="display:none; margin-bottom:1.25rem;">
+                    <textarea name="csv_contenido" id="csvNuevo" class="form-control" rows="9"
+                              style="font-family:monospace; font-size:0.85rem;"
+                              placeholder="area,metodo,umbral,peso
+Realista,suma_binaria,0.6,1.0
+Investigador,suma_binaria,0.6,1.0
+Artístico,suma_binaria,0.6,1.0
+Social,suma_binaria,0.6,1.0
+Emprendedor,suma_binaria,0.6,1.0
+Convencional,suma_binaria,0.6,1.0"></textarea>
+                    <small style="color:var(--text-light);">
+                        Columnas: <code>area, metodo, umbral, peso</code> — una fila por área RIASEC. Primera fila = encabezados.
+                    </small>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Crear Fórmula</button>
+            </form>
+        </div>
+
+        <!-- Guía de formatos -->
+        <div class="card card-accent" style="border-left-color:#0d9488;">
+            <div class="card-header">
+                <h2>Guía de Formatos</h2>
+            </div>
+            <div style="font-size:0.85rem; line-height:1.8; color:var(--text-secondary);">
+                <p style="font-weight:700; color:#0d9488;">{ } Formato JSON</p>
+                <p>Define todos los parámetros como objeto JSON:</p>
+                <ul style="margin-left:1.2rem;">
+                    <li><code>metodo</code>: <em>suma_binaria</em>, <em>likert</em>, <em>ponderado</em></li>
+                    <li><code>valor_positivo / valor_negativo</code>: puntos por respuesta</li>
+                    <li><code>umbral_afinidad</code>: porcentaje mínimo 0–1 (ej: 0.6)</li>
+                    <li><code>criterio_dominante</code>: <em>puntaje_maximo</em> | <em>promedio_ponderado</em></li>
+                    <li><code>areas</code>: lista de áreas RIASEC</li>
+                </ul>
+                <hr style="margin:0.75rem 0; border-color:#e2e8f0;">
+                <p style="font-weight:700; color:#7c3aed;">&lt;/&gt; Formato Código</p>
+                <p>Pseudocódigo Python con variables disponibles: <code>respuestas</code>, <code>items</code>, <code>area</code>.</p>
+                <hr style="margin:0.75rem 0; border-color:#e2e8f0;">
+                <p style="font-weight:700; color:#b45309;">⊞ Formato CSV</p>
+                <p>Tabla con columnas <code>area, metodo, umbral, peso</code> — una fila por área RIASEC.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de fórmulas -->
+    <div class="card" style="margin-top:1.5rem;">
+        <div class="card-header">
+            <h2>Fórmulas Configuradas</h2>
+        </div>
+        {% if formulas %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Formato</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in formulas %}
+                    {% set fmt = f.parametros._formato if f.parametros and '_formato' in f.parametros else 'json' %}
+                    <tr>
+                        <td>{{ f.id }}</td>
+                        <td><strong>{{ f.nombre }}</strong></td>
+                        <td><code>{{ f.tipo }}</code></td>
+                        <td>
+                            {% if fmt == 'codigo' %}
+                            <span class="badge" style="background:#ede9fe; color:#7c3aed;">&lt;/&gt; Código</span>
+                            {% elif fmt == 'csv' %}
+                            <span class="badge" style="background:#fef3c7; color:#b45309;">⊞ CSV</span>
+                            {% else %}
+                            <span class="badge" style="background:#ccfbf1; color:#0d9488;">{ } JSON</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.82rem; color:var(--text-secondary);">{{ f.descripcion or '—' }}</td>
+                        <td>
+                            {% if f.activa %}
+                            <span class="badge badge-success">✓ Activa</span>
+                            {% else %}
+                            <span class="badge" style="background:#e2e8f0;color:#64748b;">Inactiva</span>
+                            {% endif %}
+                        </td>
+                        <td style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                            {% if not f.activa %}
+                            <form method="POST" action="{{ url_for('admin.activar_formula', id=f.id) }}" style="display:inline;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-primary" style="font-size:0.78rem; padding:0.3rem 0.7rem;" title="Activar esta fórmula">Activar</button>
+                            </form>
+                            {% endif %}
+                            <button class="btn btn-secondary" style="font-size:0.78rem; padding:0.3rem 0.7rem;"
+                                    onclick="abrirEditor({{ f.id }})">
+                                Editar
+                            </button>
+                        </td>
+                    </tr>
+                    <!-- Mostrar parámetros actuales -->
+                    <tr>
+                        <td colspan="6" style="background:#f8fafc; padding:0.5rem 1rem;">
+                            {% if fmt == 'codigo' %}
+                            <pre style="font-size:0.78rem; color:#4a5568; margin:0; white-space:pre-wrap;">{{ f.parametros._codigo }}</pre>
+                            {% elif fmt == 'csv' %}
+                            <pre style="font-size:0.78rem; color:#4a5568; margin:0; white-space:pre-wrap;">{{ f.parametros._csv }}</pre>
+                            {% else %}
+                            <pre style="font-size:0.78rem; color:#4a5568; margin:0; white-space:pre-wrap;">{{ f.parametros | tojson(indent=2) }}</pre>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:2rem;">
+            <p>No hay fórmulas configuradas aún.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal edición de fórmula -->
+<div id="modalEditar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:620px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <h2 style="margin-bottom:1.25rem;">Editar Fórmula</h2>
+        <form method="POST" id="formEditar">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="formato" id="formatoEdit" value="json">
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Nombre</label>
+                <input type="text" name="nombre" id="editNombre" class="form-control" required>
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label style="font-weight:600; display:block; margin-bottom:0.3rem;">Descripción</label>
+                <textarea name="descripcion" id="editDescripcion" class="form-control" rows="2"></textarea>
+            </div>
+
+            <!-- Tabs edición -->
+            <div style="margin-bottom:1rem;">
+                <label style="font-weight:600; display:block; margin-bottom:0.5rem;">Formato de fórmula</label>
+                <div style="display:flex; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden;">
+                    <button type="button" class="tab-btn tab-btn-edit active" data-fmt="json"
+                            style="flex:1; padding:0.5rem; border:none; background:#0d9488; color:#fff; font-weight:600; cursor:pointer; font-size:0.82rem;">
+                        { } JSON
+                    </button>
+                    <button type="button" class="tab-btn tab-btn-edit" data-fmt="codigo"
+                            style="flex:1; padding:0.5rem; border:none; border-left:1px solid #cbd5e1; background:#f8fafc; color:#374151; font-weight:600; cursor:pointer; font-size:0.82rem;">
+                        &lt;/&gt; Código
+                    </button>
+                    <button type="button" class="tab-btn tab-btn-edit" data-fmt="csv"
+                            style="flex:1; padding:0.5rem; border:none; border-left:1px solid #cbd5e1; background:#f8fafc; color:#374151; font-weight:600; cursor:pointer; font-size:0.82rem;">
+                        ⊞ CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel JSON edit -->
+            <div id="panelEdit-json" class="panel-edit" style="margin-bottom:1.25rem;">
+                <textarea name="parametros" id="editParametros" class="form-control" rows="10"
+                          style="font-family:monospace; font-size:0.85rem;"></textarea>
+                <small id="jsonError" style="color:#ef4444; display:none;">JSON inválido — revise la sintaxis.</small>
+            </div>
+
+            <!-- Panel Código edit -->
+            <div id="panelEdit-codigo" class="panel-edit" style="display:none; margin-bottom:1.25rem;">
+                <textarea name="codigo_contenido" id="editCodigo" class="form-control" rows="10"
+                          style="font-family:monospace; font-size:0.85rem;"
+                          placeholder="# Expresión de cálculo..."></textarea>
+            </div>
+
+            <!-- Panel CSV edit -->
+            <div id="panelEdit-csv" class="panel-edit" style="display:none; margin-bottom:1.25rem;">
+                <textarea name="csv_contenido" id="editCsv" class="form-control" rows="10"
+                          style="font-family:monospace; font-size:0.85rem;"
+                          placeholder="area,metodo,umbral,peso&#10;Realista,suma_binaria,0.6,1.0"></textarea>
+                <small style="color:var(--text-light);">Primera fila = encabezados.</small>
+            </div>
+
+            <div style="display:flex; gap:0.75rem;">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var FORMULAS_DATA = {{ formulas | tojson }};
+
+/* ── Tab switching ───────────────────────────────────────── */
+function activarTab(grupo, fmt) {
+    document.querySelectorAll('.tab-btn-' + grupo).forEach(function(btn) {
+        var act = btn.dataset.fmt === fmt;
+        btn.style.background = act ? '#0d9488' : '#f8fafc';
+        btn.style.color      = act ? '#fff'    : '#374151';
+    });
+    document.querySelectorAll('.panel-' + grupo).forEach(function(p) {
+        p.style.display = 'none';
+    });
+    var suffix = (grupo === 'nueva') ? 'Nuevo' : 'Edit';
+    var panel = document.getElementById('panel' + suffix + '-' + fmt);
+    if (panel) panel.style.display = 'block';
+    var hidden = document.getElementById('formato' + suffix);
+    if (hidden) hidden.value = fmt;
+}
+
+document.querySelectorAll('.tab-btn-nueva').forEach(function(btn) {
+    btn.addEventListener('click', function() { activarTab('nueva', this.dataset.fmt); });
+});
+document.querySelectorAll('.tab-btn-edit').forEach(function(btn) {
+    btn.addEventListener('click', function() { activarTab('edit', this.dataset.fmt); });
+});
+
+/* ── Validar JSON en nueva fórmula ──────────────────────── */
+document.getElementById('formNueva').addEventListener('submit', function(e) {
+    if (document.getElementById('formatoNuevo').value !== 'json') return;
+    try {
+        JSON.parse(document.getElementById('paramNuevo').value);
+        document.getElementById('jsonErrorNuevo').style.display = 'none';
+    } catch(err) {
+        e.preventDefault();
+        document.getElementById('jsonErrorNuevo').style.display = 'block';
+    }
+});
+
+/* ── Abrir modal de edición ─────────────────────────────── */
+function abrirEditor(id) {
+    var f = FORMULAS_DATA.find(function(x){ return x.id === id; });
+    if (!f) return;
+    document.getElementById('editNombre').value = f.nombre || '';
+    document.getElementById('editDescripcion').value = f.descripcion || '';
+    document.getElementById('formEditar').action = '/admin/formulas-calculo/' + id + '/editar';
+    document.getElementById('jsonError').style.display = 'none';
+
+    var fmt = (f.parametros && f.parametros._formato) ? f.parametros._formato : 'json';
+    if (fmt === 'codigo') {
+        document.getElementById('editCodigo').value = (f.parametros && f.parametros._codigo) || '';
+    } else if (fmt === 'csv') {
+        document.getElementById('editCsv').value = (f.parametros && f.parametros._csv) || '';
+    } else {
+        var p = Object.assign({}, f.parametros || {});
+        delete p._formato;
+        document.getElementById('editParametros').value = JSON.stringify(p, null, 2);
+        fmt = 'json';
+    }
+    activarTab('edit', fmt);
+    document.getElementById('modalEditar').style.display = 'flex';
+}
+
+/* ── Validar JSON en edición ────────────────────────────── */
+document.getElementById('formEditar').addEventListener('submit', function(e) {
+    if (document.getElementById('formatoEdit').value !== 'json') return;
+    try {
+        JSON.parse(document.getElementById('editParametros').value);
+        document.getElementById('jsonError').style.display = 'none';
+    } catch(err) {
+        e.preventDefault();
+        document.getElementById('jsonError').style.display = 'block';
+    }
+});
+
+/* ── Cerrar modal ───────────────────────────────────────── */
+function cerrarModal() {
+    document.getElementById('modalEditar').style.display = 'none';
+}
+document.getElementById('modalEditar').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+});
+</script>
+{% endblock %}

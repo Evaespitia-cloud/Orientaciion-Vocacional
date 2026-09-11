@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Registro — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('main.index') }}" style="position:fixed; top:1.2rem; left:1.4rem; display:inline-flex; align-items:center; gap:0.45rem; color:#fff; background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.2); padding:0.45rem 1rem 0.45rem 0.75rem; border-radius:999px; font-size:0.85rem; font-weight:600; text-decoration:none; z-index:100; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    Inicio
+</a>
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 520px;">
+        <div class="auth-header">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="66" height="66" style="filter:drop-shadow(0 6px 18px rgba(79,70,229,0.45)); margin-bottom:1rem;">
+            <h1>Crear Cuenta</h1>
+            <p>Regístrate para acceder a la plataforma de orientación vocacional</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.registro') }}" id="registroForm" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="nombres">Nombres *</label>
+                    <input type="text" id="nombres" name="nombres" class="form-control" placeholder="Tus nombres" required>
+                </div>
+                <div class="form-group">
+                    <label for="apellidos">Apellidos *</label>
+                    <input type="text" id="apellidos" name="apellidos" class="form-control" placeholder="Tus apellidos" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="tipo_documento">Tipo documento</label>
+                    <select id="tipo_documento" name="tipo_documento" class="form-control">
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="TI">Tarjeta de Identidad</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                        <option value="PA">Pasaporte</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="documento">Número de documento</label>
+                    <input type="text" id="documento" name="documento" class="form-control" placeholder="1234567890" pattern="[0-9A-Za-z\-]+" title="Solo letras, números y guiones">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Correo electrónico *</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="correo@ejemplo.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div style="position:relative;">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Mínimo 10 caracteres, mayúscula, minúscula, número y símbolo" minlength="10" required oninput="checkPasswordStrength(this.value)">
+                    <button type="button" onclick="toggleVer('password','eyePass')" tabindex="-1" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;" aria-label="Mostrar contraseña">
+                        <svg id="eyePass" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <div id="passwordStrength" style="margin-top: 0.4rem; font-size: 0.8rem;"></div>
+                <div style="height: 4px; border-radius: 2px; background: #e5e7eb; margin-top: 4px;">
+                    <div id="strengthBar" style="height: 100%; border-radius: 2px; width: 0%; transition: width 0.3s, background 0.3s;"></div>
+                </div>
+                <ul style="font-size: 0.75rem; color: var(--text-secondary); margin: 0.4rem 0 0 1rem; padding: 0;">
+                    <li id="req-len">Al menos 10 caracteres</li>
+                    <li id="req-upper">Al menos 1 letra mayúscula</li>
+                    <li id="req-lower">Al menos 1 letra minúscula</li>
+                    <li id="req-num">Al menos 1 número</li>
+                    <li id="req-special">Al menos 1 símbolo</li>
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label for="password_confirm">Confirmar contraseña</label>
+                <div style="position:relative;">
+                    <input type="password" id="password_confirm" name="password_confirm" class="form-control" required placeholder="Repite tu contraseña" oninput="checkPasswordMatch()">
+                    <button type="button" onclick="toggleVer('password_confirm','eyeConf')" tabindex="-1" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;" aria-label="Mostrar contraseña">
+                        <svg id="eyeConf" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <div id="matchMsg" style="font-size: 0.8rem; margin-top: 0.3rem;"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="300 123 4567">
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="grado_id">Institución educativa</label>
+                    <input type="text" id="grado_id" name="grado_id" class="form-control" placeholder="Ej: Colegio San José">
+                </div>
+                <div class="form-group">
+                    <label for="semestre">Grado</label>
+                    <select id="semestre" name="semestre" class="form-control">
+                        <option value="">Seleccionar...</option>
+                        <option value="9">9° Grado</option>
+                        <option value="10">10° Grado</option>
+                        <option value="11">11° Grado</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg" id="btnRegistro">
+                Crear Cuenta
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                ¿Ya tienes cuenta?
+                <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Inicia sesión</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleVer(inputId, iconId) {
+    const inp = document.getElementById(inputId);
+    const ico = document.getElementById(iconId);
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+        inp.type = 'password';
+        ico.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+}
+
+
+function checkPasswordStrength(val) {
+    const lenOk = val.length >= 10;
+    const upperOk = /[A-Z]/.test(val);
+    const lowerOk = /[a-z]/.test(val);
+    const numOk = /[0-9]/.test(val);
+    const specialOk = /[^A-Za-z0-9]/.test(val);
+
+    document.getElementById('req-len').style.color = lenOk ? '#059669' : '#6b7280';
+    document.getElementById('req-upper').style.color = upperOk ? '#059669' : '#6b7280';
+    document.getElementById('req-lower').style.color = lowerOk ? '#059669' : '#6b7280';
+    document.getElementById('req-num').style.color = numOk ? '#059669' : '#6b7280';
+    document.getElementById('req-special').style.color = specialOk ? '#059669' : '#6b7280';
+
+    const score = [lenOk, upperOk, lowerOk, numOk, specialOk].filter(Boolean).length;
+    const bar = document.getElementById('strengthBar');
+    const msg = document.getElementById('passwordStrength');
+    const configs = [
+        {w:'20%', bg:'#ef4444', txt:'Muy débil', color:'#ef4444'},
+        {w:'40%', bg:'#ef4444', txt:'Débil', color:'#ef4444'},
+        {w:'60%', bg:'#f59e0b', txt:'Regular', color:'#f59e0b'},
+        {w:'80%', bg:'#3b82f6', txt:'Buena', color:'#3b82f6'},
+        {w:'100%', bg:'#059669', txt:'Fuerte ✓', color:'#059669'},
+    ];
+    if (val.length === 0) { bar.style.width = '0%'; msg.textContent = ''; return; }
+    const c = configs[score - 1] || configs[0];
+    bar.style.width = c.w; bar.style.background = c.bg;
+    msg.textContent = c.txt; msg.style.color = c.color;
+}
+
+function checkPasswordMatch() {
+    const p1 = document.getElementById('password').value;
+    const p2 = document.getElementById('password_confirm').value;
+    const msg = document.getElementById('matchMsg');
+    if (!p2) { msg.textContent = ''; return; }
+    if (p1 === p2) {
+        msg.textContent = '✓ Las contraseñas coinciden'; msg.style.color = '#059669';
+    } else {
+        msg.textContent = '✗ Las contraseñas no coinciden'; msg.style.color = '#ef4444';
+    }
+}
+
+document.getElementById('registroForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password');
+    const passwordConfirm = document.getElementById('password_confirm');
+
+    const p1 = password.value;
+    const p2 = passwordConfirm.value;
+
+    // Validar coincidencia
+    if (p1 !== p2) {
+        e.preventDefault();
+        document.getElementById('matchMsg').textContent = '✗ Las contraseñas no coinciden';
+        document.getElementById('matchMsg').style.color = '#ef4444';
+        passwordConfirm.focus();
+        return;
+    }
+
+    // Validar fortaleza mínima
+    if (p1.length < 10 || !/[A-Z]/.test(p1) || !/[a-z]/.test(p1) || !/[0-9]/.test(p1) || !/[^A-Za-z0-9]/.test(p1)) {
+        e.preventDefault();
+        document.getElementById('passwordStrength').textContent = 'La contraseña no cumple los requisitos mínimos';
+        document.getElementById('passwordStrength').style.color = '#ef4444';
+        password.focus();
+        return;
+    }
+
+    // Deshabilitar botón para evitar doble envío
+    const btn = document.getElementById('btnRegistro');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Creando cuenta...';
+    }
+});
+</script>
+{% endblock %}

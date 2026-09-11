@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Inicio — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>¡Hola, {{ session.get('nombre', 'Estudiante') }}!</h1>
+        <p>Bienvenido/a a la plataforma de orientación vocacional</p>
+    </div>
+
+    <!-- Alerta de datos demográficos pendientes -->
+    {% if not datos_demograficos_completos %}
+    <div class="card card-accent" style="border-left-color: #f59e0b; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="stat-icon" style="background: #fef3c7; color: #92400e;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: #92400e;">Completa tus datos demográficos</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Debes completar tu información personal antes de iniciar cualquier prueba vocacional.
+                </p>
+            </div>
+            <a href="{{ url_for('estudiante.datos_demograficos') }}" class="btn btn-primary btn-sm" style="margin-left: auto; white-space: nowrap;">
+                Completar datos →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pruebas Disponibles -->
+    {% if prueba_cards %}
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;">Pruebas Disponibles</h2>
+    <div class="stats-grid">
+        {% for card in prueba_cards %}
+        {% set config = card.config %}
+        {% set app    = card.app %}
+        {% set estado = card.estado %}
+        <div class="card card-accent">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <div class="stat-icon purple">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                </div>
+                <div style="flex:1;">
+                    <h3 style="font-size:1rem; font-weight:700; color:var(--primary); margin:0 0 0.2rem;">{{ config.nombre }}</h3>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">
+                        {{ config.descripcion or 'Prueba de orientación vocacional' }}
+                    </p>
+                    <p style="font-size:0.75rem; color:var(--text-light); margin-top:4px;">
+                        Disponible hasta: {{ config.fecha_fin[:10] if config.fecha_fin else 'Sin límite' }}
+                    </p>
+                </div>
+            </div>
+            <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+                {% if estado == 'completada' and app %}
+                <a href="{{ url_for('estudiante.resultados', aplicacion_id=app.id) }}" class="btn btn-primary btn-sm">Ver Resultados</a>
+                <a href="{{ url_for('estudiante.descargar_reporte', aplicacion_id=app.id) }}" class="btn btn-secondary btn-sm">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
+                </a>
+                {% elif estado == 'en_progreso' and app %}
+                <a href="{{ url_for('estudiante.cuestionario', config_id=config.id) }}" class="btn btn-primary btn-sm">Continuar →</a>
+                {% else %}
+                <a href="{{ url_for('estudiante.cuestionario', config_id=config.id) }}" class="btn btn-primary btn-sm">Comenzar Prueba →</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Mis Aplicaciones (máx 3 — una por prueba disponible) -->
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin: 2rem 0 1rem;">Mis Aplicaciones</h2>
+    {% if historial %}
+    <div class="stats-grid">
+        {% for app in historial %}
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <span style="font-weight:600; color:var(--primary);">Aplicación #{{ app.id }}</span>
+                {% if app.estado == 'completada' %}
+                    <span class="badge badge-success">Completada</span>
+                {% elif app.estado == 'en_progreso' %}
+                    <span class="badge badge-warning">En progreso</span>
+                {% else %}
+                    <span class="badge badge-danger">Abandonada</span>
+                {% endif %}
+            </div>
+            {% if app.estado == 'en_progreso' %}
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:{{ app.progreso }}%"></div>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px;">Progreso: {{ app.progreso }}%</p>
+            <a href="{{ url_for('estudiante.cuestionario', config_id=app.configuracion_id) }}" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">
+                Continuar →
+            </a>
+            {% elif app.estado == 'completada' %}
+            <p style="font-size:0.8rem; color:var(--text-secondary);">
+                Finalizada: {{ app.fecha_fin[:10] if app.fecha_fin else '' }}
+            </p>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                <a href="{{ url_for('estudiante.resultados', aplicacion_id=app.id) }}" class="btn btn-primary btn-sm">Ver Resultados</a>
+                <a href="{{ url_for('estudiante.descargar_reporte', aplicacion_id=app.id) }}" class="btn btn-secondary btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> PDF
+                </a>
+            </div>
+            {% elif app.estado == 'abandonada' %}
+            <p style="font-size:0.8rem; color:var(--text-secondary);">La prueba fue abandonada.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+            <h3>Aún no has iniciado ninguna prueba</h3>
+            <p>Cuando inicies una prueba, aparecerá aquí con su estado.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── Explorador de intereses PLN ──────────────────────────────────────── -->
+<div class="container" style="margin-top:0; padding-top:0;">
+  <div class="card" style="margin-top:1.5rem;">
+    <div style="display:flex; align-items:flex-start; gap:1rem; margin-bottom:1rem;">
+      <div class="stat-icon teal" style="flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h2 style="font-size:1rem; font-weight:700; color:var(--primary); margin:0 0 0.25rem;">¿Qué te gusta hacer?</h2>
+        <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+          Escribe tus actividades, intereses o pasatiempos favoritos separados por comas.
+          El sistema identifica en cuáles áreas vocacionales encajan.
+        </p>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+      <input id="plnInput" type="text"
+        placeholder="ej: programar, ayudar personas, tocar guitarra, resolver problemas…"
+        style="flex:1; min-width:220px; padding:0.6rem 0.85rem; border:1px solid var(--border); border-radius:8px; font-size:0.9rem; outline:none;"
+        onkeydown="if(event.key==='Enter') analizarIntereses()">
+      <button class="btn btn-primary" onclick="analizarIntereses()" id="btnPln">
+        Analizar →
+      </button>
+    </div>
+
+    <div id="plnResultado" style="display:none; margin-top:1.25rem;"></div>
+  </div>
+</div>
+
+<script>
+const COLORES_RIASEC = {
+  Realista: '#ef4444', Investigador: '#3b82f6', 'Artístico': '#a855f7',
+  Social: '#22c55e', Emprendedor: '#f59e0b', Convencional: '#6b7280'
+};
+const DESC_RIASEC = {
+  Realista:     'Actividades prácticas, técnicas y al aire libre',
+  Investigador: 'Ciencia, análisis, investigación y tecnología',
+  'Artístico':  'Arte, creatividad, música y expresión',
+  Social:       'Ayudar, enseñar y trabajar con personas',
+  Emprendedor:  'Negocios, liderazgo y persuasión',
+  Convencional: 'Organización, datos y procedimientos',
+};
+
+async function analizarIntereses() {
+  const texto = document.getElementById('plnInput').value.trim();
+  if (!texto) return;
+
+  const btn = document.getElementById('btnPln');
+  btn.disabled = true;
+  btn.textContent = 'Analizando…';
+
+  let data, ok;
+  try {
+    const res = await fetch('/estudiante/api/pln/analizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    });
+    data = await res.json();
+    ok = res.ok;
+  } catch {
+    ok = false;
+    data = { error: 'No se pudo conectar con el servidor.' };
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Analizar →';
+
+  const el = document.getElementById('plnResultado');
+  if (!ok || data.error) {
+    el.innerHTML = `<p style="color:#ef4444;font-size:0.85rem;">${data.error || 'Error al analizar.'}</p>`;
+    el.style.display = 'block';
+    return;
+  }
+
+  const a = data.analisis;
+  const sorted = Object.entries(a.scores_riasec).sort((x, y) => y[1] - x[1]);
+  const domArea = a.area_dominante;
+  const sentColor = a.sentimiento === 'positivo' ? '#22c55e' : a.sentimiento === 'negativo' ? '#ef4444' : '#6b7280';
+  const sentLabel = a.sentimiento === 'positivo' ? '😊 Positivo' : a.sentimiento === 'negativo' ? '😕 Negativo' : '😐 Neutro';
+
+  const barras = sorted.map(([area, val]) => {
+    const color = COLORES_RIASEC[area] || '#6b7280';
+    const esTop = area === domArea;
+    return `
+      <div style="margin:6px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+          <span style="font-size:0.82rem; font-weight:${esTop ? '700' : '400'}; color:${esTop ? 'var(--primary)' : 'var(--text-secondary)'};">
+            ${esTop ? '★ ' : ''}${area}
+            <span style="font-size:0.73rem; font-weight:400; color:var(--text-light);">&nbsp;— ${DESC_RIASEC[area] || ''}</span>
+          </span>
+          <span style="font-size:0.8rem; font-weight:600; color:${color};">${val.toFixed(0)}%</span>
+        </div>
+        <div style="background:var(--border); border-radius:6px; height:8px;">
+          <div style="width:${Math.min(val,100)}%; height:100%; background:${color}; border-radius:6px; transition:width .5s;"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const keywords = domArea && a.palabras_clave?.[domArea]?.length
+    ? `<div style="margin-top:0.75rem; font-size:0.78rem; color:var(--text-secondary);">
+        <strong>Palabras que apuntan a ${domArea}:</strong>
+        ${a.palabras_clave[domArea].slice(0,10).map(p =>
+          `<span style="background:var(--bg-secondary); border:1px solid var(--border); padding:0.1rem 0.45rem; border-radius:10px; margin:2px; display:inline-block;">${p}</span>`
+        ).join('')}
+       </div>` : '';
+
+  el.innerHTML = `
+    <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center; margin-bottom:0.85rem;">
+      ${domArea
+        ? `<span style="background:${COLORES_RIASEC[domArea]}20; color:${COLORES_RIASEC[domArea]}; border:1px solid ${COLORES_RIASEC[domArea]}40; padding:0.25rem 0.85rem; border-radius:20px; font-size:0.85rem; font-weight:700;">
+            ★ ${domArea} — área dominante
+           </span>`
+        : `<span style="color:var(--text-secondary); font-size:0.85rem;">Sin coincidencias claras — intenta con más detalle.</span>`}
+      <span style="font-size:0.8rem; color:${sentColor};">${sentLabel}</span>
+    </div>
+    ${barras}
+    ${keywords}
+    <p style="font-size:0.75rem; color:var(--text-light); margin-top:0.75rem; margin-bottom:0;">
+      Este análisis es solo una orientación preliminar basada en las palabras que usaste. El cuestionario completo da resultados más precisos.
+    </p>`;
+  el.style.display = 'block';
+}
+</script>
+{% endblock %}

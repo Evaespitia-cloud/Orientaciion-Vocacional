@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Evolución Vocacional — Estudiantes{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Evolución Vocacional de Estudiantes</h1>
+        <p>Visualiza el progreso e historial vocacional de cada estudiante registrado</p>
+    </div>
+
+    <div class="card">
+        <!-- Búsqueda -->
+        <form method="GET" action="{{ url_for('admin.evolucion_estudiantes') }}"
+              style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1.25rem;">
+            <div style="flex:1; min-width:220px;">
+                <label style="font-size:0.78rem; color:var(--text-secondary); display:block; margin-bottom:4px;">Nombre o email</label>
+                <input type="text" name="buscar" value="{{ buscar }}"
+                       placeholder="Buscar estudiante…"
+                       style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:8px; font-size:0.875rem;">
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+                <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                {% if buscar %}
+                <a href="{{ url_for('admin.evolucion_estudiantes') }}" class="btn btn-secondary btn-sm">Limpiar</a>
+                {% endif %}
+            </div>
+        </form>
+
+        <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+            {{ total }} estudiante{{ 's' if total != 1 else '' }}
+            {% if buscar %} encontrado{{ 's' if total != 1 else '' }} para "<strong>{{ buscar }}</strong>"{% endif %}
+        </p>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estudiante</th>
+                        <th>Email</th>
+                        <th>Grado</th>
+                        <th style="text-align:center;">Pruebas<br>completadas</th>
+                        <th>Última prueba</th>
+                        <th>Último perfil</th>
+                        <th>Evolución</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for est in estudiantes %}
+                    <tr>
+                        <td><strong>{{ est.nombre_completo }}</strong></td>
+                        <td style="font-size:0.85rem;">{{ est.email }}</td>
+                        <td>{{ est.grado_nombre or '—' }}</td>
+                        <td style="text-align:center;">
+                            {% if est.total_pruebas == 0 %}
+                                <span class="badge badge-danger">Sin pruebas</span>
+                            {% elif est.total_pruebas == 1 %}
+                                <span class="badge badge-warning">1 prueba</span>
+                            {% else %}
+                                <span class="badge badge-success">{{ est.total_pruebas }} pruebas</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.85rem;">{{ est.ultima_fecha or '—' }}</td>
+                        <td>
+                            {% if est.ultimo_perfil %}
+                                <span class="badge badge-purple">{{ est.ultimo_perfil }}</span>
+                            {% else %}
+                                <span style="color:var(--text-light); font-size:0.82rem;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if est.total_pruebas > 0 %}
+                                <button class="btn btn-sm btn-primary"
+                                        onclick="verEvolucion({{ est.id }}, '{{ est.nombre_completo }}')">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                                    Ver evolución
+                                </button>
+                            {% else %}
+                                <span class="btn btn-sm btn-secondary" style="opacity:0.45; cursor:default;" title="Este estudiante no ha completado ninguna prueba">
+                                    Sin datos
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not estudiantes %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; color:var(--text-light); padding:2rem;">
+                            {% if buscar %}
+                                No se encontraron estudiantes que coincidan con "{{ buscar }}"
+                            {% else %}
+                                No hay estudiantes registrados
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if paginas > 1 %}
+        <div class="pagination">
+            {% for p in range(1, paginas + 1) %}
+                {% if p == pagina_actual %}
+                    <span class="active">{{ p }}</span>
+                {% else %}
+                    <a href="?page={{ p }}{% if buscar %}&buscar={{ buscar }}{% endif %}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Modal de evolución vocacional ─────────────────────────────────────── -->
+<div id="modalEvolucion" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:820px; width:96%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2 id="tituloEvolucion" style="margin:0; font-size:1.15rem; color:var(--primary);">Evolución vocacional</h2>
+            <button onclick="cerrarEvolucion()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b; line-height:1;">✕</button>
+        </div>
+
+        <!-- Estado: cargando -->
+        <div id="evolucionCargando" style="text-align:center; padding:2.5rem; color:#64748b;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4; display:block; margin:0 auto 0.75rem;"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+            <p style="margin:0;">Cargando datos…</p>
+        </div>
+
+        <!-- Estado: con datos -->
+        <div id="evolucionContenido" style="display:none;">
+            <!-- Gráfica -->
+            <canvas id="chartEvolucionEstudiante" style="max-height:300px; margin-bottom:0.5rem;"></canvas>
+
+            <!-- Leyenda de interpretación (1 prueba) -->
+            <div id="avisoUnaProeba" style="display:none; background:#fef9c3; border:1px solid #fde68a; border-radius:8px; padding:0.65rem 1rem; margin:0.75rem 0; font-size:0.83rem; color:#92400e;">
+                <strong>ℹ Solo una prueba registrada.</strong> Se necesitan al menos dos para ver la línea de evolución. El gráfico muestra el resultado actual.
+            </div>
+
+            <!-- Tabla de historial -->
+            <div id="tablaEvolucion" style="margin-top:1.25rem;"></div>
+
+            <!-- Predicción (si hay ≥2 pruebas) -->
+            <div id="prediccionPanel" style="display:none; margin-top:1.25rem; background:linear-gradient(135deg,#ede9fe,#dbeafe); border-radius:10px; padding:1rem 1.25rem;">
+                <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:#4338ca;">Tendencia predicha</h4>
+                <p id="prediccionTexto" style="margin:0; font-size:0.9rem;"></p>
+            </div>
+        </div>
+
+        <!-- Estado: sin datos -->
+        <div id="evolucionSinDatos" style="display:none; text-align:center; padding:2.5rem; color:#64748b;">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4; display:block; margin:0 auto 0.75rem;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p style="margin:0; font-weight:600;">Sin pruebas completadas</p>
+            <p style="margin:0.4rem 0 0; font-size:0.85rem;">Este estudiante aún no ha realizado ninguna prueba.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let chartEvol = null;
+const RIASEC_COLORES = {
+    'Realista':'#e74c3c', 'Investigador':'#3498db', 'Artístico':'#9b59b6',
+    'Social':'#27ae60', 'Emprendedor':'#f39c12', 'Convencional':'#1abc9c'
+};
+
+function verEvolucion(usuarioId, nombre) {
+    document.getElementById('tituloEvolucion').textContent = 'Evolución vocacional — ' + nombre;
+    document.getElementById('evolucionCargando').style.display = 'block';
+    document.getElementById('evolucionContenido').style.display = 'none';
+    document.getElementById('evolucionSinDatos').style.display = 'none';
+    document.getElementById('avisoUnaProeba').style.display = 'none';
+    document.getElementById('prediccionPanel').style.display = 'none';
+    document.getElementById('modalEvolucion').style.display = 'flex';
+
+    fetch(`/admin/api/evolucion-estudiante/${usuarioId}`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('evolucionCargando').style.display = 'none';
+            const historial = (data.evolucion && data.evolucion.historial) ? data.evolucion.historial : [];
+
+            if (historial.length === 0) {
+                document.getElementById('evolucionSinDatos').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('evolucionContenido').style.display = 'block';
+
+            // Aviso si solo hay 1 prueba
+            if (historial.length === 1) {
+                document.getElementById('avisoUnaProeba').style.display = 'block';
+            }
+
+            // Gráfica RIASEC
+            const areas = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+            const datasets = areas.map(area => ({
+                label: area,
+                data: historial.map(h => {
+                    const v = h.puntajes ? Number(h.puntajes[area] || 0) : 0;
+                    return Math.max(0, Math.min(100, Math.round(v)));
+                }),
+                borderColor: RIASEC_COLORES[area],
+                backgroundColor: RIASEC_COLORES[area] + '22',
+                tension: 0.4, fill: false, pointRadius: 7, pointHoverRadius: 9, borderWidth: 2,
+            }));
+            if (chartEvol) chartEvol.destroy();
+            chartEvol = new Chart(document.getElementById('chartEvolucionEstudiante'), {
+                type: 'line',
+                data: { labels: historial.map(h => h.fecha), datasets },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11 }, padding: 10, usePointStyle: true }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterTitle: items => {
+                                    const h = historial[items[0].dataIndex];
+                                    return 'Perfil: ' + h.perfil_principal +
+                                           (h.perfil_secundario ? ' / ' + h.perfil_secundario : '') +
+                                           (h.codigo_riasec ? '  (' + h.codigo_riasec + ')' : '');
+                                },
+                                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, title: { display: true, text: 'Fecha de aplicación', font: { size: 11 } } },
+                        y: {
+                            beginAtZero: true, max: 100,
+                            title: { display: true, text: 'Puntaje normalizado', font: { size: 11 } },
+                            ticks: { callback: v => v + '%', stepSize: 10 }
+                        }
+                    }
+                }
+            });
+
+            // Tabla de historial
+            let html = `<table>
+                <thead><tr>
+                    <th>Fecha</th>
+                    <th>Perfil principal</th>
+                    <th>Secundario</th>
+                    <th>Código RIASEC</th>
+                </tr></thead><tbody>`;
+            historial.forEach(h => {
+                html += `<tr>
+                    <td>${h.fecha}</td>
+                    <td><strong>${h.perfil_principal}</strong></td>
+                    <td>${h.perfil_secundario || '—'}</td>
+                    <td><code>${h.codigo_riasec || '—'}</code></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('tablaEvolucion').innerHTML = html;
+
+            // Panel de predicción
+            const pred = data.prediccion;
+            if (pred && pred.tiene_prediccion && pred.perfil_predicho) {
+                document.getElementById('prediccionPanel').style.display = 'block';
+                document.getElementById('prediccionTexto').textContent =
+                    `Basado en ${pred.basado_en} prueba(s), la tendencia apunta hacia un perfil ` +
+                    `${pred.perfil_predicho}.`;
+            }
+        })
+        .catch(() => {
+            document.getElementById('evolucionCargando').style.display = 'none';
+            document.getElementById('evolucionSinDatos').style.display = 'block';
+        });
+}
+
+function cerrarEvolucion() {
+    document.getElementById('modalEvolucion').style.display = 'none';
+    if (chartEvol) { chartEvol.destroy(); chartEvol = null; }
+}
+
+document.getElementById('modalEvolucion').addEventListener('click', function(e) {
+    if (e.target === this) cerrarEvolucion();
+});
+</script>
+{% endblock %}

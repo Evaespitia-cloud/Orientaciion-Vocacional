@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Estadísticas Agregadas{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1100px;">
+    <div class="page-header">
+        <h1>Estadísticas Agregadas</h1>
+        <p>Visualización de datos agregados según el rol: promedios, medianas y desviaciones estándar por grado y área (investigador), o mapa de calor por área y grado (directivo).</p>
+    </div>
+    <div id="estadisticas-agregadas-cargando" style="text-align:center; padding:2.5rem; color:#64748b;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4; display:block; margin:0 auto 0.75rem;"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+        <p style="margin:0;">Cargando datos…</p>
+    </div>
+    <div id="estadisticas-agregadas-contenido" style="display:none;"></div>
+    <div id="evolucion-vocacional-inst" style="display:none; margin-top:2.5rem;">
+        <h3>Evolución Vocacional Institucional <span style="font-size:1rem;font-weight:400;color:#64748b;">Tendencia de perfiles Holland mes a mes</span></h3>
+        <canvas id="evolucionVocacionalChart" height="120"></canvas>
+        <div id="evolucion-vocacional-alerta" style="margin-top:1.5rem;"></div>
+    </div>
+</div>
+<script>
+function renderTablaEstadisticas(datos) {
+    let html = `<table class=\"table-agregada\"><thead><tr><th>Grado</th><th>Área</th><th>Promedio</th><th>Mediana</th><th>Desviación</th><th>N</th></tr></thead><tbody>`;
+    for (const row of datos) {
+        html += `<tr><td>${row.grado}</td><td>${row.area}</td><td>${row.promedio}</td><td>${row.mediana}</td><td>${row.desviacion}</td><td>${row.n}</td></tr>`;
+    }
+    html += `</tbody></table>`;
+    return html;
+}
+
+function renderHeatmap(matriz, grados, areas) {
+    let html = `<div style='overflow-x:auto;'><table class=\"table-heatmap\"><thead><tr><th>Grado</th>`;
+    for (const area of areas) html += `<th>${area}</th>`;
+    html += `</tr></thead><tbody>`;
+    for (const grado of grados) {
+        html += `<tr><td>${grado}</td>`;
+        for (const area of areas) {
+            const val = matriz[grado] && matriz[grado][area] !== undefined ? matriz[grado][area] : '';
+            html += `<td style=\"background: linear-gradient(to top, #a5d6a7 ${(val/100)*100}%, #fff 0%);\">${val !== '' ? val : '-'}</td>`;
+        }
+        html += `</tr>`;
+    }
+    html += `</tbody></table></div>`;
+    return html;
+}
+
+
+fetch('/estadisticas/evolucion-agregada')
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('estadisticas-agregadas-cargando').style.display = 'none';
+        const cont = document.getElementById('estadisticas-agregadas-contenido');
+        const evolDiv = document.getElementById('evolucion-vocacional-inst');
+        const alerta = document.getElementById('evolucion-vocacional-alerta');
+        if (data.mensaje && data.mensaje.toLowerCase().includes('denegado')) {
+            cont.innerHTML = '<div class="alert alert-danger" style="margin-top:2rem;">Acceso denegado</div>';
+        } else if (data.estadisticas) {
+            cont.innerHTML = '<h3>Promedios, Mediana y Desviación por Grado y Área</h3>' + renderTablaEstadisticas(data.estadisticas);
+        } else if (data.heatmap) {
+            cont.innerHTML = '<h3>Mapa de calor de desempeño por área y grado</h3>' + renderHeatmap(data.heatmap, data.grados, data.areas);
+        }
+        if (data.evolucion) {
+            evolDiv.style.display = '';
+            renderEvolucionVocacional(data.evolucion);
+        } else if (evolDiv) {
+            evolDiv.style.display = '';
+            alerta.innerHTML = '<div style="text-align:center;padding:2.5rem 0;color:#64748b;">Se necesitan pruebas completadas para mostrar la evolución vocacional.</div>';
+        }
+        if (!data.estadisticas && !data.heatmap && !data.evolucion) {
+            cont.innerHTML = '<p>No hay datos disponibles.</p>';
+        }
+    })
+    .catch(() => {
+        document.getElementById('estadisticas-agregadas-cargando').style.display = 'none';
+        document.getElementById('estadisticas-agregadas-contenido').innerHTML = '<p>Error al cargar los datos.</p>';
+    });
+
+function renderEvolucionVocacional(evolucion) {
+    const ctx = document.getElementById('evolucionVocacionalChart').getContext('2d');
+    const perfiles = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'];
+    const colores = {
+        'Realista': '#42a5f5',
+        'Investigador': '#ab47bc',
+        'Artístico': '#7e57c2',
+        'Social': '#26a69a',
+        'Emprendedor': '#ffa726',
+        'Convencional': '#789262'
+    };
+    const labels = evolucion.map(e => e.periodo);
+    const datasets = perfiles.map(perfil => ({
+        label: perfil,
+        data: evolucion.map(e => e.perfiles[perfil] || 0),
+        borderColor: colores[perfil],
+        backgroundColor: colores[perfil],
+        fill: false,
+        tension: 0.2
+    }));
+    if (window.evolChart) window.evolChart.destroy();
+    window.evolChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                title: { display: false },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            interaction: { mode: 'nearest', axis: 'x', intersect: false },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'N estudiantes' } },
+                x: { title: { display: true, text: 'Periodo (Año-Mes)' } }
+            }
+        }
+    });
+    document.getElementById('evolucion-vocacional-alerta').innerHTML = '';
+}
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Exportar Datos{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+    <div class="page-header">
+        <h1>Exportación de Datos</h1>
+        <p>Descargar datos en formato CSV para análisis externo</p>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="card" style="text-align: center;">
+            <div style="margin-bottom: 1rem;"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+            <h3 class="card-title">Resultados Anonimizados</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                Datos sin información personal identificable. Ideal para análisis estadístico e investigación.
+            </p>
+            <a href="{{ url_for('admin.exportar_csv_resultados', anonimizado='true') }}" class="btn btn-primary btn-full">
+                Descargar CSV
+            </a>
+        </div>
+
+        {% if session.get('rol') in ('bienestar', 'ti') %}
+        <div class="card" style="text-align: center;">
+            <div style="margin-bottom: 1rem;"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+            <h3 class="card-title">Resultados Identificados</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                Incluye nombres y documentos. Solo para personal autorizado (bienestar / TI).
+            </p>
+            <button class="btn btn-danger btn-full" onclick="confirmarDescargaIdentificada()">
+                Descargar CSV (Sensible)
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem; text-align: center;">
+        <div style="margin-bottom: 1rem;"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <h3 class="card-title">Estadísticas Agregadas</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+            Resumen estadístico por institución y distribución de perfiles.
+        </p>
+        <a href="{{ url_for('admin.exportar_csv_estadisticas') }}" class="btn btn-success">
+            Descargar Estadísticas CSV
+        </a>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem; text-align: center;">
+        <div style="margin-bottom: 1rem;"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <h3 class="card-title">Base Exportable Completa (Excel)</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+            Identificación, aplicación, respuestas por ítem (trazabilidad), intereses,
+            competencias y perfil integrado — según la estructura mínima de la simulación.
+        </p>
+        <a href="{{ url_for('admin.exportar_excel_completo') }}" class="btn btn-primary">
+            Descargar Excel (.xlsx)
+        </a>
+    </div>
+
+    <!-- Evolución Vocacional Institucional -->
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+            <h2>Evolución Vocacional Institucional</h2>
+            <p style="color:var(--text-secondary); font-size:0.85rem; margin:0;">Tendencia de perfiles Holland mes a mes</p>
+        </div>
+        {% if evolucion_agregada %}
+        <div class="chart-container" style="height:300px; padding:1rem;">
+            <canvas id="chartEvolucionExportar"></canvas>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:2rem; color:var(--text-secondary);">
+            <p>No hay datos de evolución aún. Complete algunas pruebas primero.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="alert alert-info" style="margin-top: 1.5rem;">
+        Todas las exportaciones quedan registradas en el log de auditoría del sistema. El uso de datos identificados está sujeto a la Ley 1581 de 2012.
+    </div>
+</div>
+
+<!-- Modal: Confirmar descarga identificada -->
+{% if session.get('rol') in ('bienestar', 'ti') %}
+<div id="modalConfirmarDescarga" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:460px; width:94%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <div style="margin-bottom:1rem; text-align:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h2 style="margin:0 0 0.75rem; font-size:1.1rem; text-align:center;">Descarga de Datos Sensibles</h2>
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;">
+            El archivo contiene <strong>datos personales identificables</strong> (nombre completo, correo electrónico y número de documento). Su descarga y uso están regulados por la <strong>Ley 1581 de 2012</strong> de protección de datos. ¿Confirma que tiene autorización para acceder a esta información?
+        </p>
+        <div style="display:flex; gap:1rem; justify-content:flex-end;">
+            <button onclick="document.getElementById('modalConfirmarDescarga').style.display='none'"
+                    class="btn btn-secondary">Cancelar</button>
+            <a id="btnDescargarIdentificado"
+               href="{{ url_for('admin.exportar_csv_resultados', anonimizado='false') }}"
+               class="btn btn-danger"
+               onclick="document.getElementById('modalConfirmarDescarga').style.display='none'">
+                Confirmar y Descargar
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if session.get('rol') in ('bienestar', 'ti') %}
+<script>
+function confirmarDescargaIdentificada() {
+    document.getElementById('modalConfirmarDescarga').style.display = 'flex';
+}
+document.getElementById('modalConfirmarDescarga').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+});
+</script>
+{% endif %}
+{% if evolucion_agregada %}
+<script>
+(function() {
+    const raw = {{ evolucion_agregada | tojson }};
+    const periodos = raw.map(p => p.periodo);
+    const areas = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'];
+    const coloresRIASEC = ['#e74c3c','#3498db','#9b59b6','#27ae60','#f39c12','#1abc9c'];
+    const datasets = areas.map((area, i) => ({
+        label: area,
+        data: periodos.map(per => {
+            const found = raw.find(p => p.periodo === per);
+            return found ? (found.perfiles[area] || 0) : 0;
+        }),
+        borderColor: coloresRIASEC[i],
+        backgroundColor: coloresRIASEC[i] + '22',
+        tension: 0.4, fill: false, pointRadius: 5, borderWidth: 2,
+    }));
+    new Chart(document.getElementById('chartEvolucionExportar'), {
+        type: 'line',
+        data: { labels: periodos, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 10 } }
+            },
+            scales: {
+                x: { grid: { display: false }, title: { display: true, text: 'Período (Año-Mes)' } },
+                y: { beginAtZero: true, title: { display: true, text: 'N.º estudiantes' }, ticks: { precision: 0 } }
+            }
+        }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

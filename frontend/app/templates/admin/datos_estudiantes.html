@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Datos de Estudiantes — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1>Datos Demográficos de Estudiantes</h1>
+            <p>Consulta la información demográfica registrada por cada estudiante.</p>
+        </div>
+        <a href="{{ url_for('admin.campos_demograficos') }}" class="btn btn-secondary">Configurar campos</a>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <form method="GET" action="{{ url_for('admin.datos_estudiantes') }}" style="display: flex; gap: 0.75rem; align-items: center;">
+            <input type="text"
+                   name="buscar"
+                   class="form-control"
+                   placeholder="Buscar por nombre, email o código..."
+                   value="{{ buscar }}"
+                   style="flex: 1;">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            {% if buscar %}
+            <a href="{{ url_for('admin.datos_estudiantes') }}" class="btn btn-secondary">Limpiar</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Resumen -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span style="color: var(--text-secondary); font-size: 0.9rem;">
+            {{ total }} estudiante{{ 's' if total != 1 else '' }} encontrado{{ 's' if total != 1 else '' }}
+        </span>
+    </div>
+
+    <!-- Tabla de datos -->
+    <div class="card">
+        {% if estudiantes %}
+        <div class="table-container" style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Documento</th>
+                        {% for campo in campos %}
+                        <th>{{ campo.etiqueta }}</th>
+                        {% endfor %}
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for est in estudiantes %}
+                    <tr>
+                        <td><strong>{{ est.nombre_completo }}</strong></td>
+                        <td style="font-size: 0.85rem;">{{ est.email }}</td>
+                        <td><code>{{ est.documento or '—' }}</code></td>
+                        {% for campo in campos %}
+                        <td>
+                            {% set valor = est.datos.get(campo.id|string) or est.datos.get(campo.id) %}
+                            {% if valor %}
+                                {{ valor }}
+                            {% else %}
+                                <span style="color: var(--text-light);">—</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td>
+                            {% set campos_obligatorios = campos|selectattr('obligatorio')|list %}
+                            {% set datos_count = est.datos|length %}
+                            {% if datos_count >= campos_obligatorios|length %}
+                                <span class="badge badge-success">Completo</span>
+                            {% elif datos_count > 0 %}
+                                <span class="badge badge-warning">Parcial</span>
+                            {% else %}
+                                <span class="badge badge-danger">Pendiente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if paginas > 1 %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; flex-wrap: wrap;">
+            {% if pagina_actual > 1 %}
+            <a href="{{ url_for('admin.datos_estudiantes', page=pagina_actual-1, buscar=buscar) }}" class="btn btn-secondary btn-sm">← Anterior</a>
+            {% endif %}
+
+            {% for p in range(1, paginas + 1) %}
+                {% if p == pagina_actual %}
+                <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ p }}</span>
+                {% elif p <= 3 or p > paginas - 2 or (p >= pagina_actual - 1 and p <= pagina_actual + 1) %}
+                <a href="{{ url_for('admin.datos_estudiantes', page=p, buscar=buscar) }}" class="btn btn-secondary btn-sm">{{ p }}</a>
+                {% elif p == 4 or p == paginas - 2 %}
+                <span style="padding: 0.3rem; color: var(--text-light);">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagina_actual < paginas %}
+            <a href="{{ url_for('admin.datos_estudiantes', page=pagina_actual+1, buscar=buscar) }}" class="btn btn-secondary btn-sm">Siguiente →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+            <h3>No hay datos registrados</h3>
+            <p>
+                {% if buscar %}
+                No se encontraron estudiantes que coincidan con "{{ buscar }}".
+                {% else %}
+                Aún ningún estudiante ha completado sus datos demográficos.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

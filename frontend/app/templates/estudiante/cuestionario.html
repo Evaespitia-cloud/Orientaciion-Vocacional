@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block title %}Cuestionario — Orientación Vocacional{% endblock %}
+
+{% block content %}
+<div class="container questionnaire">
+    <div class="progress-header">
+        <div class="progress-info">
+            <span>{{ instrumento.nombre or 'Cuestionario de Orientación Vocacional' }}</span>
+            <span id="progressText">0% completado</span>
+            <span class="saving-indicator" id="savingIndicator">Guardando...</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <form id="cuestionarioForm">
+        {% set ns = namespace(counter=0) %}
+        {% for dimension in instrumento.get('dimensiones', []) %}
+        <div class="question-section">
+            <h2>{{ dimension.nombre }}</h2>
+            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                {{ dimension.descripcion or '' }}
+            </p>
+
+            {% for escala in dimension.get('escalas', []) %}
+            <h3>{{ escala.nombre }}</h3>
+
+            {% for item in escala.get('items', []) %}
+            {% set ns.counter = ns.counter + 1 %}
+            <div class="question-card {% if item.id in respuestas_previas %}answered{% endif %}" id="question-{{ item.id }}">
+                {% if item.contexto %}
+                <p class="question-context">{{ item.contexto }}</p>
+                {% endif %}
+                <p class="question-text">{{ ns.counter }}. {{ item.texto }}</p>
+
+                {% if item.tipo == 'comparacion_binaria' and item.opciones %}
+                {# ── Comparación binaria: dos actividades RIASEC, se elige una ── #}
+                <div class="comparison-choice">
+                    <label class="comparison-option" id="opt_{{ item.id }}_0">
+                        <input type="radio"
+                               name="item_{{ item.id }}"
+                               value="0"
+                               data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id)|string == '0' %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, 0)">
+                        <span class="comparison-card">
+                            <strong>A</strong>
+                            <span>{{ item.opciones.opcion_a.texto }}</span>
+                        </span>
+                    </label>
+                    <label class="comparison-option" id="opt_{{ item.id }}_1">
+                        <input type="radio"
+                               name="item_{{ item.id }}"
+                               value="1"
+                               data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id)|string == '1' %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, 1)">
+                        <span class="comparison-card">
+                            <strong>B</strong>
+                            <span>{{ item.opciones.opcion_b.texto }}</span>
+                        </span>
+                    </label>
+                </div>
+
+                {% elif item.tipo == 'juicio_situacional' and item.opciones %}
+                {# ── Juicio situacional: 4 opciones graduadas, sin revelar el puntaje ── #}
+                <div class="multiple-choice" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                    {% for opcion in item.opciones.opciones %}
+                    <label class="mc-option" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                        <input type="radio"
+                               name="item_{{ item.id }}"
+                               value="{{ loop.index0 }}"
+                               data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id)|string == loop.index0|string %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, {{ loop.index0 }})">
+                        <span><strong>{{ opcion.letra }})</strong> {{ opcion.texto }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                {% elif item.tipo == 'eleccion_forzada' %}
+                {# ── Elección forzada: Sí / No (binario 1/0) ── #}
+                <div class="binary-choice" style="display: flex; gap: 1rem; justify-content: center; margin-top: 0.75rem;">
+                    <label class="binary-option" id="opt_{{ item.id }}_1">
+                        <input type="radio"
+                               name="item_{{ item.id }}"
+                               value="1"
+                               data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id)|string == '1' %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, 1)">
+                        <span class="binary-btn yes-btn">Sí</span>
+                    </label>
+                    <label class="binary-option" id="opt_{{ item.id }}_0">
+                        <input type="radio"
+                               name="item_{{ item.id }}"
+                               value="0"
+                               data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id)|string == '0' %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, 0)">
+                        <span class="binary-btn no-btn">No</span>
+                    </label>
+                </div>
+
+                {% elif item.tipo == 'opcion_multiple' and item.opciones %}
+                {# ── Opción múltiple ── #}
+                {% set opciones_list = item.opciones.opciones if item.opciones.opciones is defined else item.opciones %}
+                <div class="multiple-choice" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                    {% for opcion in opciones_list %}
+                    {% set opcion_texto = opcion.texto if opcion is mapping else opcion %}
+                    {% set opcion_valor = loop.index0 %}
+                    <label class="mc-option" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                        <input type="radio"
+                               name="item_{{ item.id }}"
+                               value="{{ opcion_valor }}"
+                               data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id)|string == opcion_valor|string %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, {{ opcion_valor }})">
+                        <span>{{ opcion_texto }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                {# ── Likert 1-5 (fallback) ── #}
+                <div class="likert-scale">
+                    {% for valor in range(1, 6) %}
+                    <div class="likert-option">
+                        <input type="radio"
+                               id="item_{{ item.id }}_{{ valor }}"
+                               name="item_{{ item.id }}"
+                               value="{{ valor }}"
+                               data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id) == valor %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, {{ valor }})">
+                        <label for="item_{{ item.id }}_{{ valor }}">{{ valor }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="likert-labels">
+                    <span>Totalmente en desacuerdo</span>
+                    <span>Totalmente de acuerdo</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div style="text-align: center; margin: 2rem 0;">
+            <button type="button" class="btn btn-primary btn-lg" id="btnFinalizar" onclick="finalizarPrueba()">
+                Finalizar Prueba
+            </button>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                Asegúrate de haber respondido todas las preguntas antes de finalizar
+            </p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .question-context {
+        background: #f8fafc; border-left: 3px solid var(--primary, #4f46e5);
+        padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.9rem;
+        color: var(--text-secondary); margin-bottom: 0.5rem; font-style: italic;
+    }
+    .comparison-choice {
+        display: flex; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;
+    }
+    .comparison-option { flex: 1; min-width: 220px; }
+    .comparison-option input[type="radio"] { display: none; }
+    .comparison-card {
+        display: flex; align-items: center; gap: 0.75rem; height: 100%;
+        padding: 0.9rem 1rem; border: 2px solid var(--border); border-radius: 10px;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .comparison-card strong {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #eef2ff;
+        color: #4f46e5; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .comparison-option input:checked + .comparison-card {
+        background: #eef2ff; border-color: #4f46e5;
+    }
+    .binary-option input[type="radio"] { display: none; }
+    .binary-btn {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.7rem 2rem; border-radius: 12px; font-weight: 600;
+        font-size: 1rem; cursor: pointer; transition: all 0.2s;
+        border: 2px solid var(--border);
+    }
+    .binary-option input:checked + .yes-btn {
+        background: #059669; color: #fff; border-color: #059669;
+    }
+    .binary-option input:checked + .no-btn {
+        background: #dc2626; color: #fff; border-color: #dc2626;
+    }
+    .binary-btn:hover { transform: scale(1.05); }
+    .mc-option:has(input:checked) {
+        background: #eef2ff; border-color: #4f46e5;
+    }
+</style>
+<script>
+const aplicacionId = {{ aplicacion_id }};
+const configId = {{ config_id }};
+let respuestas = {};
+let saveTimeout = null;
+let totalItems = document.querySelectorAll('.question-card').length;
+
+// Cargar respuestas previas
+{% for item_id, valor in respuestas_previas.items() %}
+respuestas[{{ item_id }}] = {{ valor }};
+{% endfor %}
+updateProgress();
+
+function onAnswer(itemId, valor) {
+    respuestas[itemId] = valor;
+
+    const card = document.getElementById('question-' + itemId);
+    if (card) card.classList.add('answered');
+
+    updateProgress();
+
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(guardarRespuestas, 2000);
+}
+
+function updateProgress() {
+    const respondidas = Object.keys(respuestas).length;
+    const porcentaje = totalItems > 0 ? Math.round(respondidas / totalItems * 100) : 0;
+    document.getElementById('progressBar').style.width = porcentaje + '%';
+    document.getElementById('progressText').textContent = porcentaje + '% completado (' + respondidas + '/' + totalItems + ')';
+}
+
+function guardarRespuestas() {
+    const indicator = document.getElementById('savingIndicator');
+    indicator.classList.add('show');
+
+    const respuestasArray = Object.entries(respuestas).map(([id, val]) => ({
+        item_id: parseInt(id),
+        valor: val
+    }));
+
+    fetch('{{ url_for("estudiante.guardar_respuestas") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            aplicacion_id: aplicacionId,
+            respuestas: respuestasArray
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        indicator.textContent = 'Guardado';
+        setTimeout(() => { indicator.classList.remove('show'); indicator.textContent = 'Guardando...'; }, 1500);
+    })
+    .catch(err => {
+        indicator.textContent = 'Error al guardar';
+        indicator.style.color = '#ef4444';
+        setTimeout(() => { indicator.classList.remove('show'); indicator.textContent = 'Guardando...'; indicator.style.color = ''; }, 3000);
+        console.error('Error guardando:', err);
+    });
+}
+
+function finalizarPrueba() {
+    if (Object.keys(respuestas).length < totalItems) {
+        const faltantes = totalItems - Object.keys(respuestas).length;
+        if (!confirm('Aún te faltan ' + faltantes + ' preguntas por responder. ¿Deseas intentar finalizar de todos modos?')) {
+            return;
+        }
+    }
+
+    // Deshabilitar aviso de beforeunload para que no interrumpa el envío
+    window.__finalizando = true;
+
+    const respuestasArray = Object.entries(respuestas).map(([id, val]) => ({
+        item_id: parseInt(id),
+        valor: val
+    }));
+
+    fetch('{{ url_for("estudiante.guardar_respuestas") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            aplicacion_id: aplicacionId,
+            respuestas: respuestasArray
+        })
+    })
+    .then(() => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/estudiante/finalizar/' + aplicacionId;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf_token';
+        csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
+    })
+    .catch(() => {
+        window.__finalizando = false;
+        alert('Error al guardar las respuestas. Revisa tu conexión e intenta nuevamente.');
+    });
+}
+
+// Advertencia al intentar salir con respuestas sin guardar
+window.addEventListener('beforeunload', function(e) {
+    if (!window.__finalizando && Object.keys(respuestas).length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+{% endblock %}
