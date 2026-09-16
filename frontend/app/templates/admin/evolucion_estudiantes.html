@@ -116,11 +116,11 @@
     <div style="background:#fff; border-radius:12px; padding:2rem; max-width:820px; width:96%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 id="tituloEvolucion" style="margin:0; font-size:1.15rem; color:var(--primary);">Evolución vocacional</h2>
-            <button onclick="cerrarEvolucion()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b; line-height:1;">✕</button>
+            <button onclick="cerrarEvolucion()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252; line-height:1;">✕</button>
         </div>
 
         <!-- Estado: cargando -->
-        <div id="evolucionCargando" style="text-align:center; padding:2.5rem; color:#64748b;">
+        <div id="evolucionCargando" style="text-align:center; padding:2.5rem; color:#525252;">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4; display:block; margin:0 auto 0.75rem;"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
             <p style="margin:0;">Cargando datos…</p>
         </div>
@@ -139,14 +139,14 @@
             <div id="tablaEvolucion" style="margin-top:1.25rem;"></div>
 
             <!-- Predicción (si hay ≥2 pruebas) -->
-            <div id="prediccionPanel" style="display:none; margin-top:1.25rem; background:linear-gradient(135deg,#ede9fe,#dbeafe); border-radius:10px; padding:1rem 1.25rem;">
-                <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:#4338ca;">Tendencia predicha</h4>
+            <div id="prediccionPanel" style="display:none; margin-top:1.25rem; background:linear-gradient(135deg,#fff1e0,#fff1e0); border-radius:10px; padding:1rem 1.25rem;">
+                <h4 style="margin:0 0 0.4rem; font-size:0.9rem; color:#b35c00;">Tendencia predicha</h4>
                 <p id="prediccionTexto" style="margin:0; font-size:0.9rem;"></p>
             </div>
         </div>
 
         <!-- Estado: sin datos -->
-        <div id="evolucionSinDatos" style="display:none; text-align:center; padding:2.5rem; color:#64748b;">
+        <div id="evolucionSinDatos" style="display:none; text-align:center; padding:2.5rem; color:#525252;">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4; display:block; margin:0 auto 0.75rem;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <p style="margin:0; font-weight:600;">Sin pruebas completadas</p>
             <p style="margin:0.4rem 0 0; font-size:0.85rem;">Este estudiante aún no ha realizado ninguna prueba.</p>

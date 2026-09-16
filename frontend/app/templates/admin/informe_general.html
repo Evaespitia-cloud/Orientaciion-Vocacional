@@ -63,7 +63,7 @@
                     {% for a in areas_interes|sort(attribute='cantidad',reverse=true) %}
                     <div style="display:flex; align-items:center; margin-bottom:0.45rem; font-size:0.82rem; gap:0.5rem;">
                         <span style="width:115px; flex-shrink:0;">{{ a.area }}</span>
-                        <div style="flex:1; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+                        <div style="flex:1; height:8px; background:#e5e5e5; border-radius:4px; overflow:hidden;">
                             <div style="width:{{ ((a.cantidad / total_a * 100) if total_a else 0)|round(0)|int }}%; height:100%; background:var(--accent); border-radius:4px;"></div>
                         </div>
                         <span style="font-weight:600; width:38px; text-align:right;">{{ ((a.cantidad / total_a * 100) if total_a else 0)|round(1) }}%</span>
@@ -167,7 +167,7 @@
                         <span style="color:var(--text-secondary);">Completadas</span>
                     </div>
                     <div>
-                        <span style="color:#94a3b8; font-weight:700; font-size:1.4rem;">{{ (resumen.get('total_aplicaciones',0)|int - resumen.get('aplicaciones_completadas',0)|int) }}</span><br>
+                        <span style="color:#a3a3a3; font-weight:700; font-size:1.4rem;">{{ (resumen.get('total_aplicaciones',0)|int - resumen.get('aplicaciones_completadas',0)|int) }}</span><br>
                         <span style="color:var(--text-secondary);">Pendientes</span>
                     </div>
                 </div>
@@ -400,7 +400,7 @@
 
 {% block scripts %}
 <script>
-const colores = ['#4f46e5', '#059669', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+const colores = ['#ef7d00', '#059669', '#f59e0b', '#ef4444', '#ffb066', '#ffb066', '#ec4899', '#84cc16'];
 
 {% if tipo_colegio and (rol in ('investigador', 'ti', 'bienestar') or not rol) %}
 new Chart(document.getElementById('chartTipoColegio').getContext('2d'), {
@@ -410,11 +410,11 @@ new Chart(document.getElementById('chartTipoColegio').getContext('2d'), {
         datasets: [{
             label: 'Estudiantes',
             data: [{% for tc in tipo_colegio %}{{ tc.estudiantes }}{% if not loop.last %},{% endif %}{% endfor %}],
-            backgroundColor: ['#4f46e5', '#059669', '#f59e0b', '#ef4444'],
+            backgroundColor: ['#ef7d00', '#059669', '#f59e0b', '#ef4444'],
         }, {
             label: 'Completadas',
             data: [{% for tc in tipo_colegio %}{{ tc.completadas }}{% if not loop.last %},{% endif %}{% endfor %}],
-            backgroundColor: ['#818cf8', '#34d399', '#fcd34d', '#fca5a5'],
+            backgroundColor: ['#ffb066', '#34d399', '#fcd34d', '#fca5a5'],
         }]
     },
     options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
@@ -480,7 +480,7 @@ new Chart(document.getElementById('chartGeneroInforme'), {
         labels: [{% for g in seg_genero %}'{{ g.genero }}'{% if not loop.last %},{% endif %}{% endfor %}],
         datasets: [{
             data: [{% for g in seg_genero %}{{ g.cantidad }}{% if not loop.last %},{% endif %}{% endfor %}],
-            backgroundColor: ['#4f46e5','#ec4899','#06b6d4','#f59e0b'],
+            backgroundColor: ['#ef7d00','#ec4899','#ffb066','#f59e0b'],
             borderWidth: 2, borderColor: '#fff',
         }]
     },
@@ -611,13 +611,13 @@ new Chart(document.getElementById('chartEdadInforme'), {
             datasets: [{
                 label: 'Distribución RIASEC',
                 data: areasRaw.map(a => a.cantidad),
-                backgroundColor: 'rgba(79, 70, 229, 0.15)',
-                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(239, 125, 0, 0.15)',
+                borderColor: '#ef7d00',
                 borderWidth: 2,
-                pointBackgroundColor: '#4f46e5',
+                pointBackgroundColor: '#ef7d00',
                 pointBorderColor: '#fff',
                 pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#4f46e5',
+                pointHoverBorderColor: '#ef7d00',
                 pointRadius: 5,
             }]
         },
@@ -651,7 +651,7 @@ new Chart(document.getElementById('chartEdadInforme'), {
             labels: ['Completadas', 'Pendientes'],
             datasets: [{
                 data: [completadas, pendientes],
-                backgroundColor: ['#059669', '#e2e8f0'],
+                backgroundColor: ['#059669', '#e5e5e5'],
                 borderWidth: 3,
                 borderColor: '#fff',
                 hoverOffset: 6,
@@ -716,7 +716,7 @@ new Chart(document.getElementById('chartEdadInforme'), {
     const raw = {{ perfiles_colegio | tojson }};
     const tipos = [...new Set(raw.map(r => r.tipo_colegio))];
     const allP  = [...new Set(raw.map(r => r.perfil))];
-    const coloresBar = ['#4f46e5','#059669','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+    const coloresBar = ['#ef7d00','#059669','#f59e0b','#ef4444','#ffb066','#ffb066'];
     const datasets = tipos.map((tipo, i) => ({
         label: tipo,
         data: allP.map(p => { const f = raw.find(r => r.tipo_colegio === tipo && r.perfil === p); return f ? f.cantidad : 0; }),
@@ -740,7 +740,7 @@ new Chart(document.getElementById('chartEdadInforme'), {
 (function() {
     const areasRaw = {{ areas_interes | tojson }};
     const sorted = [...areasRaw].sort((a, b) => b.cantidad - a.cantidad);
-    const coloresAreas = ['#4f46e5','#059669','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+    const coloresAreas = ['#ef7d00','#059669','#f59e0b','#ef4444','#ffb066','#ffb066'];
     new Chart(document.getElementById('chartAreasDir'), {
         type: 'bar',
         data: {

@@ -42,7 +42,13 @@ def login():
 
 @auth_routes.route('/registro', methods=['GET', 'POST'])
 def registro():
-    """Página de registro de estudiante con contraseña propia."""
+    """Página de registro de estudiante con contraseña propia.
+
+    Si el registro falla (contraseña sin carácter especial, correo repetido, etc.)
+    se vuelve a mostrar el formulario con los datos ya diligenciados para que el
+    usuario no tenga que escribirlo todo de nuevo. Por seguridad, los campos de
+    contraseña sí se vacían.
+    """
     if request.method == 'POST':
         rol = 'estudiante'
         datos = {
@@ -57,11 +63,15 @@ def registro():
             'rol': rol,
         }
 
+        # Datos que se devuelven al formulario si algo falla (sin contraseñas)
+        form_previo = {k: v for k, v in request.form.items()
+                       if k not in ('password', 'password_confirm', '_csrf_token')}
+
         password = request.form.get('password') or ''
         password_confirm = request.form.get('password_confirm') or ''
         if password != password_confirm:
-            flash('Las contraseñas no coinciden.', 'error')
-            return render_template('auth/registro.html')
+            flash('Las contraseñas no coinciden. Vuelve a escribirlas; el resto de tus datos se conservó.', 'error')
+            return render_template('auth/registro.html', form=form_previo)
         datos['password'] = password
 
         data, status = api_request('POST', '/auth/registro', datos)
@@ -69,10 +79,14 @@ def registro():
         if status == 201:
             flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
             return redirect(url_for('auth.login'))
-        else:
-            flash(data.get('error', 'Error en el registro'), 'error')
 
-    return render_template('auth/registro.html')
+        error = data.get('error', 'Error en el registro')
+        if 'contraseña' in error.lower():
+            error += ' Vuelve a escribir la contraseña; el resto de tus datos se conservó.'
+        flash(error, 'error')
+        return render_template('auth/registro.html', form=form_previo)
+
+    return render_template('auth/registro.html', form={})
 
 
 @auth_routes.route('/consentimiento', methods=['GET', 'POST'])

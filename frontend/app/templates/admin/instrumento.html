@@ -38,7 +38,7 @@
         {% if inst.dimensiones %}
         <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
             {% for dim in inst.dimensiones %}
-            <div style="padding: 1rem; background: {% if loop.index == 1 %}#eef2ff{% else %}#fef3f2{% endif %}; border-radius: 10px; border-left: 4px solid {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %};">
+            <div style="padding: 1rem; background: {% if loop.index == 1 %}#fff8f0{% else %}#fef3f2{% endif %}; border-radius: 10px; border-left: 4px solid {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %};">
                 <h4 style="font-size: 0.95rem; font-weight: 700; color: {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %}; margin-bottom: 0.5rem;">
                     Prueba {{ loop.index }}: {{ dim.nombre }}
                 </h4>
@@ -168,7 +168,7 @@ document.querySelectorAll('.btn-toggle-activa').forEach(function(btn) {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="margin:0; font-size:1.2rem;">Nuevo Instrumento</h2>
             <button onclick="document.getElementById('modalNuevoInstrumento').style.display='none'"
-                    style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>
         <form method="POST" action="{{ url_for('admin.crear_instrumento') }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">

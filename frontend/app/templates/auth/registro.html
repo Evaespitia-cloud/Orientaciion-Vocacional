@@ -2,6 +2,8 @@
 {% block title %}Registro — Orientación Vocacional{% endblock %}
 
 {% block content %}
+{# "form" conserva lo que el usuario ya había escrito si el registro falló #}
+{% set form = form | default({}, true) %}
 <a href="{{ url_for('main.index') }}" style="position:fixed; top:1.2rem; left:1.4rem; display:inline-flex; align-items:center; gap:0.45rem; color:#fff; background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.2); padding:0.45rem 1rem 0.45rem 0.75rem; border-radius:999px; font-size:0.85rem; font-weight:600; text-decoration:none; z-index:100; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     Inicio
@@ -9,7 +11,9 @@
 <div class="auth-wrapper">
     <div class="auth-card" style="max-width: 520px;">
         <div class="auth-header">
-            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="66" height="66" style="filter:drop-shadow(0 6px 18px rgba(79,70,229,0.45)); margin-bottom:1rem;">
+            <img src="{{ url_for('static', filename='img/logo-usb.png') }}"
+                 alt="Universidad de San Buenaventura"
+                 style="width:100%; max-width:230px; height:auto; margin-bottom:1.1rem;">
             <h1>Crear Cuenta</h1>
             <p>Regístrate para acceder a la plataforma de orientación vocacional</p>
         </div>
@@ -19,11 +23,11 @@
             <div class="grid-2">
                 <div class="form-group">
                     <label for="nombres">Nombres *</label>
-                    <input type="text" id="nombres" name="nombres" class="form-control" placeholder="Tus nombres" required>
+                    <input type="text" id="nombres" name="nombres" class="form-control" placeholder="Tus nombres" value="{{ form.get('nombres', '') }}" required>
                 </div>
                 <div class="form-group">
                     <label for="apellidos">Apellidos *</label>
-                    <input type="text" id="apellidos" name="apellidos" class="form-control" placeholder="Tus apellidos" required>
+                    <input type="text" id="apellidos" name="apellidos" class="form-control" placeholder="Tus apellidos" value="{{ form.get('apellidos', '') }}" required>
                 </div>
             </div>
 
@@ -31,21 +35,22 @@
                 <div class="form-group">
                     <label for="tipo_documento">Tipo documento</label>
                     <select id="tipo_documento" name="tipo_documento" class="form-control">
-                        <option value="CC">Cédula de Ciudadanía</option>
-                        <option value="TI">Tarjeta de Identidad</option>
-                        <option value="CE">Cédula de Extranjería</option>
-                        <option value="PA">Pasaporte</option>
+                        {% set td = form.get('tipo_documento', 'CC') %}
+                        <option value="CC" {% if td == 'CC' %}selected{% endif %}>Cédula de Ciudadanía</option>
+                        <option value="TI" {% if td == 'TI' %}selected{% endif %}>Tarjeta de Identidad</option>
+                        <option value="CE" {% if td == 'CE' %}selected{% endif %}>Cédula de Extranjería</option>
+                        <option value="PA" {% if td == 'PA' %}selected{% endif %}>Pasaporte</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="documento">Número de documento</label>
-                    <input type="text" id="documento" name="documento" class="form-control" placeholder="1234567890" pattern="[0-9A-Za-z\-]+" title="Solo letras, números y guiones">
+                    <input type="text" id="documento" name="documento" class="form-control" placeholder="1234567890" value="{{ form.get('documento', '') }}" pattern="[0-9A-Za-z\-]+" title="Solo letras, números y guiones">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="email">Correo electrónico *</label>
-                <input type="email" id="email" name="email" class="form-control" placeholder="correo@ejemplo.com" required>
+                <input type="email" id="email" name="email" class="form-control" placeholder="correo@ejemplo.com" value="{{ form.get('email', '') }}" required>
             </div>
 
             <div class="form-group">
@@ -57,7 +62,7 @@
                     </button>
                 </div>
                 <div id="passwordStrength" style="margin-top: 0.4rem; font-size: 0.8rem;"></div>
-                <div style="height: 4px; border-radius: 2px; background: #e5e7eb; margin-top: 4px;">
+                <div style="height: 4px; border-radius: 2px; background: #e5e5e5; margin-top: 4px;">
                     <div id="strengthBar" style="height: 100%; border-radius: 2px; width: 0%; transition: width 0.3s, background 0.3s;"></div>
                 </div>
                 <ul style="font-size: 0.75rem; color: var(--text-secondary); margin: 0.4rem 0 0 1rem; padding: 0;">
@@ -82,21 +87,22 @@
 
             <div class="form-group">
                 <label for="telefono">Teléfono</label>
-                <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="300 123 4567">
+                <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="300 123 4567" value="{{ form.get('telefono', '') }}">
             </div>
 
             <div class="grid-2">
                 <div class="form-group">
                     <label for="grado_id">Institución educativa</label>
-                    <input type="text" id="grado_id" name="grado_id" class="form-control" placeholder="Ej: Colegio San José">
+                    <input type="text" id="grado_id" name="grado_id" class="form-control" placeholder="Ej: Colegio San José" value="{{ form.get('grado_id', '') }}">
                 </div>
                 <div class="form-group">
                     <label for="semestre">Grado</label>
                     <select id="semestre" name="semestre" class="form-control">
+                        {% set sem = form.get('semestre', '') %}
                         <option value="">Seleccionar...</option>
-                        <option value="9">9° Grado</option>
-                        <option value="10">10° Grado</option>
-                        <option value="11">11° Grado</option>
+                        <option value="9"  {% if sem == '9'  %}selected{% endif %}>9° Grado</option>
+                        <option value="10" {% if sem == '10' %}selected{% endif %}>10° Grado</option>
+                        <option value="11" {% if sem == '11' %}selected{% endif %}>11° Grado</option>
                     </select>
                 </div>
             </div>
@@ -138,11 +144,11 @@ function checkPasswordStrength(val) {
     const numOk = /[0-9]/.test(val);
     const specialOk = /[^A-Za-z0-9]/.test(val);
 
-    document.getElementById('req-len').style.color = lenOk ? '#059669' : '#6b7280';
-    document.getElementById('req-upper').style.color = upperOk ? '#059669' : '#6b7280';
-    document.getElementById('req-lower').style.color = lowerOk ? '#059669' : '#6b7280';
-    document.getElementById('req-num').style.color = numOk ? '#059669' : '#6b7280';
-    document.getElementById('req-special').style.color = specialOk ? '#059669' : '#6b7280';
+    document.getElementById('req-len').style.color = lenOk ? '#059669' : '#525252';
+    document.getElementById('req-upper').style.color = upperOk ? '#059669' : '#525252';
+    document.getElementById('req-lower').style.color = lowerOk ? '#059669' : '#525252';
+    document.getElementById('req-num').style.color = numOk ? '#059669' : '#525252';
+    document.getElementById('req-special').style.color = specialOk ? '#059669' : '#525252';
 
     const score = [lenOk, upperOk, lowerOk, numOk, specialOk].filter(Boolean).length;
     const bar = document.getElementById('strengthBar');
@@ -151,7 +157,7 @@ function checkPasswordStrength(val) {
         {w:'20%', bg:'#ef4444', txt:'Muy débil', color:'#ef4444'},
         {w:'40%', bg:'#ef4444', txt:'Débil', color:'#ef4444'},
         {w:'60%', bg:'#f59e0b', txt:'Regular', color:'#f59e0b'},
-        {w:'80%', bg:'#3b82f6', txt:'Buena', color:'#3b82f6'},
+        {w:'80%', bg:'#ff9a3d', txt:'Buena', color:'#ff9a3d'},
         {w:'100%', bg:'#059669', txt:'Fuerte ✓', color:'#059669'},
     ];
     if (val.length === 0) { bar.style.width = '0%'; msg.textContent = ''; return; }

@@ -151,8 +151,8 @@
 
 <script>
 const COLORES_RIASEC = {
-  Realista: '#ef4444', Investigador: '#3b82f6', 'Artístico': '#a855f7',
-  Social: '#22c55e', Emprendedor: '#f59e0b', Convencional: '#6b7280'
+  Realista: '#ef4444', Investigador: '#ff9a3d', 'Artístico': '#ffd6a8',
+  Social: '#22c55e', Emprendedor: '#f59e0b', Convencional: '#525252'
 };
 const DESC_RIASEC = {
   Realista:     'Actividades prácticas, técnicas y al aire libre',
@@ -198,11 +198,11 @@ async function analizarIntereses() {
   const a = data.analisis;
   const sorted = Object.entries(a.scores_riasec).sort((x, y) => y[1] - x[1]);
   const domArea = a.area_dominante;
-  const sentColor = a.sentimiento === 'positivo' ? '#22c55e' : a.sentimiento === 'negativo' ? '#ef4444' : '#6b7280';
+  const sentColor = a.sentimiento === 'positivo' ? '#22c55e' : a.sentimiento === 'negativo' ? '#ef4444' : '#525252';
   const sentLabel = a.sentimiento === 'positivo' ? '😊 Positivo' : a.sentimiento === 'negativo' ? '😕 Negativo' : '😐 Neutro';
 
   const barras = sorted.map(([area, val]) => {
-    const color = COLORES_RIASEC[area] || '#6b7280';
+    const color = COLORES_RIASEC[area] || '#525252';
     const esTop = area === domArea;
     return `
       <div style="margin:6px 0;">

@@ -107,17 +107,17 @@
     <div style="background:#fff; border-radius:12px; padding:2rem; max-width:780px; width:94%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 id="tituloEvolucion" style="margin:0; font-size:1.1rem;">Evolución vocacional</h2>
-            <button onclick="cerrarEvolucion()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+            <button onclick="cerrarEvolucion()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>
 
-        <div id="evolucionCargando" style="text-align:center; padding:2rem; color:#64748b;">
+        <div id="evolucionCargando" style="text-align:center; padding:2rem; color:#525252;">
             <p>Cargando datos...</p>
         </div>
         <div id="evolucionContenido" style="display:none;">
             <canvas id="chartEvolucionEstudiante" style="max-height:280px;"></canvas>
             <div id="tablaEvolucion" style="margin-top:1.5rem;"></div>
         </div>
-        <div id="evolucionSinDatos" style="display:none; text-align:center; padding:2rem; color:#64748b;">
+        <div id="evolucionSinDatos" style="display:none; text-align:center; padding:2rem; color:#525252;">
             <p>Este estudiante aún no tiene suficientes pruebas completadas para mostrar evolución.</p>
         </div>
     </div>
@@ -201,9 +201,9 @@ function verEvolucion(usuarioId, nombre) {
             // Tendencia predicha
             const pred = data.prediccion;
             if (pred && pred.tiene_prediccion && pred.perfil_predicho) {
-                html += `<div style="margin-top:1rem; padding:0.85rem 1rem; background:#f0f4ff; border-radius:8px; border-left:4px solid #4f46e5;">
-                    <p style="margin:0; font-size:0.85rem; font-weight:700; color:#4f46e5; margin-bottom:0.25rem;">Tendencia predicha</p>
-                    <p style="margin:0; font-size:0.85rem; color:#374151;">Basado en ${pred.basado_en} prueba(s), la tendencia apunta hacia un perfil <strong>${pred.perfil_predicho}</strong>.</p>
+                html += `<div style="margin-top:1rem; padding:0.85rem 1rem; background:#f0f4ff; border-radius:8px; border-left:4px solid #ef7d00;">
+                    <p style="margin:0; font-size:0.85rem; font-weight:700; color:#ef7d00; margin-bottom:0.25rem;">Tendencia predicha</p>
+                    <p style="margin:0; font-size:0.85rem; color:#262626;">Basado en ${pred.basado_en} prueba(s), la tendencia apunta hacia un perfil <strong>${pred.perfil_predicho}</strong>.</p>
                 </div>`;
             }
             document.getElementById('tablaEvolucion').innerHTML = html;

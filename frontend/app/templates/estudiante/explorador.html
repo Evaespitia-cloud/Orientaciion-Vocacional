@@ -14,14 +14,14 @@
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.3rem 0.85rem; border-radius: 20px; font-size: 0.8rem;
   font-weight: 700; letter-spacing: 1.5px;
-  background: linear-gradient(135deg, #4f46e5, #0d9488);
+  background: linear-gradient(135deg, #ef7d00, #b35c00);
   color: #fff; margin-left: 0.5rem;
 }
 
 /* ── Controls ──────────────────────────────────────── */
 .expl-controls {
   display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
-  background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+  background: #fafafa; border: 1px solid var(--border); border-radius: 12px;
   padding: 0.9rem 1.1rem; margin-bottom: 1.5rem;
 }
 .filter-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
@@ -89,7 +89,7 @@
 .career-unis { font-size: 0.78rem; color: var(--text-light); }
 .career-unis strong { color: var(--primary); font-size: 0.82rem; display: block; margin-bottom: 0.3rem; }
 .career-unis span {
-  display: inline-block; background: #eef2ff; color: #4338ca;
+  display: inline-block; background: #fff8f0; color: #b35c00;
   padding: 0.2rem 0.6rem; border-radius: 20px; margin: 0.15rem 0.15rem 0 0;
   font-size: 0.72rem;
 }
@@ -125,7 +125,7 @@
   padding: 0.6rem 0.75rem; border-radius: 10px; cursor: pointer;
   transition: background 0.15s; border-bottom: 1px solid var(--border);
 }
-.career-row:hover { background: #f8fafc; }
+.career-row:hover { background: #fafafa; }
 .career-row-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .career-row-name { font-size: 0.85rem; font-weight: 600; color: var(--primary); flex: 1; }
 .career-row-compat { font-size: 0.8rem; font-weight: 700; }
@@ -153,14 +153,14 @@
   <div class="expl-controls">
     <span class="filter-label">Área:</span>
     <div class="area-filters" id="areaFilters">
-      <button class="area-btn active" data-area="all" style="color:#4f46e5; border-color:#4f46e5;">Todas</button>
+      <button class="area-btn active" data-area="all" style="color:#ef7d00; border-color:#ef7d00;">Todas</button>
       <button class="area-btn" data-area="salud"        style="color:#10b981; border-color:#10b981;">Salud</button>
-      <button class="area-btn" data-area="ingenieria"   style="color:#6366f1; border-color:#6366f1;">Ingeniería</button>
-      <button class="area-btn" data-area="ciencias"     style="color:#06b6d4; border-color:#06b6d4;">Ciencias</button>
+      <button class="area-btn" data-area="ingenieria"   style="color:#ff9a3d; border-color:#ff9a3d;">Ingeniería</button>
+      <button class="area-btn" data-area="ciencias"     style="color:#ffb066; border-color:#ffb066;">Ciencias</button>
       <button class="area-btn" data-area="arte_cultura" style="color:#f59e0b; border-color:#f59e0b;">Arte y Diseño</button>
       <button class="area-btn" data-area="social"       style="color:#f43f5e; border-color:#f43f5e;">Social / Hum.</button>
-      <button class="area-btn" data-area="negocios"     style="color:#8b5cf6; border-color:#8b5cf6;">Negocios</button>
-      <button class="area-btn" data-area="comunicacion" style="color:#fb923c; border-color:#fb923c;">Comunicación</button>
+      <button class="area-btn" data-area="negocios"     style="color:#ffb066; border-color:#ffb066;">Negocios</button>
+      <button class="area-btn" data-area="comunicacion" style="color:#ffb066; border-color:#ffb066;">Comunicación</button>
       <button class="area-btn" data-area="juridica"     style="color:#ef4444; border-color:#ef4444;">Jurídica</button>
     </div>
     <div class="compat-filter">
@@ -209,8 +209,8 @@
       <div class="panel-card">
         <p style="font-size:0.75rem; font-weight:700; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">Tu perfil RIASEC</p>
         {% set areas_map = {
-          'Realista': ('R', '#f97316'),
-          'Investigador': ('I', '#6366f1'),
+          'Realista': ('R', '#ff9a3d'),
+          'Investigador': ('I', '#ff9a3d'),
           'Artístico': ('A', '#f59e0b'),
           'Social': ('S', '#10b981'),
           'Emprendedor': ('E', '#ef4444'),
@@ -221,7 +221,7 @@
         <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
           <span style="font-size:0.75rem; font-weight:700; color:{{ color }}; width:18px;">{{ code }}</span>
           <span style="font-size:0.73rem; color:var(--text-secondary); width:90px; flex-shrink:0;">{{ area_name }}</span>
-          <div style="flex:1; height:7px; background:#eef2ff; border-radius:4px; overflow:hidden;">
+          <div style="flex:1; height:7px; background:#fff8f0; border-radius:4px; overflow:hidden;">
             <div style="width:{{ score }}%; height:100%; background:{{ color }}; border-radius:4px;"></div>
           </div>
           <span style="font-size:0.73rem; font-weight:700; color:var(--text-secondary); width:30px; text-align:right;">{{ score }}%</span>
@@ -239,15 +239,15 @@
   <!-- Legend -->
   <div class="legend-grid">
     <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div>Salud</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#6366f1;"></div>Ingeniería</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div>Ciencias</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff9a3d;"></div>Ingeniería</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffb066;"></div>Ciencias</div>
     <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div>Arte y Diseño</div>
     <div class="legend-item"><div class="legend-dot" style="background:#f43f5e;"></div>Social / Humanidades</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div>Negocios</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#fb923c;"></div>Comunicación</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffb066;"></div>Negocios</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffb066;"></div>Comunicación</div>
     <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>Jurídica / Política</div>
     <div class="legend-item">
-      <div style="width:14px;height:14px;border-radius:50%;border:2px dashed #4f46e5;flex-shrink:0;"></div>
+      <div style="width:14px;height:14px;border-radius:50%;border:2px dashed #ef7d00;flex-shrink:0;"></div>
       Tu perfil
     </div>
   </div>
@@ -272,7 +272,7 @@ const CX = 250, CY = 250, HEX_R = 185;
 const KEYS = ['R','I','A','S','E','C'];
 const LABELS = { R:'Realista', I:'Investigador', A:'Artístico', S:'Social', E:'Emprendedor', C:'Convencional' };
 const ANGLES_DEG = { R:-90, I:-30, A:30, S:90, E:150, C:210 };
-const RIASEC_COLORS = { R:'#f97316', I:'#6366f1', A:'#f59e0b', S:'#10b981', E:'#ef4444', C:'#0ea5e9' };
+const RIASEC_COLORS = { R:'#ff9a3d', I:'#ff9a3d', A:'#f59e0b', S:'#10b981', E:'#ef4444', C:'#0ea5e9' };
 
 const rad = d => d * Math.PI / 180;
 const VERTS = {};
@@ -342,12 +342,12 @@ const CAREERS = [
 // ── Area colors ─────────────────────────────────────
 const AREA_COLORS = {
   salud:        '#10b981',
-  ingenieria:   '#6366f1',
-  ciencias:     '#06b6d4',
+  ingenieria:   '#ff9a3d',
+  ciencias:     '#ffb066',
   arte_cultura: '#f59e0b',
   social:       '#f43f5e',
-  negocios:     '#8b5cf6',
-  comunicacion: '#fb923c',
+  negocios:     '#ffb066',
+  comunicacion: '#ffb066',
   juridica:     '#ef4444',
 };
 
@@ -467,14 +467,14 @@ function renderStudent(svg) {
 
   // Fill
   el('polygon', {
-    points: pts, fill: '#4f46e5', opacity: 0.15,
+    points: pts, fill: '#ef7d00', opacity: 0.15,
     stroke: 'none',
   }, svg);
 
   // Outline (dashed)
   el('polygon', {
     points: pts, fill: 'none',
-    stroke: '#818cf8', 'stroke-width': 1.5, 'stroke-dasharray': '5,3', opacity: 0.8,
+    stroke: '#ffb066', 'stroke-width': 1.5, 'stroke-dasharray': '5,3', opacity: 0.8,
   }, svg);
 
   // Score dots
@@ -482,7 +482,7 @@ function renderStudent(svg) {
     const frac = RAW_SCORES[k] / 100;
     const dx = CX + VERTS[k].x * HEX_R * frac;
     const dy = CY + VERTS[k].y * HEX_R * frac;
-    el('circle', { cx: dx, cy: dy, r: 3.5, fill: '#818cf8' }, svg);
+    el('circle', { cx: dx, cy: dy, r: 3.5, fill: '#ffb066' }, svg);
   });
 }
 
@@ -505,7 +505,7 @@ function renderCareers(svg) {
 
   visible.forEach(career => {
     const pos = careerPos(career.scores);
-    const color = AREA_COLORS[career.area] || '#94a3b8';
+    const color = AREA_COLORS[career.area] || '#a3a3a3';
     const isSelected = career.id === selectedId;
     const r = isSelected ? 9 : 7;
     const opacity = career._compat < 30 ? 0.4 : 0.85;
@@ -582,7 +582,7 @@ function showTooltip(career, e) {
   hideTooltip();
   const svg = document.getElementById('hollandSvg');
   const pos = careerPos(career.scores);
-  const color = AREA_COLORS[career.area] || '#94a3b8';
+  const color = AREA_COLORS[career.area] || '#a3a3a3';
 
   const g = el('g', { id: 'svgTooltip' }, svg);
   const tx = pos.x > 350 ? pos.x - 90 : pos.x + 12;
@@ -590,7 +590,7 @@ function showTooltip(career, e) {
 
   el('rect', { x:tx-4, y:ty-14, width:88, height:32, rx:6,
     fill:'#1e2a44', stroke: color, 'stroke-width':1, opacity:0.95 }, g);
-  const t1 = el('text', { x:tx+40, y:ty+2, 'text-anchor':'middle', fill:'#e2e8f0',
+  const t1 = el('text', { x:tx+40, y:ty+2, 'text-anchor':'middle', fill:'#e5e5e5',
     'font-size':10, 'font-weight':700, 'font-family':'Inter, sans-serif' }, g);
   t1.textContent = career.name;
   const t2 = el('text', { x:tx+40, y:ty+14, 'text-anchor':'middle',
@@ -623,7 +623,7 @@ document.querySelectorAll('.area-btn').forEach(btn => {
       b.style.color = b.style.borderColor; // restore original
     });
     btn.classList.add('active');
-    const col = btn.dataset.area === 'all' ? '#4f46e5' : btn.style.borderColor;
+    const col = btn.dataset.area === 'all' ? '#ef7d00' : btn.style.borderColor;
     btn.style.background = col;
     btn.style.color = '#fff';
     renderAll();

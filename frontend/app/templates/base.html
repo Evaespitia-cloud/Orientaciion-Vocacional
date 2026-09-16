@@ -6,7 +6,9 @@
     <meta name="description" content="Plataforma de Orientación Vocacional para Bachilleres">
     <title>{% block title %}Orientación Vocacional{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo-usb-marca.png') }}">
+    <meta name="theme-color" content="#111111">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     {% block head %}{% endblock %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -39,7 +41,8 @@
     {% if session.get('access_token') %}
     <nav class="navbar" id="mainNavbar">
         <a href="/" class="navbar-brand">
-            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="34" height="34" style="display:block;">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}"
+                 alt="" aria-hidden="true" width="34" height="34" style="display:block;">
             Orientación Vocacional
         </a>
 
@@ -77,6 +80,14 @@
             {% endif %}
         </ul>
 
+        <a href="https://www.usbmed.edu.co" target="_blank" rel="noopener"
+           class="navbar-usb" title="Universidad de San Buenaventura">
+            <img class="usb-completo" src="{{ url_for('static', filename='img/logo-usb.png') }}"
+                 alt="Universidad de San Buenaventura">
+            <img class="usb-marca" src="{{ url_for('static', filename='img/logo-usb-marca.png') }}"
+                 alt="Universidad de San Buenaventura">
+        </a>
+
         <div class="navbar-user">
             <div class="avatar">{{ session.get('nombre', 'U')[0] }}</div>
             <a href="{{ url_for('main.perfil') }}" class="user-name" style="text-decoration:none; color:inherit;">{{ session.get('nombre', 'Usuario') }}</a>
@@ -109,6 +120,9 @@
         {% else %}
             <p>© 2026 Plataforma de Orientación Vocacional</p>
         {% endif %}
+        <p style="margin-top:0.35rem; font-size:0.8rem; opacity:0.75;">
+            Universidad de San Buenaventura
+        </p>
     </footer>
     {% endif %}
 

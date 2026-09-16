@@ -86,9 +86,12 @@
                             {{ u.created_at[:10] if u.created_at else '—' }}
                         </td>
                         {% if session.get('rol') == 'ti' %}
-                        <td>
+                        <td style="white-space:nowrap;">
                             <button class="btn btn-sm btn-secondary"
                                     onclick="abrirModalEditar({{ u.id }})">Editar</button>
+                            <button class="btn btn-sm btn-secondary"
+                                    onclick="abrirModalEditar({{ u.id }}, true)"
+                                    title="Restablecer la contraseña de este usuario">Contraseña</button>
                         </td>
                         {% endif %}
                     </tr>
@@ -116,46 +119,123 @@
 
 <!-- Modal: Nuevo Usuario -->
 {% if session.get('rol') == 'ti' %}
-<div id="modalCrearUsuario" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:500px; width:94%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+<div id="modalCrearUsuario" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal-box" style="background:#fff; border-radius:12px; padding:2rem; max-width:560px; width:100%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="margin:0; font-size:1.2rem;">Nuevo Usuario</h2>
-            <button onclick="cerrarModalCrear()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+            <button onclick="cerrarModalCrear()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">&#10005;</button>
         </div>
-        <form method="POST" action="{{ url_for('admin.crear_usuario') }}">
+        <form method="POST" action="{{ url_for('admin.crear_usuario') }}" id="formCrear" novalidate>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-            <div class="form-group">
-                <label>Nombres *</label>
-                <input type="text" name="nombres" class="form-control" required>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Nombres *</label>
+                    <input type="text" name="nombres" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Apellidos *</label>
+                    <input type="text" name="apellidos" class="form-control" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Apellidos *</label>
-                <input type="text" name="apellidos" class="form-control" required>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Tipo de documento</label>
+                    <select name="tipo_documento" class="form-control">
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="TI">Tarjeta de Identidad</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                        <option value="PA">Pasaporte</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Número de documento</label>
+                    <input type="text" name="documento" class="form-control" placeholder="1234567890">
+                </div>
             </div>
+
             <div class="form-group">
                 <label>Correo electrónico *</label>
                 <input type="email" name="email" class="form-control" required>
             </div>
+
             <div class="form-group">
-                <label>Contraseña * <small style="color:var(--text-secondary)">(mín. 8 chars, 1 mayúscula, 1 número)</small></label>
-                <input type="password" name="password" class="form-control" required minlength="8">
+                <label>Teléfono</label>
+                <input type="tel" name="telefono" class="form-control" placeholder="300 123 4567">
             </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Grado</label>
+                    <select name="semestre" class="form-control">
+                        <option value="">Seleccionar...</option>
+                        <option value="9">9&deg; Grado</option>
+                        <option value="10">10&deg; Grado</option>
+                        <option value="11">11&deg; Grado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cohorte</label>
+                    <input type="text" name="cohorte" class="form-control" placeholder="2026-1">
+                </div>
+            </div>
+
             <div class="form-group">
-                <label>Rol *</label>
-                <select name="rol" class="form-control" required>
-                    {% for r in roles %}
-                    <option value="{{ r.nombre }}">{{ r.nombre | capitalize }}</option>
-                    {% endfor %}
-                </select>
+                <label>Contraseña *</label>
+                <div style="position:relative;">
+                    <input type="password" name="password" id="crear_password" class="form-control"
+                           required placeholder="Mínimo 10 caracteres" style="padding-right:2.6rem;"
+                           oninput="revisarRequisitos('crear_password', 'crearReq')">
+                    <button type="button" onclick="alternarVer('crear_password','eyeCrear')" tabindex="-1"
+                            aria-label="Mostrar u ocultar contraseña"
+                            style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;">
+                        <svg id="eyeCrear" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <ul id="crearReq" style="font-size:0.75rem; color:var(--text-secondary); margin:0.45rem 0 0 1.1rem; padding:0;">
+                    <li data-req="len">Al menos 10 caracteres</li>
+                    <li data-req="upper">Al menos 1 letra mayúscula</li>
+                    <li data-req="lower">Al menos 1 letra minúscula</li>
+                    <li data-req="num">Al menos 1 número</li>
+                    <li data-req="special">Al menos 1 carácter especial</li>
+                </ul>
             </div>
+
             <div class="form-group">
-                <label>Estado</label>
-                <select name="activo" class="form-control">
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                </select>
+                <label>Confirmar contraseña *</label>
+                <div style="position:relative;">
+                    <input type="password" name="password_confirm" id="crear_password_confirm" class="form-control"
+                           required placeholder="Repite la contraseña" style="padding-right:2.6rem;"
+                           oninput="revisarCoincidencia('crear_password','crear_password_confirm','crearMatch')">
+                    <button type="button" onclick="alternarVer('crear_password_confirm','eyeCrearConf')" tabindex="-1"
+                            aria-label="Mostrar u ocultar contraseña"
+                            style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;">
+                        <svg id="eyeCrearConf" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <div id="crearMatch" style="font-size:0.8rem; margin-top:0.3rem;"></div>
             </div>
-            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;">
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Rol *</label>
+                    <select name="rol" class="form-control" required>
+                        {% for r in roles %}
+                        <option value="{{ r.nombre }}">{{ r.nombre | capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select name="activo" class="form-control">
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem; flex-wrap:wrap;">
                 <button type="button" onclick="cerrarModalCrear()" class="btn btn-secondary">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Crear Usuario</button>
             </div>
@@ -164,42 +244,123 @@
 </div>
 
 <!-- Modal: Editar Usuario -->
-<div id="modalEditarUsuario" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:12px; padding:2rem; max-width:500px; width:94%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+<div id="modalEditarUsuario" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal-box" style="background:#fff; border-radius:12px; padding:2rem; max-width:560px; width:100%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="margin:0; font-size:1.2rem;">Editar Usuario</h2>
-            <button onclick="cerrarModalEditar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+            <button onclick="cerrarModalEditar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">&#10005;</button>
         </div>
-        <form id="formEditar" method="POST" action="">
+        <form id="formEditar" method="POST" action="" novalidate>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-            <div class="form-group">
-                <label>Nombres *</label>
-                <input type="text" name="nombres" id="edit_nombres" class="form-control" required>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Nombres *</label>
+                    <input type="text" name="nombres" id="edit_nombres" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Apellidos *</label>
+                    <input type="text" name="apellidos" id="edit_apellidos" class="form-control" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Apellidos *</label>
-                <input type="text" name="apellidos" id="edit_apellidos" class="form-control" required>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Tipo de documento</label>
+                    <select name="tipo_documento" id="edit_tipo_documento" class="form-control">
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="TI">Tarjeta de Identidad</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                        <option value="PA">Pasaporte</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Número de documento</label>
+                    <input type="text" name="documento" id="edit_documento" class="form-control">
+                </div>
             </div>
+
             <div class="form-group">
                 <label>Correo electrónico *</label>
                 <input type="email" name="email" id="edit_email" class="form-control" required>
             </div>
+
             <div class="form-group">
-                <label>Rol *</label>
-                <select name="rol" id="edit_rol" class="form-control" required>
-                    {% for r in roles %}
-                    <option value="{{ r.nombre }}">{{ r.nombre | capitalize }}</option>
-                    {% endfor %}
-                </select>
+                <label>Teléfono</label>
+                <input type="tel" name="telefono" id="edit_telefono" class="form-control">
             </div>
-            <div class="form-group">
-                <label>Estado</label>
-                <select name="activo" id="edit_activo" class="form-control">
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                </select>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Rol *</label>
+                    <select name="rol" id="edit_rol" class="form-control" required>
+                        {% for r in roles %}
+                        <option value="{{ r.nombre }}">{{ r.nombre | capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select name="activo" id="edit_activo" class="form-control">
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
             </div>
-            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;">
+
+            <!-- Restablecer contraseña -->
+            <div style="border-top:1px solid var(--border); margin-top:0.5rem; padding-top:1.25rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                    <div>
+                        <strong style="font-size:0.95rem;">Contraseña</strong>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">
+                            Déjala en blanco para no modificarla.
+                        </p>
+                    </div>
+                    <button type="button" id="btnTogglePassword" class="btn btn-sm btn-secondary"
+                            onclick="mostrarSeccionPassword()">Cambiar contraseña</button>
+                </div>
+
+                <div id="seccionPassword" style="display:none; margin-top:1rem;">
+                    <div class="form-group">
+                        <label>Nueva contraseña</label>
+                        <div style="position:relative;">
+                            <input type="password" name="password" id="edit_password" class="form-control"
+                                   placeholder="Mínimo 10 caracteres" autocomplete="new-password" style="padding-right:2.6rem;"
+                                   oninput="revisarRequisitos('edit_password', 'editarReq')">
+                            <button type="button" onclick="alternarVer('edit_password','eyeEditar')" tabindex="-1"
+                                    aria-label="Mostrar u ocultar contraseña"
+                                    style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;">
+                                <svg id="eyeEditar" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                        <ul id="editarReq" style="font-size:0.75rem; color:var(--text-secondary); margin:0.45rem 0 0 1.1rem; padding:0;">
+                            <li data-req="len">Al menos 10 caracteres</li>
+                            <li data-req="upper">Al menos 1 letra mayúscula</li>
+                            <li data-req="lower">Al menos 1 letra minúscula</li>
+                            <li data-req="num">Al menos 1 número</li>
+                            <li data-req="special">Al menos 1 carácter especial</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confirmar nueva contraseña</label>
+                        <div style="position:relative;">
+                            <input type="password" name="password_confirm" id="edit_password_confirm" class="form-control"
+                                   placeholder="Repite la contraseña" autocomplete="new-password" style="padding-right:2.6rem;"
+                                   oninput="revisarCoincidencia('edit_password','edit_password_confirm','editarMatch')">
+                            <button type="button" onclick="alternarVer('edit_password_confirm','eyeEditarConf')" tabindex="-1"
+                                    aria-label="Mostrar u ocultar contraseña"
+                                    style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;">
+                                <svg id="eyeEditarConf" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                        <div id="editarMatch" style="font-size:0.8rem; margin-top:0.3rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem; flex-wrap:wrap;">
                 <button type="button" onclick="cerrarModalEditar()" class="btn btn-secondary">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             </div>
@@ -213,7 +374,92 @@
 <script>
 var USUARIOS_DATA = {{ usuarios | tojson }};
 
-/* Toggle activo/inactivo */
+/* ── Utilidades de contraseña ───────────────────────── */
+var OJO_ABIERTO = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+var OJO_CERRADO = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+function alternarVer(inputId, iconId) {
+    var inp = document.getElementById(inputId);
+    var ico = document.getElementById(iconId);
+    if (!inp || !ico) return;
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.innerHTML = OJO_CERRADO;
+    } else {
+        inp.type = 'password';
+        ico.innerHTML = OJO_ABIERTO;
+    }
+}
+
+function evaluarPassword(val) {
+    return {
+        len: val.length >= 10,
+        upper: /[A-Z]/.test(val),
+        lower: /[a-z]/.test(val),
+        num: /[0-9]/.test(val),
+        special: /[^A-Za-z0-9]/.test(val)
+    };
+}
+
+function passwordValida(val) {
+    var r = evaluarPassword(val);
+    return r.len && r.upper && r.lower && r.num && r.special;
+}
+
+function revisarRequisitos(inputId, listaId) {
+    var val = (document.getElementById(inputId) || {}).value || '';
+    var lista = document.getElementById(listaId);
+    if (!lista) return;
+    var r = evaluarPassword(val);
+    lista.querySelectorAll('li').forEach(function(li) {
+        var ok = r[li.dataset.req];
+        li.style.color = val.length === 0 ? '#525252' : (ok ? '#059669' : '#ef4444');
+    });
+}
+
+function revisarCoincidencia(id1, id2, msgId) {
+    var p1 = (document.getElementById(id1) || {}).value || '';
+    var p2 = (document.getElementById(id2) || {}).value || '';
+    var msg = document.getElementById(msgId);
+    if (!msg) return;
+    if (!p2) { msg.textContent = ''; return; }
+    if (p1 === p2) {
+        msg.textContent = 'Las contraseñas coinciden';
+        msg.style.color = '#059669';
+    } else {
+        msg.textContent = 'Las contraseñas no coinciden';
+        msg.style.color = '#ef4444';
+    }
+}
+
+/* Valida un par de campos de contraseña antes de enviar el formulario.
+   requerida = true obliga a diligenciarlos (creación de usuario). */
+function validarPasswordFormulario(e, idPass, idConf, listaId, msgId, requerida) {
+    var pass = document.getElementById(idPass);
+    var conf = document.getElementById(idConf);
+    if (!pass || !conf) return true;
+
+    var p1 = pass.value;
+    var p2 = conf.value;
+
+    if (!requerida && !p1 && !p2) return true;
+
+    if (!passwordValida(p1)) {
+        e.preventDefault();
+        revisarRequisitos(idPass, listaId);
+        pass.focus();
+        return false;
+    }
+    if (p1 !== p2) {
+        e.preventDefault();
+        revisarCoincidencia(idPass, idConf, msgId);
+        conf.focus();
+        return false;
+    }
+    return true;
+}
+
+/* ── Toggle activo/inactivo ─────────────────────────── */
 document.querySelectorAll('.btn-toggle-activo').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var id = this.dataset.id;
@@ -247,10 +493,16 @@ document.querySelectorAll('.btn-toggle-activo').forEach(function(btn) {
     });
 });
 
-/* Modal Crear */
+/* ── Modal Crear ────────────────────────────────────── */
 function abrirModalCrear() {
     var m = document.getElementById('modalCrearUsuario');
-    if (m) m.style.display = 'flex';
+    if (!m) return;
+    var f = document.getElementById('formCrear');
+    if (f) f.reset();
+    revisarRequisitos('crear_password', 'crearReq');
+    var match = document.getElementById('crearMatch');
+    if (match) match.textContent = '';
+    m.style.display = 'flex';
 }
 function cerrarModalCrear() {
     var m = document.getElementById('modalCrearUsuario');
@@ -259,18 +511,57 @@ function cerrarModalCrear() {
 var mc = document.getElementById('modalCrearUsuario');
 if (mc) mc.addEventListener('click', function(e) { if (e.target === this) cerrarModalCrear(); });
 
-/* Modal Editar */
-function abrirModalEditar(id) {
+var formCrear = document.getElementById('formCrear');
+if (formCrear) {
+    formCrear.addEventListener('submit', function(e) {
+        validarPasswordFormulario(e, 'crear_password', 'crear_password_confirm', 'crearReq', 'crearMatch', true);
+    });
+}
+
+/* ── Modal Editar ───────────────────────────────────── */
+function mostrarSeccionPassword() {
+    var sec = document.getElementById('seccionPassword');
+    var btn = document.getElementById('btnTogglePassword');
+    if (!sec) return;
+    var visible = sec.style.display !== 'none';
+    sec.style.display = visible ? 'none' : 'block';
+    if (btn) btn.textContent = visible ? 'Cambiar contraseña' : 'Cancelar cambio';
+    if (visible) {
+        document.getElementById('edit_password').value = '';
+        document.getElementById('edit_password_confirm').value = '';
+        document.getElementById('editarMatch').textContent = '';
+        revisarRequisitos('edit_password', 'editarReq');
+    } else {
+        document.getElementById('edit_password').focus();
+    }
+}
+
+function abrirModalEditar(id, abrirPassword) {
     var u = USUARIOS_DATA.find(function(x) { return x.id === id; });
     if (!u) return;
     var form = document.getElementById('formEditar');
     form.action = '/admin/usuarios/' + u.id + '/editar';
-    document.getElementById('edit_nombres').value   = u.nombres   || '';
-    document.getElementById('edit_apellidos').value = u.apellidos || '';
-    document.getElementById('edit_email').value     = u.email     || '';
-    document.getElementById('edit_rol').value       = (u.rol && u.rol.nombre) ? u.rol.nombre : '';
-    document.getElementById('edit_activo').value    = u.activo ? 'true' : 'false';
+    document.getElementById('edit_nombres').value        = u.nombres   || '';
+    document.getElementById('edit_apellidos').value      = u.apellidos || '';
+    document.getElementById('edit_email').value          = u.email     || '';
+    document.getElementById('edit_documento').value      = u.documento || '';
+    document.getElementById('edit_telefono').value       = u.telefono  || '';
+    document.getElementById('edit_tipo_documento').value = u.tipo_documento || 'CC';
+    document.getElementById('edit_rol').value            = (u.rol && u.rol.nombre) ? u.rol.nombre : '';
+    document.getElementById('edit_activo').value         = u.activo ? 'true' : 'false';
+
+    // La sección de contraseña siempre arranca cerrada y vacía
+    var sec = document.getElementById('seccionPassword');
+    var btn = document.getElementById('btnTogglePassword');
+    document.getElementById('edit_password').value = '';
+    document.getElementById('edit_password_confirm').value = '';
+    document.getElementById('editarMatch').textContent = '';
+    revisarRequisitos('edit_password', 'editarReq');
+    sec.style.display = 'none';
+    if (btn) btn.textContent = 'Cambiar contraseña';
+
     document.getElementById('modalEditarUsuario').style.display = 'flex';
+    if (abrirPassword) mostrarSeccionPassword();
 }
 function cerrarModalEditar() {
     var m = document.getElementById('modalEditarUsuario');
@@ -278,5 +569,17 @@ function cerrarModalEditar() {
 }
 var me = document.getElementById('modalEditarUsuario');
 if (me) me.addEventListener('click', function(e) { if (e.target === this) cerrarModalEditar(); });
+
+var formEditar = document.getElementById('formEditar');
+if (formEditar) {
+    formEditar.addEventListener('submit', function(e) {
+        validarPasswordFormulario(e, 'edit_password', 'edit_password_confirm', 'editarReq', 'editarMatch', false);
+    });
+}
+
+/* Cerrar modales con la tecla Escape */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { cerrarModalCrear(); cerrarModalEditar(); }
+});
 </script>
 {% endblock %}

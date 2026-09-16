@@ -3,9 +3,9 @@
   <defs>
     <!-- Main hex gradient: indigo → violet → teal -->
     <linearGradient id="hg" x1="20%" y1="5%" x2="80%" y2="95%">
-      <stop offset="0%"   stop-color="#4338ca"/>
-      <stop offset="50%"  stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#0d9488"/>
+      <stop offset="0%"   stop-color="#b35c00"/>
+      <stop offset="50%"  stop-color="#ff9a3d"/>
+      <stop offset="100%" stop-color="#b35c00"/>
     </linearGradient>
 
     <!-- Ambient top-glow for depth -->
@@ -23,7 +23,7 @@
     <!-- Hex drop shadow -->
     <filter id="hs" x="-12%" y="-12%" width="124%" height="124%">
       <feDropShadow dx="0" dy="3" stdDeviation="5"
-                    flood-color="#4338ca" flood-opacity="0.5"/>
+                    flood-color="#b35c00" flood-opacity="0.5"/>
     </filter>
   </defs>
 

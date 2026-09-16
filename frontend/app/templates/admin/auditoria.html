@@ -135,7 +135,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                 <h2 style="margin:0; font-size:1.2rem;">Nueva Política de Retención</h2>
                 <button onclick="document.getElementById('modalCrearPolitica').style.display='none'"
-                        style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+                        style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
             </div>
             <form method="POST" action="{{ url_for('admin.crear_politica_retencion') }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">

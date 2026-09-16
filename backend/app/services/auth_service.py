@@ -55,7 +55,12 @@ class AuthService:
         if Usuario.query.filter_by(email=email).first():
             raise ValueError('El correo electrónico ya está registrado')
 
-        if datos.get('documento') and Usuario.query.filter_by(documento=datos['documento']).first():
+        # Documento y teléfono vacíos se guardan como NULL: '' rompería la
+        # restricción UNIQUE de documento en el segundo registro sin documento.
+        documento = str(datos.get('documento') or '').strip() or None
+        datos['documento'] = documento
+        datos['telefono'] = str(datos.get('telefono') or '').strip() or None
+        if documento and Usuario.query.filter_by(documento=documento).first():
             raise ValueError('El documento ya está registrado')
 
         # Obtener rol (por defecto estudiante)

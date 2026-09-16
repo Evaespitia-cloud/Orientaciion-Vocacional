@@ -19,7 +19,7 @@
             <div>
                 <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);">{{ usuario.get('nombres', '') }} {{ usuario.get('apellidos', '') }}</div>
                 <div style="color: var(--text-secondary); font-size: 0.9rem;">{{ usuario.get('email', '') }}</div>
-                <span style="display: inline-block; margin-top: 0.4rem; background: #eef2ff; color: #4338ca; padding: 0.2rem 0.75rem; border-radius: 12px; font-size: 0.78rem; font-weight: 600; text-transform: capitalize;">
+                <span style="display: inline-block; margin-top: 0.4rem; background: #fff8f0; color: #b35c00; padding: 0.2rem 0.75rem; border-radius: 12px; font-size: 0.78rem; font-weight: 600; text-transform: capitalize;">
                     {{ usuario.get('rol', {}).get('nombre', session.get('rol', '')) }}
                 </span>
             </div>

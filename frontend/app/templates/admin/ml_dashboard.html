@@ -118,8 +118,8 @@
 .cluster-card { background: var(--bg-secondary); border-radius: 10px; padding: 1rem; border: 1px solid var(--border); }
 .cluster-card h4 { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--accent); }
 .cluster-bar { height: 6px; border-radius: 3px; margin: 4px 0; }
-.bar-r { background: #ef4444; } .bar-i { background: #3b82f6; } .bar-a { background: #a855f7; }
-.bar-s { background: #22c55e; } .bar-e { background: #f59e0b; } .bar-c { background: #6b7280; }
+.bar-r { background: #ef4444; } .bar-i { background: #ff9a3d; } .bar-a { background: #ffd6a8; }
+.bar-s { background: #22c55e; } .bar-e { background: #f59e0b; } .bar-c { background: #525252; }
 .badge-cluster { display: inline-block; background: var(--accent); color: white; border-radius: 12px; padding: 0.15rem 0.6rem; font-size: 0.75rem; }
 .combination-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:0.45rem; }
 .combination-chip { border:1px solid var(--border); border-radius:6px; padding:0.45rem 0.6rem; font-size:0.78rem; background:#fff; }
@@ -195,7 +195,7 @@ async function ejecutarClustering() {
 }
 
 function renderClusteringResultado(r) {
-  const colores = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#a855f7','#14b8a6','#f97316','#8b5cf6'];
+  const colores = ['#ff9a3d','#22c55e','#f59e0b','#ef4444','#ffd6a8','#ef7d00','#ff9a3d','#ffb066'];
   const html = `
     <div style="background:var(--bg-secondary);border-radius:10px;padding:1.2rem;margin-top:1rem;">
       <div style="display:flex;gap:1.5rem;margin-bottom:1rem;flex-wrap:wrap;">
@@ -273,7 +273,7 @@ async function analizarTexto() {
     return;
   }
   const a = data.analisis;
-  const colores = { Realista: '#ef4444', Investigador: '#3b82f6', 'Artístico': '#a855f7', Social: '#22c55e', Emprendedor: '#f59e0b', Convencional: '#6b7280' };
+  const colores = { Realista: '#ef4444', Investigador: '#ff9a3d', 'Artístico': '#ffd6a8', Social: '#22c55e', Emprendedor: '#f59e0b', Convencional: '#525252' };
   const sorted = Object.entries(a.scores_riasec).sort((x, y) => y[1] - x[1]);
   const domArea = a.area_dominante;
   const sentBadge = a.sentimiento === 'positivo' ? '🟢 Positivo' : a.sentimiento === 'negativo' ? '🔴 Negativo' : '⚪ Neutro';
@@ -290,7 +290,7 @@ async function analizarTexto() {
           <div class="pln-bar-row">
             <span class="pln-bar-label">${area}</span>
             <div style="flex:1;background:var(--border);border-radius:5px;height:10px;">
-              <div style="width:${Math.min(val, 100)}%;height:100%;background:${colores[area] || '#6b7280'};border-radius:5px;transition:width 0.5s;"></div>
+              <div style="width:${Math.min(val, 100)}%;height:100%;background:${colores[area] || '#525252'};border-radius:5px;transition:width 0.5s;"></div>
             </div>
             <span class="pln-bar-val">${val.toFixed(1)}%</span>
           </div>

@@ -1,5 +1,7 @@
 """Controlador de gestión de usuarios y roles."""
 
+import re
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
@@ -58,8 +60,15 @@ def listar_usuarios():
 @roles_requeridos('ti')
 def crear_usuario():
     """Crear un usuario desde el panel administrativo."""
-    datos = request.get_json()
+    datos = request.get_json() or {}
     admin_id = int(get_jwt_identity())
+
+    # Los campos opcionales vacíos se guardan como NULL (evita choques de unicidad)
+    for campo in ('documento', 'telefono', 'cohorte'):
+        if not str(datos.get(campo) or '').strip():
+            datos[campo] = None
+        else:
+            datos[campo] = str(datos[campo]).strip()
 
     campos_requeridos = ['email', 'password', 'nombres', 'apellidos', 'rol']
     for campo in campos_requeridos:
@@ -114,36 +123,87 @@ def obtener_usuario(id):
 @jwt_required()
 @roles_requeridos('bienestar', 'ti')
 def actualizar_usuario(id):
-    """Actualizar datos de un usuario."""
-    usuario = Usuario.query.get_or_404(id)
-    datos = request.get_json()
+    """Actualizar datos de un usuario (incluido el restablecimiento de contraseña).
 
-    campos_actualizables = ['nombres', 'apellidos', 'email', 'telefono', 'grado_id',
-                            'semestre', 'cohorte', 'activo']
+    Solo el rol TI puede cambiar el rol o restablecer la contraseña de otra cuenta.
+    """
+    usuario = Usuario.query.get_or_404(id)
+    datos = request.get_json() or {}
+
+    solicitante_id = int(get_jwt_identity())
+    solicitante = Usuario.query.get(solicitante_id)
+    es_ti = bool(solicitante and solicitante.rol and solicitante.rol.nombre == 'ti')
+
     datos_anteriores = usuario.to_dict()
 
+    # --- Email: formato y unicidad ---
+    if 'email' in datos:
+        email = str(datos.get('email') or '').strip().lower()
+        if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email) or len(email) > 255:
+            return jsonify({'error': 'Correo electrónico inválido'}), 400
+        if Usuario.query.filter(Usuario.email == email, Usuario.id != usuario.id).first():
+            return jsonify({'error': 'El correo electrónico ya está registrado'}), 400
+        usuario.email = email
+
+    # --- Documento: unicidad (vacío = NULL) ---
+    if 'documento' in datos:
+        documento = str(datos.get('documento') or '').strip() or None
+        if documento and Usuario.query.filter(
+                Usuario.documento == documento, Usuario.id != usuario.id).first():
+            return jsonify({'error': 'El documento ya está registrado'}), 400
+        usuario.documento = documento
+
+    campos_actualizables = ['nombres', 'apellidos', 'telefono', 'tipo_documento',
+                            'grado_id', 'semestre', 'cohorte', 'activo']
     for campo in campos_actualizables:
         if campo in datos:
-            setattr(usuario, campo, datos[campo])
+            valor = datos[campo]
+            if campo in ('telefono', 'cohorte'):
+                valor = str(valor or '').strip() or None
+            setattr(usuario, campo, valor)
 
+    # --- Rol: solo TI ---
     if 'rol' in datos:
-        solicitante = Usuario.query.get(int(get_jwt_identity()))
-        if not solicitante or not solicitante.rol or solicitante.rol.nombre != 'ti':
+        if not es_ti:
             return jsonify({'error': 'Solo TI puede modificar roles'}), 403
         rol = Rol.query.filter_by(nombre=datos['rol'], activo=True).first()
         if not rol:
             return jsonify({'error': 'Rol inválido o inactivo'}), 400
         usuario.rol_id = rol.id
 
-    db.session.commit()
+    # --- Contraseña: solo TI, aplica la misma política que el registro ---
+    password_nueva = str(datos.get('password') or '')
+    cambio_password = bool(password_nueva)
+    if cambio_password:
+        if not es_ti:
+            return jsonify({'error': 'Solo TI puede restablecer contraseñas'}), 403
+        try:
+            AuthService.validar_password(password_nueva)
+        except ValueError as exc:
+            return jsonify({'error': str(exc)}), 400
+        usuario.password_hash = AuthService.hash_password(password_nueva)
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': 'No se pudo actualizar el usuario'}), 500
 
     registrar_auditoria(
-        int(get_jwt_identity()), 'ACTUALIZAR_USUARIO', 'usuarios',
+        solicitante_id, 'ACTUALIZAR_USUARIO', 'usuarios',
         f'Usuario {usuario.email} actualizado',
         datos_anteriores=datos_anteriores,
         datos_nuevos=usuario.to_dict(),
         ip_address=request.remote_addr
     )
+
+    # La contraseña nunca se registra en auditoría, solo el hecho del cambio
+    if cambio_password:
+        registrar_auditoria(
+            solicitante_id, 'RESTABLECER_PASSWORD', 'usuarios',
+            f'Contraseña del usuario {usuario.email} restablecida por un administrador',
+            ip_address=request.remote_addr
+        )
 
     return jsonify({'message': 'Usuario actualizado', 'usuario': usuario.to_dict()}), 200
 

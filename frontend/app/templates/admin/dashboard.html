@@ -366,7 +366,7 @@
         </div>
         <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
             {% for inst in por_instrumento %}
-            <div class="card" style="border-top: 4px solid {% if inst.get('obligatoria') %}#4f46e5{% else %}#0d9488{% endif %};">
+            <div class="card" style="border-top: 4px solid {% if inst.get('obligatoria') %}#ef7d00{% else %}#b35c00{% endif %};">
                 <div class="card-header">
                     <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); flex:1;">
                         {{ inst.config_nombre }}
@@ -468,7 +468,7 @@
 
 {% block scripts %}
 <script>
-const RIASEC_COLORS = ['#4f46e5','#0d9488','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+const RIASEC_COLORS = ['#ef7d00','#b35c00','#f59e0b','#ef4444','#ffb066','#ffb066'];
 
 // 1. Gráfico de perfiles (global - active for all roles)
 {% if perfiles %}

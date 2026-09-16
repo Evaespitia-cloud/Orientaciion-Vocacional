@@ -58,7 +58,7 @@
         </div>
 
         {% for escala in dimension.get('escalas', []) %}
-        <div style="margin-bottom: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid {{ colores_riasec[loop.index0 % 6] }};">
+        <div style="margin-bottom: 1rem; padding: 1rem; background: #fafafa; border-radius: 8px; border-left: 4px solid {{ colores_riasec[loop.index0 % 6] }};">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                 <h3 style="font-size: 0.95rem; font-weight: 600; color: {{ colores_riasec[loop.index0 % 6] }}; margin: 0;">
                     {{ escala.nombre }}
@@ -101,7 +101,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="margin:0; font-size:1.2rem;">Nueva Dimensión</h2>
             <button onclick="document.getElementById('modalNuevaDimension').style.display='none'"
-                    style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>
         <form method="POST" action="{{ url_for('admin.crear_dimension', inst_id=instrumento.id) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -138,7 +138,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="margin:0; font-size:1.2rem;">Nueva Escala</h2>
             <button onclick="document.getElementById('modalNuevaEscala').style.display='none'"
-                    style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>
         <p id="tituloDimension" style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;"></p>
         <form id="formNuevaEscala" method="POST" action="">

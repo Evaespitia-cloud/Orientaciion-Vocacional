@@ -7,13 +7,13 @@
         <h1>Estadísticas Agregadas</h1>
         <p>Visualización de datos agregados según el rol: promedios, medianas y desviaciones estándar por grado y área (investigador), o mapa de calor por área y grado (directivo).</p>
     </div>
-    <div id="estadisticas-agregadas-cargando" style="text-align:center; padding:2.5rem; color:#64748b;">
+    <div id="estadisticas-agregadas-cargando" style="text-align:center; padding:2.5rem; color:#525252;">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4; display:block; margin:0 auto 0.75rem;"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
         <p style="margin:0;">Cargando datos…</p>
     </div>
     <div id="estadisticas-agregadas-contenido" style="display:none;"></div>
     <div id="evolucion-vocacional-inst" style="display:none; margin-top:2.5rem;">
-        <h3>Evolución Vocacional Institucional <span style="font-size:1rem;font-weight:400;color:#64748b;">Tendencia de perfiles Holland mes a mes</span></h3>
+        <h3>Evolución Vocacional Institucional <span style="font-size:1rem;font-weight:400;color:#525252;">Tendencia de perfiles Holland mes a mes</span></h3>
         <canvas id="evolucionVocacionalChart" height="120"></canvas>
         <div id="evolucion-vocacional-alerta" style="margin-top:1.5rem;"></div>
     </div>
@@ -64,7 +64,7 @@ fetch('/estadisticas/evolucion-agregada')
             renderEvolucionVocacional(data.evolucion);
         } else if (evolDiv) {
             evolDiv.style.display = '';
-            alerta.innerHTML = '<div style="text-align:center;padding:2.5rem 0;color:#64748b;">Se necesitan pruebas completadas para mostrar la evolución vocacional.</div>';
+            alerta.innerHTML = '<div style="text-align:center;padding:2.5rem 0;color:#525252;">Se necesitan pruebas completadas para mostrar la evolución vocacional.</div>';
         }
         if (!data.estadisticas && !data.heatmap && !data.evolucion) {
             cont.innerHTML = '<p>No hay datos disponibles.</p>';

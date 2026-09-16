@@ -35,6 +35,27 @@ def solo_gestion(f):
     return decorated
 
 
+def solo_ti(f):
+    """Decorador para acciones de administración de cuentas — únicamente rol TI.
+
+    El backend ya restringe estas operaciones; aquí se bloquean antes de llamarlo
+    para que bienestar/directivo no vean errores 403 del API.
+    """
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if session.get('rol') != 'ti':
+            mensaje = 'Solo el rol TI puede administrar cuentas de usuario.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+                    or request.path.endswith('/toggle-activo'):
+                from flask import jsonify as _jsonify
+                return _jsonify({'error': mensaje}), 403
+            flash(mensaje, 'error')
+            return redirect(url_for('admin.usuarios'))
+        return f(*args, **kwargs)
+    return decorated
+
+
 @admin_bp.route('/dashboard')
 @admin_required
 def dashboard():
@@ -102,6 +123,7 @@ def usuarios():
 @admin_bp.route('/usuarios/<int:id>/toggle-activo', methods=['POST'])
 @admin_required
 @solo_gestion
+@solo_ti
 def toggle_activo_usuario(id):
     """Activar o desactivar un usuario."""
     from flask import jsonify as flask_jsonify
@@ -118,13 +140,26 @@ def toggle_activo_usuario(id):
 @admin_bp.route('/usuarios/crear', methods=['POST'])
 @admin_required
 @solo_gestion
+@solo_ti
 def crear_usuario():
-    """Crear un nuevo usuario desde el panel admin."""
+    """Crear un nuevo usuario desde el panel admin con todos los campos de registro."""
+    password = request.form.get('password', '')
+    password_confirm = request.form.get('password_confirm', '')
+    if password != password_confirm:
+        flash('Las contraseñas no coinciden.', 'error')
+        return redirect(url_for('admin.usuarios'))
+
     datos = {
         'nombres': request.form.get('nombres', '').strip(),
         'apellidos': request.form.get('apellidos', '').strip(),
         'email': request.form.get('email', '').strip(),
-        'password': request.form.get('password', ''),
+        'password': password,
+        'tipo_documento': request.form.get('tipo_documento', 'CC'),
+        'documento': request.form.get('documento', '').strip() or None,
+        'telefono': request.form.get('telefono', '').strip() or None,
+        'cohorte': request.form.get('cohorte', '').strip() or None,
+        'semestre': request.form.get('semestre', type=int),
+        'grado_id': request.form.get('grado_id', type=int),
         'rol': request.form.get('rol', 'estudiante'),
         'activo': request.form.get('activo', 'true') == 'true',
     }
@@ -139,20 +174,42 @@ def crear_usuario():
 @admin_bp.route('/usuarios/<int:id>/editar', methods=['POST'])
 @admin_required
 @solo_gestion
+@solo_ti
 def editar_usuario(id):
-    """Editar datos de un usuario."""
+    """Editar datos de un usuario, incluido el restablecimiento de su contraseña."""
     datos = {}
     for campo in ('nombres', 'apellidos', 'email', 'rol'):
         val = request.form.get(campo, '').strip()
         if val:
             datos[campo] = val
+
+    # Campos opcionales: se envían aunque queden vacíos para poder limpiarlos
+    for campo in ('documento', 'telefono'):
+        if campo in request.form:
+            datos[campo] = request.form.get(campo, '').strip() or None
+    tipo_doc = request.form.get('tipo_documento', '').strip()
+    if tipo_doc:
+        datos['tipo_documento'] = tipo_doc
+
     activo_val = request.form.get('activo')
     if activo_val is not None:
         datos['activo'] = activo_val == 'true'
 
+    # Contraseña: opcional. Solo se envía si el admin escribió una nueva.
+    password = request.form.get('password', '')
+    password_confirm = request.form.get('password_confirm', '')
+    if password or password_confirm:
+        if password != password_confirm:
+            flash('Las contraseñas no coinciden. No se guardaron los cambios.', 'error')
+            return redirect(url_for('admin.usuarios'))
+        datos['password'] = password
+
     data, status = api_request('PUT', f'/usuarios/{id}', datos)
     if status == 200:
-        flash('Usuario actualizado correctamente.', 'success')
+        if 'password' in datos:
+            flash('Usuario actualizado y contraseña restablecida correctamente.', 'success')
+        else:
+            flash('Usuario actualizado correctamente.', 'success')
     else:
         flash(data.get('error', 'Error al actualizar el usuario'), 'error')
     return redirect(url_for('admin.usuarios'))
