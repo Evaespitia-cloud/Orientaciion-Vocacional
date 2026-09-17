@@ -60,6 +60,7 @@ def registro():
             'telefono': request.form.get('telefono'),
             'grado_id': request.form.get('grado_id', type=int),
             'semestre': request.form.get('semestre', type=int),
+            'genero': request.form.get('genero') or None,
             'rol': rol,
         }
 

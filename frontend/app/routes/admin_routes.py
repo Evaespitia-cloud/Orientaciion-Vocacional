@@ -160,6 +160,7 @@ def crear_usuario():
         'cohorte': request.form.get('cohorte', '').strip() or None,
         'semestre': request.form.get('semestre', type=int),
         'grado_id': request.form.get('grado_id', type=int),
+        'genero': request.form.get('genero') or None,
         'rol': request.form.get('rol', 'estudiante'),
         'activo': request.form.get('activo', 'true') == 'true',
     }

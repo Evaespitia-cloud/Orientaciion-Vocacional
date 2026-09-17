@@ -5,6 +5,7 @@ from flask_jwt_extended import (
     create_access_token, jwt_required, get_jwt_identity, get_jwt
 )
 from ..services.auth_service import AuthService
+from ..services.demografico_service import guardar_genero
 from ..extensions import db
 from ..utils.audit import registrar_auditoria
 from ..utils.rate_limit import allow_request
@@ -46,6 +47,7 @@ def registro():
 
     try:
         usuario = AuthService.registrar_usuario(datos)
+        guardar_genero(usuario.id, datos.get('genero'))
         registrar_auditoria(
             usuario.id, 'REGISTRO', 'auth',
             f'Nuevo usuario registrado: {usuario.email}',

@@ -10,6 +10,7 @@ from ..models.usuario import Usuario, Rol
 from ..utils.decorators import roles_requeridos
 from ..utils.audit import registrar_auditoria
 from ..services.auth_service import AuthService
+from ..services.demografico_service import guardar_genero
 
 usuario_bp = Blueprint('usuarios', __name__)
 
@@ -85,6 +86,8 @@ def crear_usuario():
     if not rol_obj:
         return jsonify({'error': f'Rol "{datos["rol"]}" no existe'}), 400
 
+    genero = datos.pop('genero', None)
+
     try:
         usuario = AuthService.registrar_usuario(datos)
         # Asignar rol indicado por el admin (puede diferir del default)
@@ -92,6 +95,7 @@ def crear_usuario():
         if 'activo' in datos:
             usuario.activo = datos['activo']
         db.session.commit()
+        guardar_genero(usuario.id, genero)
 
         registrar_auditoria(
             admin_id, 'CREAR_USUARIO', 'usuarios',
@@ -170,6 +174,10 @@ def actualizar_usuario(id):
         if not rol:
             return jsonify({'error': 'Rol inválido o inactivo'}), 400
         usuario.rol_id = rol.id
+
+    # --- Género: se guarda como dato demográfico, no como columna ---
+    if 'genero' in datos:
+        guardar_genero(usuario.id, datos.get('genero'))
 
     # --- Contraseña: solo TI, aplica la misma política que el registro ---
     password_nueva = str(datos.get('password') or '')

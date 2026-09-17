@@ -90,6 +90,17 @@
                 <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="300 123 4567" value="{{ form.get('telefono', '') }}">
             </div>
 
+            <div class="form-group">
+                <label for="genero">Género</label>
+                <select id="genero" name="genero" class="form-control">
+                    {% set gen = form.get('genero', '') %}
+                    <option value="">Seleccionar...</option>
+                    <option value="Masculino" {% if gen == 'Masculino' %}selected{% endif %}>Masculino</option>
+                    <option value="Femenino" {% if gen == 'Femenino' %}selected{% endif %}>Femenino</option>
+                    <option value="Prefiero no decirlo" {% if gen == 'Prefiero no decirlo' %}selected{% endif %}>Prefiero no decirlo</option>
+                </select>
+            </div>
+
             <div class="grid-2">
                 <div class="form-group">
                     <label for="grado_id">Institución educativa</label>

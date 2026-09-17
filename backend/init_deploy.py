@@ -70,6 +70,21 @@ def main():
                           'Evaluación de intereses basada en RIASEC.', 0, 1)
         ensure_instrument('Prueba de Competencias Vocacionales Holland', 'Competencias Vocacionales',
                           'Evaluación de competencias basada en RIASEC.', 1, 4)
+        # Campo demográfico de género: alimenta el reporte de segmentación
+        # que ya existe en el panel (/api/estadisticas/segmentacion/genero).
+        from app.models.demografico import CampoDemografico
+        campo_genero = CampoDemografico.query.filter_by(nombre='genero').first()
+        opciones_genero = ['Masculino', 'Femenino', 'Prefiero no decirlo']
+        if not campo_genero:
+            orden = db.session.query(db.func.max(CampoDemografico.orden)).scalar() or 0
+            db.session.add(CampoDemografico(
+                nombre='genero', etiqueta='Género', tipo_campo='select',
+                opciones=opciones_genero, obligatorio=False, activo=True, orden=orden + 1,
+            ))
+        elif not campo_genero.opciones:
+            campo_genero.opciones = opciones_genero
+            campo_genero.tipo_campo = 'select'
+
         admin_email = (os.getenv('ADMIN_EMAIL') or '').strip().lower()
         admin_password = os.getenv('ADMIN_PASSWORD') or ''
         if admin_email and admin_password and not Usuario.query.filter_by(email=admin_email).first():
