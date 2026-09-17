@@ -216,7 +216,13 @@ def _unificar_puntajes_riasec(intereses_puntajes, competencias_puntajes, puntaje
                    intereses_puntajes.get(area, {}).get('positivas') or 
                    intereses_puntajes.get(area, {}).get('bruto') or 0)
         comparativo[area]['Intereses Vocacionales'] = int_val
-        int_max = intereses_puntajes.get(area, {}).get('total') or (5 if int_val <= 5 else 0)
+        # OJO: 'total' es el NÚMERO DE ÍTEMS, no el máximo de puntos. Usarlo como
+        # denominador producía porcentajes de 340% en Competencias, donde cada
+        # ítem vale hasta 4 puntos. El máximo real viene en 'interes_maximo' /
+        # 'competencia_maximo'; el respaldo es para perfiles guardados antiguos.
+        int_max = (intereses_puntajes.get(area, {}).get('interes_maximo')
+                   or intereses_puntajes.get(area, {}).get('total')
+                   or (5 if int_val <= 5 else 0))
         
         # Competencias (Respuestas positivas y total posibles)
         com_val = (competencias_puntajes.get(area, {}).get('Competencias Vocacionales') or 
@@ -224,7 +230,9 @@ def _unificar_puntajes_riasec(intereses_puntajes, competencias_puntajes, puntaje
                    competencias_puntajes.get(area, {}).get('positivas') or 
                    competencias_puntajes.get(area, {}).get('bruto') or 0)
         comparativo[area]['Competencias Vocacionales'] = com_val
-        com_max = competencias_puntajes.get(area, {}).get('total') or (3 if com_val <= 3 else 0)
+        com_max = (competencias_puntajes.get(area, {}).get('competencia_maximo')
+                   or competencias_puntajes.get(area, {}).get('total')
+                   or (3 if com_val <= 3 else 0))
         
         # Determinar el máximo y puntaje según las pruebas que realmente existen
         if has_intereses and has_competencias:
@@ -244,7 +252,9 @@ def _unificar_puntajes_riasec(intereses_puntajes, competencias_puntajes, puntaje
             
         comparativo[area]['total'] = combined_max
         normalizado = (combined_score / combined_max * 100) if combined_max > 0 else 0
-        comparativo[area]['normalizado'] = round(normalizado, 2)
+        # Red de seguridad: un porcentaje nunca puede salirse de 0–100. Si pasa,
+        # es señal de que el denominador está mal y hay que revisarlo.
+        comparativo[area]['normalizado'] = round(min(100.0, max(0.0, normalizado)), 2)
         
     return comparativo
 

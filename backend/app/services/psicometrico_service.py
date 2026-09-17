@@ -368,7 +368,18 @@ class PsicometricoService:
 
             interes_normalizado = interes['puntaje_normalizado'] if interes else 0
             competencia_normalizado = competencia['puntaje_normalizado'] if competencia else 0
-            normalizado = round((interes_normalizado + competencia_normalizado) / 2, 2) if (interes or competencia) else 0
+            # Solo se promedia cuando el estudiante respondió AMBAS pruebas. Si falta
+            # una, promediar contra un cero la dejaría con la mitad del puntaje que
+            # realmente obtuvo (85% se mostraba como 42.5%) y ninguna fortaleza
+            # alcanzaría el umbral. El perfil queda marcado como preliminar.
+            if interes and competencia:
+                normalizado = round((interes_normalizado + competencia_normalizado) / 2, 2)
+            elif interes:
+                normalizado = round(interes_normalizado, 2)
+            elif competencia:
+                normalizado = round(competencia_normalizado, 2)
+            else:
+                normalizado = 0
 
             total_positivas = (interes['respuestas_positivas'] if interes else 0) + (competencia['respuestas_positivas'] if competencia else 0)
             total_items = (interes['total_items'] if interes else 0) + (competencia['total_items'] if competencia else 0)
@@ -385,6 +396,10 @@ class PsicometricoService:
                 'interes_normalizado': interes_normalizado,
                 'competencia_puntaje': competencia['puntaje_bruto'] if competencia else 0,
                 'competencia_porcentaje': competencia_normalizado,
+                # Máximo de PUNTOS posibles (no número de ítems): en Competencias
+                # cada pregunta vale hasta 4, así que 5 ítems son 20 puntos.
+                'interes_maximo': interes['puntaje_maximo'] if interes else 0,
+                'competencia_maximo': competencia['puntaje_maximo'] if competencia else 0,
             }
 
         # ── Enriquecer con PLN si hay respuestas abiertas ──────────────────
@@ -410,8 +425,17 @@ class PsicometricoService:
 
         # Determinar perfil dominante: se cruza el ranking de INTERESES (criterio primario,
         # según los lineamientos de la simulación) con el porcentaje de COMPETENCIAS por campo.
+        # Si el estudiante no ha respondido la prueba de Intereses, todos los
+        # puntajes de interés valen 0 y el orden resultante sería el de la lista
+        # (siempre "Realista, Investigador, Artístico"), no el de sus respuestas.
+        # En ese caso el ranking se hace con lo que sí respondió y el perfil se
+        # marca como preliminar.
+        hay_intereses = any(puntajes_por_area.get(a, {}).get('interes_puntaje', 0) > 0 for a in areas_holland)
+        perfil_preliminar = not hay_intereses
+
         if puntajes_por_area:
-            ranking_intereses = sorted(areas_holland, key=lambda a: puntajes_por_area[a]['interes_puntaje'], reverse=True)
+            clave_ranking = 'interes_puntaje' if hay_intereses else 'normalizado'
+            ranking_intereses = sorted(areas_holland, key=lambda a: puntajes_por_area[a].get(clave_ranking, 0), reverse=True)
             for posicion, area in enumerate(ranking_intereses, start=1):
                 puntajes_por_area[area]['ranking_interes'] = posicion
 
@@ -504,6 +528,8 @@ class PsicometricoService:
                 'puntajes_escala': puntajes_escala_todas,
                 'puntajes_por_area': puntajes_por_area,
                 'codigo_riasec': codigo_riasec,
+                # True cuando el perfil se dedujo sin la prueba de Intereses
+                'preliminar': perfil_preliminar,
                 'ranking_intereses': ranking_intereses,
                 'campo_prioritario_1': perfil_principal_nombre,
                 'campo_prioritario_2': perfil_secundario_nombre,

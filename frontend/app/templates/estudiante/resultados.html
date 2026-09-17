@@ -20,6 +20,13 @@
             </span>
         </div>
         {% endif %}
+        {% if perfil.datos_json and perfil.datos_json.preliminar %}
+        <div style="margin-top: 1rem;">
+            <span style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600;">
+                Resultado preliminar — falta la prueba de Intereses
+            </span>
+        </div>
+        {% endif %}
     </div>
 
     {% if perfil.datos_json and perfil.datos_json.advertencia %}
