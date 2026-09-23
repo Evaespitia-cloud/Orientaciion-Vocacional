@@ -47,15 +47,22 @@ def ensure_instrument(nombre, dimension_name, desc, vmin, vmax):
         esc.valor_minimo, esc.valor_maximo, esc.orden = vmin, vmax, n
     now = datetime.utcnow()
     cfg = ConfiguracionAplicacion.query.filter_by(instrumento_id=inst.id).first()
+    # obligatoria=True es lo que hace que la prueba aparezca SIEMPRE en el panel
+    # del estudiante. El endpoint /aplicaciones/disponibles muestra una config
+    # obligatoria por instrumento, pero de las no obligatorias solo muestra la
+    # más reciente entre todos los instrumentos. Con las dos marcadas como no
+    # obligatorias, únicamente se veía una prueba y la de Intereses quedaba
+    # invisible para los estudiantes.
     if not cfg:
         cfg = ConfiguracionAplicacion(
             instrumento_id=inst.id, nombre=nombre, descripcion=desc,
             fecha_inicio=now - timedelta(days=1), fecha_fin=now + timedelta(days=3650),
-            obligatoria=False, activa=True
+            obligatoria=True, activa=True
         )
         db.session.add(cfg)
     else:
         cfg.activa = True
+        cfg.obligatoria = True
         if cfg.fecha_fin < now:
             cfg.fecha_fin = now + timedelta(days=3650)
     return inst

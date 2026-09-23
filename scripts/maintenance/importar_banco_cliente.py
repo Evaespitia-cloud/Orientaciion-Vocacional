@@ -219,6 +219,14 @@ def extraer_competencia(ruta: Path) -> list[dict]:
         contexto = siguiente(bloque, indice_contexto)
         texto = siguiente(bloque, indice_enunciado)
 
+        # Algunos ítems no traen sección de contexto. En esos casos la lectura
+        # arrastraba el propio rótulo ("Enunciado del ítem") y terminaba
+        # mostrándose como si fuera la situación. Un rótulo no es contexto.
+        ROTULOS = {"enunciado del item", "contexto de la situacion",
+                   "construccion del item", "opcion a"}
+        if not contexto or normalizar(contexto) in ROTULOS or len(contexto.strip()) < 25:
+            contexto = None
+
         opciones = []
         for letra in "ABCD":
             etiqueta = normalizar(f"Opción {letra}")
@@ -575,6 +583,10 @@ def argumentos() -> argparse.Namespace:
     )
     parser.add_argument("--version", default="2.0")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--forzar-excel", action="store_true",
+        help="Ignorar los .docx y cargar desde el Excel de respaldo",
+    )
     return parser.parse_args()
 
 
@@ -641,10 +653,14 @@ def importar_en_bd(intereses: list[dict], competencias: list[dict], version: str
         activos_competencias = Item.query.join(Escala).filter(
             Escala.dimension_id == dimension_competencias.id, Item.activo == True
         ).count()
-        if activos_intereses != 30 or activos_competencias != 30:
+        # La postcondición comprueba que quedó activo exactamente lo que se cargó.
+        # Antes exigía 30 y 30, lo que impedía cargar un banco de otro tamaño.
+        if activos_intereses != len(intereses) or activos_competencias != len(competencias):
             db.session.rollback()
             raise BancoInvalido(
-                f'Postcondición inválida: intereses={activos_intereses}, competencias={activos_competencias}'
+                f'Postcondición inválida: se esperaban {len(intereses)} intereses y '
+                f'{len(competencias)} competencias activos, pero quedaron '
+                f'{activos_intereses} y {activos_competencias}'
             )
 
         if not CampoDemografico.query.filter_by(nombre="grupo").first():
@@ -654,19 +670,45 @@ def importar_en_bd(intereses: list[dict], competencias: list[dict], version: str
                 obligatorio=False, orden=orden + 1,
             ))
         db.session.commit()
-        print("Importación aplicada: 30 intereses y 30 competencias.")
+        print(f"Importación aplicada: {len(intereses)} intereses y {len(competencias)} competencias.")
 
 
 def main() -> int:
     args = argumentos()
+
+    # Fuente principal: los documentos originales de los ítems, que traen el
+    # valor de cada opción de respuesta. El Excel queda solo como respaldo.
+    usar_docx = (
+        not args.forzar_excel
+        and args.intereses_dir and args.intereses_dir.is_dir()
+        and args.competencias_docx and args.competencias_docx.exists()
+    )
     try:
-        if not args.excel or not args.excel.exists():
-            raise BancoInvalido(f"No se encontró el banco oficial: {args.excel}")
-        intereses, competencias = cargar_banco_desde_excel(args.excel)
-        print(f"Excel oficial leído: {args.excel}")
+        if usar_docx:
+            intereses, competencias = cargar_banco(args.intereses_dir, args.competencias_docx)
+            print(f"Banco leído de los documentos originales:")
+            print(f"  Intereses (elección forzada): {args.intereses_dir}")
+            print(f"  Competencias (juicio situacional): {args.competencias_docx}")
+        else:
+            if not args.excel or not args.excel.exists():
+                raise BancoInvalido(
+                    "No se encontró el banco de ítems. Se esperaban las carpetas "
+                    f"'{args.intereses_dir}' y '{args.competencias_docx}', "
+                    f"o el Excel '{args.excel}'."
+                )
+            intereses, competencias = cargar_banco_desde_excel(args.excel)
+            print(f"Excel de respaldo leído: {args.excel}")
     except (OSError, KeyError, ValueError, BancoInvalido) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
+
+    # Resumen de cómo queda repartido el banco por campo RIASEC
+    from collections import Counter
+    print("\nDistribución por campo RIASEC:")
+    for etiqueta, lote in (("Intereses", intereses), ("Competencias", competencias)):
+        conteo = Counter(item["campo_escala"] for item in lote)
+        detalle = ", ".join(f"{campo}={n}" for campo, n in sorted(conteo.items()))
+        print(f"  {etiqueta}: {detalle}")
 
     print(f"Intereses validados: {len(intereses)}")
     print(f"Competencias validadas: {len(competencias)}")

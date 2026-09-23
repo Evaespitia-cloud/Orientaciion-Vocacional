@@ -29,6 +29,14 @@ def login():
             rol = session['rol']
             if rol in ('bienestar', 'ti', 'directivo', 'investigador'):
                 return redirect(url_for('admin.dashboard'))
+
+            # El consentimiento se pide aquí, nada más entrar, y no justo antes
+            # de la prueba: interrumpir al estudiante cuando ya iba a empezar lo
+            # devolvía al inicio y daba la sensación de que la página lo rebotaba.
+            estado, st = api_request('GET', '/consentimiento/estado')
+            if st == 200 and not estado.get('tiene_consentimiento'):
+                return redirect(url_for('auth.consentimiento'))
+            session['consentimiento'] = True
             return redirect(url_for('estudiante.inicio'))
         else:
             error = data.get('error', 'Error al iniciar sesión')
@@ -96,6 +104,12 @@ def consentimiento():
     if 'access_token' not in session:
         return redirect(url_for('auth.login'))
 
+    # A dónde seguir después de aceptar. Si el estudiante venía de abrir una
+    # prueba, se le devuelve ahí en vez de mandarlo al inicio.
+    destino = request.args.get('next') or request.form.get('next')
+    if not destino or not destino.startswith('/'):
+        destino = url_for('estudiante.inicio')
+
     if request.method == 'POST':
         aceptado = request.form.get('aceptado') == 'si'
         data, status = api_request('POST', '/consentimiento/', {
@@ -105,9 +119,11 @@ def consentimiento():
 
         if status == 201 and aceptado:
             session['consentimiento'] = True
-            return redirect(url_for('estudiante.inicio'))
+            return redirect(destino)
         elif not aceptado:
             flash('Debes aceptar el consentimiento para continuar.', 'warning')
+        else:
+            flash(data.get('error', 'No se pudo registrar el consentimiento.'), 'error')
 
     # Obtener estado del consentimiento
     data, status = api_request('GET', '/consentimiento/estado')
@@ -116,9 +132,10 @@ def consentimiento():
 
     if tiene_consentimiento:
         session['consentimiento'] = True
-        return redirect(url_for('estudiante.inicio'))
+        return redirect(destino)
 
-    return render_template('auth/consentimiento.html', texto_politica=texto_politica)
+    return render_template('auth/consentimiento.html',
+                           texto_politica=texto_politica, destino=destino)
 
 
 @auth_routes.route('/logout', methods=['POST'])

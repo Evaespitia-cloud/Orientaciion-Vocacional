@@ -703,9 +703,10 @@ tbody tr:last-child td {
     box-shadow: var(--shadow-sm);
 }
 
+/* Marca discreta de "ya respondida", sin teñir el contenido: el color de
+   selección va únicamente sobre la opción que la persona eligió. */
 .question-card.answered {
-    border-left: 3px solid var(--teal);
-    background: #f0fdf4;
+    border-left: 3px solid #059669;
 }
 
 .question-text {

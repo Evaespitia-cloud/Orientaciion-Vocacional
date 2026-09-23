@@ -146,10 +146,28 @@ def guardar_respuestas(id):
 
     datos = request.get_json(silent=True) or {}
     respuestas_data = datos.get('respuestas', [])
-    if not isinstance(respuestas_data, list) or len(respuestas_data) > 30:
+    if not isinstance(respuestas_data, list):
         return jsonify({'error': 'Formato de respuestas inválido'}), 400
 
     instrumento_id = aplicacion.configuracion.instrumento_id
+
+    # El tope se calcula sobre la prueba real. Antes estaba fijo en 30, heredado
+    # de cuando cada instrumento tenía 30 ítems: con bancos más grandes, todo
+    # envío con más de 30 respuestas se rechazaba y el estudiante perdía lo
+    # contestado de ahí en adelante sin ningún aviso.
+    total_items = db.session.query(Item.id).join(
+        Escala, Item.escala_id == Escala.id
+    ).join(
+        Dimension, Escala.dimension_id == Dimension.id
+    ).filter(
+        Dimension.instrumento_id == instrumento_id,
+        Item.activo == True,
+    ).count()
+    if len(respuestas_data) > max(total_items, 1):
+        return jsonify({
+            'error': f'Se enviaron {len(respuestas_data)} respuestas y la prueba '
+                     f'tiene {total_items} ítems'
+        }), 400
     ids_solicitados = []
     for resp in respuestas_data:
         if not isinstance(resp, dict) or 'item_id' not in resp:

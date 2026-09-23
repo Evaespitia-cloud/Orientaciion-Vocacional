@@ -125,7 +125,8 @@ def cuestionario(config_id):
     ])
 
     if not checks['consentimiento'][0].get('tiene_consentimiento'):
-        return redirect(url_for('auth.consentimiento'))
+        return redirect(url_for('auth.consentimiento',
+                                next=url_for('estudiante.cuestionario', config_id=config_id)))
 
     if not checks['demo'][0].get('completo', False):
         flash('Debes completar tus datos demográficos antes de iniciar la prueba.', 'warning')
