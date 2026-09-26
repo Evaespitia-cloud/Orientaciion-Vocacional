@@ -38,7 +38,7 @@
     /* Alias heredados: el código antiguo sigue usando estos nombres */
     --teal: #b35c00;
     --teal-light: #ef7d00;
-    --bg-main: #f7f7f8;
+    --bg-main: #fdfaf6;
     --bg-card: #ffffff;
     --bg-glass: rgba(255, 255, 255, 0.7);
     --text-primary: #171717;
@@ -88,144 +88,99 @@ a:hover {
     color: var(--accent-light);
 }
 
-/* ---- Navbar ---- */
+/* ---- Navbar ----
+   Barra clara: fondo blanco, texto oscuro y naranja institucional como
+   acento. El negro queda para elementos puntuales (encabezados de tabla,
+   títulos), no para superficies grandes. */
 .navbar {
-    background: linear-gradient(135deg, var(--primary) 0%, #262626 100%);
-    padding: 0 2rem;
+    background: #fff;
+    padding: 0 1.5rem;
     height: 64px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.75rem;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 12px rgba(17, 17, 17, 0.06);
 }
+
+/* Botón que despliega el menú principal — esquina superior izquierda */
+.menu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.menu-btn:hover { background: var(--orange-dark); }
+.menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .navbar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
-    color: white;
+    gap: 10px;
+    color: var(--text-primary);
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
-    flex-shrink: 0;
-    margin-right: 1rem;
+    margin-right: auto;
 }
 
-.navbar-user {
-    flex-shrink: 0;
-}
+.navbar-brand:hover { color: var(--accent-text); }
 
-.navbar-nav {
-    display: flex;
-    align-items: center;
-    gap: 0.2rem;
-    list-style: none;
-    min-width: 0;
-    flex-shrink: 1;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.navbar-nav::-webkit-scrollbar {
-    display: none;
-}
-
-.navbar-nav li {
-    flex-shrink: 0;
-}
-
-.navbar-nav a {
-    white-space: nowrap;
-}
-
-/* Margen extra de seguridad antes de que el menú pase a desplegable */
-@media (max-width: 1600px) {
-    .navbar { padding: 0 1rem; }
-    .navbar-brand { font-size: 1rem; gap: 8px; margin-right: 0.5rem; }
-    .navbar-usb { margin-right: 0.6rem; }
-    .navbar-user { gap: 8px; }
-}
-
-.navbar-nav a {
-    color: rgba(255, 255, 255, 0.8);
-    padding: 7px 11px;
-    border-radius: var(--radius-sm);
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.navbar-nav a:hover, .navbar-nav a.active {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-}
-
-/* Logo institucional: siempre visible al lado derecho de la barra.
-   Va sobre una pastilla blanca porque el logo es negro sobre naranja
-   y la barra es negra; así se respeta el logo sin recolorearlo. */
+/* Logo institucional: siempre visible, a la derecha de la barra. Sobre
+   fondo blanco ya no necesita la pastilla que llevaba con la barra negra. */
 .navbar-usb {
     display: flex;
     align-items: center;
-    margin-right: 1rem;
-    background: #fff;
-    border-radius: 8px;
-    padding: 5px 10px;
+    margin-right: 0.5rem;
     flex-shrink: 0;
     line-height: 0;
 }
 
-.navbar-usb img {
-    display: block;
-    height: 26px;
-    width: auto;
-}
+.navbar-usb img { display: block; height: 30px; width: auto; }
 
 .navbar-usb .usb-marca {
     display: none;
-    height: 26px;
-    width: 26px;
-    border-radius: 4px;
-}
-
-/* En pantallas angostas el texto del logo no se leería: se deja el sello */
-@media (max-width: 720px) {
-    .navbar-usb { padding: 4px; margin-right: 0.6rem; }
-    .navbar-usb .usb-completo { display: none; }
-    .navbar-usb .usb-marca { display: block; }
-}
-
-@media (max-width: 560px) {
-    /* Se oculta el nombre de la app (queda su icono) para que el logo
-       institucional siempre quepa sin desbordar la barra. */
-    .navbar-brand { font-size: 0; gap: 0; }
-    .navbar-user .user-name { display: none; }
+    height: 28px;
+    width: 28px;
+    border-radius: 5px;
 }
 
 .navbar-user {
     display: flex;
     align-items: center;
-    gap: 12px;
-    color: white;
+    gap: 10px;
+    color: var(--text-primary);
+    flex-shrink: 0;
 }
 
 .navbar-user .avatar {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: var(--accent-gradient);
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
     font-weight: 700;
+    flex-shrink: 0;
 }
 
 .navbar-user .user-name {
@@ -238,25 +193,161 @@ a:hover {
 }
 
 .btn-logout {
-    background: rgba(255, 255, 255, 0.12);
-    color: white !important;
+    background: #fff;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border);
     padding: 6px 14px;
     border-radius: var(--radius-sm);
     font-size: 0.8rem;
+    font-weight: 600;
 }
 
 .btn-logout:hover {
-    background: rgba(239, 68, 68, 0.8);
+    background: var(--orange-soft);
+    border-color: var(--accent);
+    color: var(--accent-text) !important;
 }
 
-/* ---- Mobile Nav Toggle ---- */
-.nav-toggle {
-    display: none;
+/* ---- Menú principal (panel lateral) ----
+   Sustituye a la lista horizontal: con once secciones ya no cabían en la
+   barra. El panel se abre desde la izquierda y muestra solo lo que
+   corresponde al rol de quien entró. */
+.menu-fondo {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 17, 17, 0.4);
+    z-index: 190;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.menu-fondo.visible { opacity: 1; visibility: visible; }
+
+.menu-lateral {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 290px;
+    max-width: 88vw;
+    background: #fff;
+    border-right: 1px solid var(--border);
+    box-shadow: 6px 0 30px rgba(17, 17, 17, 0.14);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s ease;
+}
+
+.menu-lateral.abierto { transform: translateX(0); visibility: visible; }
+
+/* Evita que el fondo se desplace mientras el menú está abierto */
+body.menu-abierto { overflow: hidden; }
+
+.menu-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem 0 1.25rem;
+    height: 64px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.menu-titulo {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+}
+
+.menu-cerrar {
     background: none;
     border: none;
-    color: white;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--text-secondary);
     cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+}
+
+.menu-cerrar:hover { background: var(--orange-soft); color: var(--accent-text); }
+
+.menu-opciones {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.85rem 0.6rem 1rem;
+}
+
+.menu-seccion {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--text-light);
+    margin: 1rem 0 0.35rem 0.65rem;
+}
+
+.menu-seccion:first-child { margin-top: 0.25rem; }
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
+    text-align: left;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.menu-item:hover { background: #f7f7f8; color: var(--accent-text); }
+
+.menu-item.active {
+    background: var(--orange-soft);
+    border-left-color: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.menu-item-salir { color: var(--text-secondary); }
+.menu-item-salir:hover { background: #fee2e2; color: #991b1b; }
+
+.menu-pie {
+    flex-shrink: 0;
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.menu-pie strong { color: var(--text-secondary); }
+
+/* En pantallas medianas el logo institucional se reduce a su sello */
+@media (max-width: 820px) {
+    .navbar { padding: 0 1rem; gap: 0.5rem; }
+    .navbar-usb .usb-completo { display: none; }
+    .navbar-usb .usb-marca { display: block; }
+}
+
+/* En pantallas angostas quedan los iconos: el menú nunca se oculta */
+@media (max-width: 620px) {
+    .menu-btn { padding: 9px 11px; }
+    .menu-btn-texto { display: none; }
+    .navbar-brand-texto { display: none; }
+    .navbar-user .user-name { display: none; }
 }
 
 /* ---- Layout ---- */
@@ -600,7 +691,7 @@ tbody tr:last-child td {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #111111 0%, #1c1c1c 30%, #262626 100%);
+    background: linear-gradient(140deg, #fff8f0 0%, #fdfaf6 45%, #fff1e0 100%);
     padding: 2rem;
     position: relative;
     overflow: hidden;
@@ -613,7 +704,7 @@ tbody tr:last-child td {
     right: -20%;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(239, 125, 0, 0.2), transparent 70%);
+    background: radial-gradient(circle, rgba(239, 125, 0, 0.18), transparent 70%);
     border-radius: 50%;
 }
 
@@ -624,12 +715,13 @@ tbody tr:last-child td {
     left: -10%;
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, rgba(179, 92, 0, 0.15), transparent 70%);
+    background: radial-gradient(circle, rgba(255, 154, 61, 0.16), transparent 70%);
     border-radius: 50%;
 }
 
 .auth-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: #fff;
+    border: 1px solid var(--border);
     backdrop-filter: blur(20px);
     border-radius: var(--radius-xl);
     padding: 2.5rem;
@@ -793,7 +885,7 @@ tbody tr:last-child td {
 
 /* ---- Results Page ---- */
 .result-hero {
-    background: linear-gradient(135deg, var(--primary) 0%, #262626 50%, var(--accent) 100%);
+    background: linear-gradient(135deg, #ef7d00 0%, #d06b00 55%, #111111 100%);
     border-radius: var(--radius-lg);
     padding: 2.5rem;
     color: white;
@@ -933,40 +1025,6 @@ tbody tr:last-child td {
 }
 
 /* ---- Responsive ---- */
-/* Por debajo de 1450px el menú pasa a ser desplegable (botón ☰) */
-@media (max-width: 1450px) {
-    .navbar-nav {
-        display: none;
-        position: absolute;
-        top: 64px;
-        left: 0;
-        right: 0;
-        background: var(--primary);
-        flex-direction: column;
-        align-items: stretch;
-        padding: 1rem;
-        gap: 0.15rem;
-        overflow-x: visible;
-        max-height: calc(100vh - 64px);
-        overflow-y: auto;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-    }
-
-    .navbar-nav.show {
-        display: flex;
-    }
-
-    .navbar-nav a {
-        padding: 10px 14px;
-        font-size: 0.875rem;
-    }
-
-    .nav-toggle {
-        display: block;
-        margin-right: auto;
-    }
-}
-
 @media (max-width: 768px) {
     .navbar {
         padding: 0 1rem;
@@ -1074,16 +1132,6 @@ tbody tr:last-child td {
 
     .navbar {
         padding: 0 0.875rem;
-    }
-
-    .navbar-brand {
-        font-size: 0.95rem;
-        gap: 8px;
-    }
-
-    /* En pantallas muy angostas el nombre se oculta: quedan avatar y "Salir" */
-    .navbar-user .user-name {
-        display: none;
     }
 
     .auth-card {

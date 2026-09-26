@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo-usb-marca.png') }}">
-    <meta name="theme-color" content="#111111">
+    <meta name="theme-color" content="#ffffff">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     {% block head %}{% endblock %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -40,45 +40,17 @@
 <body>
     {% if session.get('access_token') %}
     <nav class="navbar" id="mainNavbar">
+        <button type="button" class="menu-btn" id="menuBtn" onclick="abrirMenu()"
+                aria-label="Abrir menú" aria-expanded="false" aria-controls="menuLateral">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span class="menu-btn-texto">Menú</span>
+        </button>
+
         <a href="/" class="navbar-brand">
             <img src="{{ url_for('static', filename='img/logo.svg') }}"
-                 alt="" aria-hidden="true" width="34" height="34" style="display:block;">
-            Orientación Vocacional
+                 alt="" aria-hidden="true" width="32" height="32" style="display:block;">
+            <span class="navbar-brand-texto">Orientación Vocacional</span>
         </a>
-
-        <button class="nav-toggle" onclick="toggleNav()" aria-label="Menú">☰</button>
-
-        <ul class="navbar-nav" id="navMenu">
-            {% if session.get('rol') == 'directivo' or session.get('rol') == 'investigador' %}
-                <li><a href="{{ url_for('admin.dashboard') }}" class="{% if request.path.startswith('/admin/dashboard') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Panel admin</a></li>
-                <li><a href="{{ url_for('admin.informe_general') }}" class="{% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Informes</a></li>
-                <li><a href="{{ url_for('admin.exportar') }}" class="{% if request.path.startswith('/admin/exportar') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Exportación anónima</a></li>
-            {% elif session.get('rol') == 'bienestar' %}
-                <li><a href="{{ url_for('admin.dashboard') }}" class="{% if request.path.startswith('/admin/dashboard') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Panel Bienestar</a></li>
-                <li><a href="{{ url_for('admin.instrumento') }}" class="{% if request.path.startswith('/admin/instrumento') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Instrumentos</a></li>
-                <li><a href="{{ url_for('admin.banco_preguntas') }}" class="{% if request.path.startswith('/admin/banco-preguntas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Banco Preguntas</a></li>
-                <li><a href="{{ url_for('admin.consultas') }}" class="{% if request.path.startswith('/admin/consultas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Consultas</a></li>
-                <li><a href="{{ url_for('admin.informe_general') }}" class="{% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Informes</a></li>
-                <li><a href="{{ url_for('admin.datos_estudiantes') }}" class="{% if request.path.startswith('/admin/datos') or request.path.startswith('/admin/campos') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Demográficos</a></li>
-                <li><a href="{{ url_for('admin.exportar') }}" class="{% if request.path.startswith('/admin/exportar') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Exportar</a></li>
-                <li><a href="{{ url_for('admin.ml_dashboard') }}" class="{% if request.path.startswith('/admin/ml-pln') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> ML / PLN</a></li>
-                <li><a href="{{ url_for('admin.auditoria_estudiantes') }}" class="{% if request.path.startswith('/admin/auditoria-estudiantes') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Auditoría estudiantes</a></li>
-            {% elif session.get('rol') == 'ti' %}
-                <li><a href="{{ url_for('admin.dashboard') }}" class="{% if request.path.startswith('/admin/dashboard') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Dashboard</a></li>
-                <li><a href="{{ url_for('admin.usuarios') }}" class="{% if request.path.startswith('/admin/usuarios') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Usuarios</a></li>
-                <li><a href="{{ url_for('admin.instrumento') }}" class="{% if request.path.startswith('/admin/instrumento') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Instrumentos</a></li>
-                <li><a href="{{ url_for('admin.informe_general') }}" class="{% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Informes</a></li>
-                <li><a href="{{ url_for('admin.datos_estudiantes') }}" class="{% if request.path.startswith('/admin/datos') or request.path.startswith('/admin/campos') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Demográficos</a></li>
-                <li><a href="{{ url_for('admin.formulas_calculo') }}" class="{% if request.path.startswith('/admin/formulas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg> Fórmulas</a></li>
-                <li><a href="{{ url_for('admin.banco_preguntas') }}" class="{% if request.path.startswith('/admin/banco-preguntas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Banco Preguntas</a></li>
-                <li><a href="{{ url_for('admin.consultas') }}" class="{% if request.path.startswith('/admin/consultas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Consultas</a></li>
-                <li><a href="{{ url_for('admin.exportar') }}" class="{% if request.path.startswith('/admin/exportar') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Exportar</a></li>
-                <li><a href="{{ url_for('admin.ml_dashboard') }}" class="{% if request.path.startswith('/admin/ml-pln') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> ML / PLN</a></li>
-                <li><a href="{{ url_for('admin.auditoria') }}" class="{% if request.path.startswith('/admin/auditoria') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Auditoría</a></li>
-            {% else %}
-                <li><a href="{{ url_for('estudiante.inicio') }}" class="{% if request.path == '/estudiante/inicio' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a></li>
-            {% endif %}
-        </ul>
 
         <a href="https://www.usbmed.edu.co" target="_blank" rel="noopener"
            class="navbar-usb" title="Universidad de San Buenaventura">
@@ -94,6 +66,71 @@
             <form method="POST" action="{{ url_for('auth.logout') }}" style="display:inline; margin:0;"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn-logout" style="border:0;cursor:pointer;">Salir</button></form>
         </div>
     </nav>
+
+    <!-- ── Menú principal (panel lateral) ──────────────────────────
+         Las opciones dejaron de vivir en la barra superior: con once
+         secciones no cabían y se montaban unas sobre otras. Ahora se
+         despliegan aquí, agrupadas y filtradas por el rol de cada usuario. -->
+    <div class="menu-fondo" id="menuFondo" onclick="cerrarMenu()"></div>
+
+    <aside class="menu-lateral" id="menuLateral" aria-label="Menú principal" aria-hidden="true">
+        <div class="menu-cabecera">
+            <span class="menu-titulo">Menú</span>
+            <button type="button" class="menu-cerrar" onclick="cerrarMenu()" aria-label="Cerrar menú">&#10005;</button>
+        </div>
+
+        <nav class="menu-opciones">
+            {% if session.get('rol') == 'directivo' or session.get('rol') == 'investigador' %}
+                <p class="menu-seccion">Panel</p>
+                <a href={{ url_for('admin.dashboard') }} class="menu-item {% if request.path.startswith('/admin/dashboard') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg><span>Panel admin</span></a>
+                <p class="menu-seccion">Análisis y datos</p>
+                <a href={{ url_for('admin.informe_general') }} class="menu-item {% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><span>Informes</span></a>
+                <a href={{ url_for('admin.exportar') }} class="menu-item {% if request.path.startswith('/admin/exportar') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg><span>Exportación anónima</span></a>
+            {% elif session.get('rol') == 'bienestar' %}
+                <p class="menu-seccion">Panel</p>
+                <a href={{ url_for('admin.dashboard') }} class="menu-item {% if request.path.startswith('/admin/dashboard') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg><span>Panel Bienestar</span></a>
+                <p class="menu-seccion">Gestión del instrumento</p>
+                <a href={{ url_for('admin.instrumento') }} class="menu-item {% if request.path.startswith('/admin/instrumento') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg><span>Instrumentos</span></a>
+                <a href={{ url_for('admin.banco_preguntas') }} class="menu-item {% if request.path.startswith('/admin/banco-preguntas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Banco Preguntas</span></a>
+                <a href={{ url_for('admin.datos_estudiantes') }} class="menu-item {% if request.path.startswith('/admin/datos') or request.path.startswith('/admin/campos') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg><span>Demográficos</span></a>
+                <p class="menu-seccion">Análisis</p>
+                <a href={{ url_for('admin.informe_general') }} class="menu-item {% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><span>Informes</span></a>
+                <a href={{ url_for('admin.consultas') }} class="menu-item {% if request.path.startswith('/admin/consultas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Consultas</span></a>
+                <a href={{ url_for('admin.ml_dashboard') }} class="menu-item {% if request.path.startswith('/admin/ml-pln') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>ML / PLN</span></a>
+                <p class="menu-seccion">Datos</p>
+                <a href={{ url_for('admin.exportar') }} class="menu-item {% if request.path.startswith('/admin/exportar') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg><span>Exportar</span></a>
+                <a href={{ url_for('admin.auditoria_estudiantes') }} class="menu-item {% if request.path.startswith('/admin/auditoria-estudiantes') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Auditoría estudiantes</span></a>
+            {% elif session.get('rol') == 'ti' %}
+                <p class="menu-seccion">Panel</p>
+                <a href={{ url_for('admin.dashboard') }} class="menu-item {% if request.path.startswith('/admin/dashboard') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg><span>Dashboard</span></a>
+                <p class="menu-seccion">Gestión</p>
+                <a href={{ url_for('admin.usuarios') }} class="menu-item {% if request.path.startswith('/admin/usuarios') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Usuarios</span></a>
+                <a href={{ url_for('admin.instrumento') }} class="menu-item {% if request.path.startswith('/admin/instrumento') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg><span>Instrumentos</span></a>
+                <a href={{ url_for('admin.banco_preguntas') }} class="menu-item {% if request.path.startswith('/admin/banco-preguntas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Banco Preguntas</span></a>
+                <a href={{ url_for('admin.formulas_calculo') }} class="menu-item {% if request.path.startswith('/admin/formulas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg><span>Fórmulas</span></a>
+                <a href={{ url_for('admin.datos_estudiantes') }} class="menu-item {% if request.path.startswith('/admin/datos') or request.path.startswith('/admin/campos') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg><span>Demográficos</span></a>
+                <p class="menu-seccion">Análisis</p>
+                <a href={{ url_for('admin.informe_general') }} class="menu-item {% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><span>Informes</span></a>
+                <a href={{ url_for('admin.consultas') }} class="menu-item {% if request.path.startswith('/admin/consultas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Consultas</span></a>
+                <a href={{ url_for('admin.ml_dashboard') }} class="menu-item {% if request.path.startswith('/admin/ml-pln') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>ML / PLN</span></a>
+                <p class="menu-seccion">Datos y sistema</p>
+                <a href={{ url_for('admin.exportar') }} class="menu-item {% if request.path.startswith('/admin/exportar') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg><span>Exportar</span></a>
+                <a href={{ url_for('admin.auditoria') }} class="menu-item {% if request.path.startswith('/admin/auditoria') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Auditoría</span></a>
+            {% else %}
+                <a href={{ url_for('estudiante.inicio') }} class="menu-item {% if request.path == '/estudiante/inicio' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></a>
+            {% endif %}
+
+            <p class="menu-seccion">Mi cuenta</p>
+            <a href="{{ url_for('main.perfil') }}" class="menu-item {% if request.path == '/perfil' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Mi perfil</span></a>
+            <form method="POST" action="{{ url_for('auth.logout') }}" style="margin:0;">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="menu-item menu-item-salir"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Cerrar sesión</span></button>
+            </form>
+        </nav>
+
+        <p class="menu-pie">Sesión iniciada como <strong>{{ session.get('rol', '') | capitalize }}</strong></p>
+    </aside>
+
     {% endif %}
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -127,9 +164,26 @@
     {% endif %}
 
     <script>
-    function toggleNav() {
-        document.getElementById('navMenu').classList.toggle('show');
+    /* ── Menú principal ───────────────────────────────────────── */
+    function abrirMenu() {
+        document.getElementById('menuLateral').classList.add('abierto');
+        document.getElementById('menuLateral').setAttribute('aria-hidden', 'false');
+        document.getElementById('menuFondo').classList.add('visible');
+        document.getElementById('menuBtn').setAttribute('aria-expanded', 'true');
+        document.body.classList.add('menu-abierto');
     }
+
+    function cerrarMenu() {
+        document.getElementById('menuLateral').classList.remove('abierto');
+        document.getElementById('menuLateral').setAttribute('aria-hidden', 'true');
+        document.getElementById('menuFondo').classList.remove('visible');
+        document.getElementById('menuBtn').setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('menu-abierto');
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') cerrarMenu();
+    });
 
     // Aviso de sesión por expirar (JWT dura 1h = 3600s)
     {% if session.get('access_token') %}
