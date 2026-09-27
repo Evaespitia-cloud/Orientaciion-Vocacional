@@ -30,11 +30,28 @@ def _local_secret(name: str) -> str:
     return value
 
 
+def _url_base_datos() -> str:
+    """Normaliza la cadena de conexión y fija el driver de PostgreSQL.
+
+    El proveedor entrega la URL como "postgresql://" (algunos, como Heroku, aún
+    usan "postgres://"). Qué librería se usa para conectarse depende entonces del
+    valor por defecto de SQLAlchemy, que cambió de psycopg2 a psycopg (v3) en la
+    versión 2.1 y tumbó el despliegue. Al escribir "+psycopg2" el driver queda
+    declarado y no depende de la versión que se instale.
+    """
+    url = os.getenv('DATABASE_URL', 'sqlite:///orientacion.db')
+    if url.startswith('postgres://'):
+        url = 'postgresql://' + url[len('postgres://'):]
+    if url.startswith('postgresql://'):
+        url = 'postgresql+psycopg2://' + url[len('postgresql://'):]
+    return url
+
+
 class Config:
     """Configuración base del backend."""
     SECRET_KEY = _local_secret('SECRET_KEY')
     JWT_SECRET_KEY = _local_secret('JWT_SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///orientacion.db')
+    SQLALCHEMY_DATABASE_URI = _url_base_datos()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
