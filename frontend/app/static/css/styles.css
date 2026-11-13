@@ -2027,3 +2027,6 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
 
 /* En el registro la lista de colegios empuja los campos de abajo en vez de taparlos */
 .auth-card .bc-lista { position: static; margin-top: 6px; box-shadow: none; }
+
+/* Los diálogos (carta, método, mapa) vuelven a centrarse: el reinicio global les quita el margin:auto del navegador */
+dialog.cc, dialog.ea-metodo { margin: auto; }
