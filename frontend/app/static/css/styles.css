@@ -2003,3 +2003,27 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
     .q-mitad { left: 12px; right: 12px; bottom: 12px; max-width: none; }
     .ea-fox { height: 72px; }
 }
+
+
+/* ── Páginas de acceso: nada se sobrepone ─────────────────────────────
+   El botón «Inicio» va dentro de la tarjeta, en el flujo normal: antes era
+   position:fixed y, al desplazarse o al aparecer un mensaje de error,
+   tapaba etiquetas, campos y alertas. */
+.btn-volver-inicio {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    color: #a35200; background: #fff; border: 1px solid #e5e5e5;
+    padding: 0.4rem 0.95rem 0.4rem 0.7rem; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600; text-decoration: none;
+    margin-bottom: 1rem; transition: background 0.2s;
+}
+.btn-volver-inicio:hover { background: #fff1e0; text-decoration: none; }
+
+/* Campos con el botón del ojo: el texto y el marcador no pasan por debajo del icono */
+.form-control.input-con-icono { padding-right: 2.8rem; }
+.form-control { text-overflow: ellipsis; }
+
+/* En celular las parejas de campos se apilan: mismo espacio que el resto del formulario */
+.auth-card .grid-2 { row-gap: 0; }
+
+/* En el registro la lista de colegios empuja los campos de abajo en vez de taparlos */
+.auth-card .bc-lista { position: static; margin-top: 6px; box-shadow: none; }
