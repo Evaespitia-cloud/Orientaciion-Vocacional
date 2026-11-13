@@ -2,12 +2,12 @@
 {% block title %}Iniciar Sesión — Orientación Vocacional{% endblock %}
 
 {% block content %}
-<a href="{{ url_for('main.index') }}" style="position:fixed; top:1.2rem; left:1.4rem; display:inline-flex; align-items:center; gap:0.45rem; color:#a35200; background:#fff; border:1px solid #e5e5e5; box-shadow:0 2px 10px rgba(17,17,17,0.08); padding:0.45rem 1rem 0.45rem 0.75rem; border-radius:999px; font-size:0.85rem; font-weight:600; text-decoration:none; z-index:100; transition:background 0.2s;" onmouseover="this.style.background='#fff1e0'" onmouseout="this.style.background='#fff'">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-    Inicio
-</a>
 <div class="auth-wrapper">
     <div class="auth-card">
+        <a href="{{ url_for('main.index') }}" class="btn-volver-inicio">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+            Inicio
+        </a>
         <div class="auth-header">
             <img src="{{ url_for('static', filename='img/logo-usb.png') }}"
                  alt="Universidad de San Buenaventura"
@@ -29,7 +29,7 @@
                     <a href="#" onclick="alert('Contacta al administrador del sistema para restablecer tu contraseña.'); return false;" style="font-size:0.8rem; font-weight:500;">¿Olvidaste tu contraseña?</a>
                 </label>
                 <div style="position:relative;">
-                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="padding-right:2.8rem;">
+                    <input type="password" id="password" name="password" class="form-control input-con-icono" placeholder="••••••••" required autocomplete="current-password">
                     <button type="button" onclick="toggleVer('password','eyeLogin')" tabindex="-1" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0;line-height:1;" aria-label="Mostrar contraseña">
                         <svg id="eyeLogin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>

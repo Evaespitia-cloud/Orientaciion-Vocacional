@@ -8,6 +8,7 @@ from ..models.aplicacion import Aplicacion, ConfiguracionAplicacion
 from ..models.resultado import ResultadoDimension, PerfilVocacional
 from ..models.instrumento import Instrumento, Dimension, Escala
 from ..models.demografico import DatoDemografico, CampoDemografico
+from . import datos_escolares
 
 RIASEC_AREAS = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional']
 
@@ -18,57 +19,32 @@ class EstadisticaService:
 
     @staticmethod
     def estadisticas_por_grado_area() -> list:
-        """Devuelve para cada grado y área vocacional: promedio, mediana y desviación estándar de puntajes."""
-        from sqlalchemy import cast, Float
+        """Para cada grado y perfil principal: promedio, mediana y desviación de los puntajes."""
         import numpy as np
-        # Obtener campo grado
-        campo_grado = CampoDemografico.query.filter_by(nombre='grado_escolar').first()
-        if not campo_grado:
-            return []
-        # Query: grado, area, puntaje
-        query = (
-            db.session.query(
-                DatoDemografico.valor.label('grado'),
-                PerfilVocacional.perfil_principal.label('area'),
-                ResultadoDimension.puntaje_normalizado.label('puntaje')
-            )
-            .join(Usuario, DatoDemografico.usuario_id == Usuario.id)
-            .join(Aplicacion, Aplicacion.usuario_id == Usuario.id)
+        escolares = datos_escolares.por_usuario()
+        filas = (
+            db.session.query(Aplicacion.usuario_id, PerfilVocacional.perfil_principal,
+                             ResultadoDimension.puntaje_normalizado)
             .join(PerfilVocacional, PerfilVocacional.aplicacion_id == Aplicacion.id)
             .join(ResultadoDimension, ResultadoDimension.aplicacion_id == Aplicacion.id)
-            .filter(DatoDemografico.campo_id == campo_grado.id)
-            .filter(Aplicacion.estado == 'completada')
-            .filter(ResultadoDimension.puntaje_normalizado != None)
+            .filter(Aplicacion.estado == 'completada', ResultadoDimension.puntaje_normalizado.isnot(None))
+            .all()
         )
-        resultados = query.all()
-        # Agrupar por grado y área
         datos = {}
-        for r in resultados:
-            grado = str(r.grado).strip() if r.grado else 'Desconocido'
-            area = r.area if r.area else 'Sin área'
-            key = (grado, area)
-            if key not in datos:
-                datos[key] = []
-            try:
-                datos[key].append(float(r.puntaje))
-            except Exception:
+        for usuario_id, area, puntaje in filas:
+            grado = (escolares.get(usuario_id) or {}).get('grado')
+            if not grado:
                 continue
-        # Calcular estadísticas
+            datos.setdefault((grado, area or 'Sin área'), []).append(float(puntaje))
         estadisticas = []
-        for (grado, area), puntajes in datos.items():
-            if not puntajes:
-                continue
+        for (grado, area), puntajes in sorted(datos.items()):
             arr = np.array(puntajes)
-            promedio = float(np.mean(arr))
-            mediana = float(np.median(arr))
-            std = float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0
             estadisticas.append({
-                'grado': grado,
-                'area': area,
-                'promedio': round(promedio, 2),
-                'mediana': round(mediana, 2),
-                'desviacion': round(std, 2),
-                'n': len(arr)
+                'grado': grado, 'area': area,
+                'promedio': round(float(np.mean(arr)), 2),
+                'mediana': round(float(np.median(arr)), 2),
+                'desviacion': round(float(np.std(arr, ddof=1)), 2) if len(arr) > 1 else 0.0,
+                'n': len(arr),
             })
         return estadisticas
 
@@ -123,112 +99,43 @@ class EstadisticaService:
 
     @staticmethod
     def estadisticas_por_grado(configuracion_id: int = None) -> list:
-        """Estadísticas de perfiles por grado escolar (usando campos demográficos dinámicos)."""
-        from sqlalchemy.orm import aliased
-        
-        campo_grado = CampoDemografico.query.filter_by(nombre='grado_escolar').first()
-        campo_colegio = CampoDemografico.query.filter_by(nombre='nombre_colegio').first()
-        
-        if not campo_grado:
-            return []
-            
-        dd_grado = aliased(DatoDemografico)
-        dd_colegio = aliased(DatoDemografico)
-        
-        query = db.session.query(
-            dd_grado.valor.label('grado'),
-            dd_colegio.valor.label('institucion'),
-            func.count(Aplicacion.id).label('total_aplicaciones'),
-            func.count(case((Aplicacion.estado == 'completada', 1))).label('completadas'),
-        ).select_from(Aplicacion).join(
-            Usuario, Aplicacion.usuario_id == Usuario.id
-        ).join(
-            dd_grado, (dd_grado.usuario_id == Usuario.id) & (dd_grado.campo_id == campo_grado.id)
-        )
-        
-        if campo_colegio:
-            query = query.outerjoin(
-                dd_colegio, (dd_colegio.usuario_id == Usuario.id) & (dd_colegio.campo_id == campo_colegio.id)
-            )
-            
+        """Aplicaciones y tasa de completación por grado escolar y colegio."""
+        escolares = datos_escolares.por_usuario()
+        q = db.session.query(Aplicacion.usuario_id, Aplicacion.estado)
         if configuracion_id:
-            query = query.filter(Aplicacion.configuracion_id == configuracion_id)
-            
-        resultados = query.group_by(dd_grado.valor, dd_colegio.valor if campo_colegio else Usuario.id).all()
-        
-        def _normalizar_grado(valor):
-            if not valor:
-                return 'Desconocido'
-            txt = str(valor).strip().lower()
-            if txt.startswith('9') or 'nov' in txt:
-                return '9°'
-            if txt.startswith('10') or 'dec' in txt or 'diec' in txt:
-                return '10°'
-            if txt.startswith('11') or 'once' in txt:
-                return '11°'
-            return valor
-
+            q = q.filter(Aplicacion.configuracion_id == configuracion_id)
         agrupado = {}
-        for r in resultados:
-            grado_norm = _normalizar_grado(r.grado)
-            inst_name = r.institucion if r.institucion else 'Sin especificar'
-            key = (grado_norm, inst_name)
-            if key not in agrupado:
-                agrupado[key] = {
-                    'grado': grado_norm,
-                    'institucion': inst_name,
-                    'total_aplicaciones': 0,
-                    'completadas': 0,
-                }
-            agrupado[key]['total_aplicaciones'] += r.total_aplicaciones
-            agrupado[key]['completadas'] += r.completadas
-
-        return [
-            {
-                'grado': val['grado'],
-                'institucion': val['institucion'],
-                'total_aplicaciones': val['total_aplicaciones'],
-                'completadas': val['completadas'],
-                'tasa_completacion': round(val['completadas'] / val['total_aplicaciones'] * 100, 2) if val['total_aplicaciones'] > 0 else 0,
-            }
-            for val in agrupado.values()
-        ]
-
+        for usuario_id, estado in q.all():
+            fila = escolares.get(usuario_id) or {}
+            if not fila.get('grado'):
+                continue
+            clave = (fila['grado'], fila.get('colegio') or 'Sin especificar')
+            g = agrupado.setdefault(clave, {'grado': clave[0], 'institucion': clave[1],
+                                            'total_aplicaciones': 0, 'completadas': 0})
+            g['total_aplicaciones'] += 1
+            g['completadas'] += estado == 'completada'
+        for g in agrupado.values():
+            g['tasa_completacion'] = round(g['completadas'] / g['total_aplicaciones'] * 100, 2)
+        return sorted(agrupado.values(), key=lambda g: (g['grado'], g['institucion']))
 
     @staticmethod
     def estadisticas_por_institucion(configuracion_id: int = None) -> list:
-        """Estadísticas agregadas por institución (usando campo demográfico 'nombre_colegio')."""
-        # campo_id=13 es "Nombre del Colegio" en datos_demograficos
-        campo = CampoDemografico.query.filter_by(nombre='nombre_colegio').first()
-        if not campo:
-            return []
-
-        query = db.session.query(
-            DatoDemografico.valor.label('institucion'),
-            func.count(Aplicacion.id).label('total'),
-            func.count(case((Aplicacion.estado == 'completada', 1))).label('completadas'),
-        ).select_from(DatoDemografico).join(
-            Usuario, Usuario.id == DatoDemografico.usuario_id
-        ).join(
-            Aplicacion, Aplicacion.usuario_id == Usuario.id
-        ).filter(
-            DatoDemografico.campo_id == campo.id
-        )
-
+        """Aplicaciones y tasa de completación por colegio."""
+        escolares = datos_escolares.por_usuario()
+        q = db.session.query(Aplicacion.usuario_id, Aplicacion.estado)
         if configuracion_id:
-            query = query.filter(Aplicacion.configuracion_id == configuracion_id)
-
-        resultados = query.group_by(DatoDemografico.valor).order_by(func.count(Aplicacion.id).desc()).all()
-
-        return [
-            {
-                'institucion': r.institucion,
-                'total': r.total,
-                'completadas': r.completadas,
-                'tasa_completacion': round(r.completadas / r.total * 100, 2) if r.total > 0 else 0,
-            }
-            for r in resultados
-        ]
+            q = q.filter(Aplicacion.configuracion_id == configuracion_id)
+        agrupado = {}
+        for usuario_id, estado in q.all():
+            colegio = (escolares.get(usuario_id) or {}).get('colegio')
+            if not colegio:
+                continue
+            g = agrupado.setdefault(colegio, {'institucion': colegio, 'total': 0, 'completadas': 0})
+            g['total'] += 1
+            g['completadas'] += estado == 'completada'
+        for g in agrupado.values():
+            g['tasa_completacion'] = round(g['completadas'] / g['total'] * 100, 2)
+        return sorted(agrupado.values(), key=lambda g: -g['total'])
 
     @staticmethod
     def promedios_dimensiones(configuracion_id: int = None) -> list:
@@ -261,77 +168,43 @@ class EstadisticaService:
 
     @staticmethod
     def estadisticas_por_tipo_colegio() -> list:
-        """Estadísticas comparativas entre colegios públicos y privados."""
-        campo_tipo = CampoDemografico.query.filter_by(nombre='tipo_colegio', activo=True).first()
-        if not campo_tipo:
-            return []
-
-        query = db.session.query(
-            DatoDemografico.valor.label('tipo_colegio'),
-            func.count(func.distinct(Usuario.id)).label('estudiantes'),
-            func.count(func.distinct(Aplicacion.id)).label('total_aplicaciones'),
-            func.count(func.distinct(case((Aplicacion.estado == 'completada', Aplicacion.id)))).label('completadas'),
-        ).select_from(DatoDemografico).join(
-            Usuario, DatoDemografico.usuario_id == Usuario.id
-        ).join(
-            Aplicacion, Aplicacion.usuario_id == Usuario.id
-        ).filter(
-            DatoDemografico.campo_id == campo_tipo.id
-        ).group_by(DatoDemografico.valor)
-
-        resultados = query.all()
-
-        return [
-            {
-                'tipo': r.tipo_colegio,
-                'estudiantes': r.estudiantes,
-                'aplicaciones': r.total_aplicaciones,
-                'completadas': r.completadas,
-                'tasa_completacion': round(r.completadas / r.total_aplicaciones * 100, 2) if r.total_aplicaciones > 0 else 0,
-            }
-            for r in resultados
-        ]
+        """Comparativa entre colegios oficiales y privados."""
+        escolares = datos_escolares.por_usuario()
+        agrupado = {}
+        filas = db.session.query(Aplicacion.usuario_id, Aplicacion.estado).all()
+        for usuario_id, estado in filas:
+            sector = (escolares.get(usuario_id) or {}).get('sector')
+            if not sector:
+                continue
+            g = agrupado.setdefault(sector, {'tipo': sector, 'usuarios': set(), 'aplicaciones': 0, 'completadas': 0})
+            g['usuarios'].add(usuario_id)
+            g['aplicaciones'] += 1
+            g['completadas'] += estado == 'completada'
+        return [{
+            'tipo': g['tipo'], 'estudiantes': len(g['usuarios']), 'aplicaciones': g['aplicaciones'],
+            'completadas': g['completadas'],
+            'tasa_completacion': round(g['completadas'] / g['aplicaciones'] * 100, 2) if g['aplicaciones'] else 0,
+        } for g in sorted(agrupado.values(), key=lambda g: g['tipo'])]
 
     @staticmethod
     def distribucion_perfiles_por_tipo_colegio() -> list:
-        """Distribución de perfiles Holland por tipo de colegio (público/privado)."""
-        campo_tipo = CampoDemografico.query.filter_by(nombre='tipo_colegio', activo=True).first()
-        if not campo_tipo:
-            return []
-
-        query = db.session.query(
-            DatoDemografico.valor.label('tipo_colegio'),
-            PerfilVocacional.perfil_principal,
-            func.count(PerfilVocacional.id).label('cantidad'),
-        ).select_from(DatoDemografico).join(
-            Usuario, DatoDemografico.usuario_id == Usuario.id
-        ).join(
-            Aplicacion, Aplicacion.usuario_id == Usuario.id
-        ).join(
-            PerfilVocacional, PerfilVocacional.aplicacion_id == Aplicacion.id
-        ).filter(
-            DatoDemografico.campo_id == campo_tipo.id
-        ).group_by(DatoDemografico.valor, PerfilVocacional.perfil_principal)
-
-        resultados = query.all()
-
-        # Agrupar por tipo de colegio
+        """Distribución de perfiles Holland por sector del colegio (oficial o privado)."""
+        escolares = datos_escolares.por_usuario()
+        filas = (db.session.query(Aplicacion.usuario_id, PerfilVocacional.perfil_principal)
+                 .join(PerfilVocacional, PerfilVocacional.aplicacion_id == Aplicacion.id).all())
         agrupado = {}
-        for r in resultados:
-            if r.tipo_colegio not in agrupado:
-                agrupado[r.tipo_colegio] = {'tipo_colegio': r.tipo_colegio, 'perfiles': [], 'total': 0}
-            agrupado[r.tipo_colegio]['perfiles'].append({
-                'perfil': r.perfil_principal,
-                'cantidad': r.cantidad,
-            })
-            agrupado[r.tipo_colegio]['total'] += r.cantidad
-
-        # Calcular porcentajes
-        for tipo_data in agrupado.values():
-            for perfil in tipo_data['perfiles']:
-                perfil['porcentaje'] = round(perfil['cantidad'] / tipo_data['total'] * 100, 2) if tipo_data['total'] > 0 else 0
-
-        return list(agrupado.values())
+        for usuario_id, perfil in filas:
+            sector = (escolares.get(usuario_id) or {}).get('sector')
+            if not sector:
+                continue
+            g = agrupado.setdefault(sector, {'tipo_colegio': sector, 'conteo': {}, 'total': 0})
+            g['conteo'][perfil] = g['conteo'].get(perfil, 0) + 1
+            g['total'] += 1
+        return [{
+            'tipo_colegio': g['tipo_colegio'], 'total': g['total'],
+            'perfiles': [{'perfil': p, 'cantidad': c, 'porcentaje': round(c / g['total'] * 100, 2)}
+                         for p, c in sorted(g['conteo'].items(), key=lambda x: -x[1])],
+        } for g in sorted(agrupado.values(), key=lambda g: g['tipo_colegio'])]
 
     @staticmethod
     def distribucion_por_areas_interes() -> list:
@@ -723,122 +596,41 @@ class EstadisticaService:
     @staticmethod
     def segmentacion_edad() -> list:
         """Distribución de perfiles vocacionales segmentada por rango de edad."""
-        campo_edad = CampoDemografico.query.filter_by(nombre='edad', activo=True).first()
-        if not campo_edad:
-            return []
-
-        rows = db.session.query(
-            DatoDemografico.valor.label('edad_raw'),
-            PerfilVocacional.perfil_principal,
-            func.count(PerfilVocacional.id).label('cantidad'),
-        ).select_from(DatoDemografico).join(
-            Usuario, DatoDemografico.usuario_id == Usuario.id
-        ).join(
-            Aplicacion, Aplicacion.usuario_id == Usuario.id
-        ).join(
-            PerfilVocacional, PerfilVocacional.aplicacion_id == Aplicacion.id
-        ).filter(
-            DatoDemografico.campo_id == campo_edad.id,
-            Aplicacion.estado == 'completada',
-        ).group_by(DatoDemografico.valor, PerfilVocacional.perfil_principal).all()
-
-        def clasificar_edad(edad_str):
-            try:
-                edad = int(edad_str)
-            except (ValueError, TypeError):
-                return 'No especificado'
-            if edad <= 14:
-                return '≤14 años'
-            elif edad <= 15:
-                return '15 años'
-            elif edad <= 16:
-                return '16 años'
-            elif edad <= 17:
-                return '17 años'
-            elif edad <= 18:
-                return '18 años'
-            else:
-                return '19+ años'
-
+        escolares = datos_escolares.por_usuario()
+        filas = (db.session.query(Aplicacion.usuario_id, PerfilVocacional.perfil_principal)
+                 .join(PerfilVocacional, PerfilVocacional.aplicacion_id == Aplicacion.id)
+                 .filter(Aplicacion.estado == 'completada').all())
         agrupado = {}
-        for r in rows:
-            rango = clasificar_edad(r.edad_raw)
-            if rango not in agrupado:
-                agrupado[rango] = {'rango_edad': rango, 'perfiles': {}, 'total': 0}
-            agrupado[rango]['perfiles'][r.perfil_principal] = (
-                agrupado[rango]['perfiles'].get(r.perfil_principal, 0) + r.cantidad
-            )
-            agrupado[rango]['total'] += r.cantidad
-
-        orden_rangos = ['≤14 años', '15 años', '16 años', '17 años', '18 años', '19+ años', 'No especificado']
+        for usuario_id, perfil in filas:
+            edad = (escolares.get(usuario_id) or {}).get('edad')
+            if edad in (None, ''):
+                continue
+            g = agrupado.setdefault(datos_escolares.rango_edad(edad), {'perfiles': {}, 'total': 0})
+            g['perfiles'][perfil] = g['perfiles'].get(perfil, 0) + 1
+            g['total'] += 1
         resultado = []
-        for rango in orden_rangos:
+        for rango in datos_escolares.RANGOS_EDAD:
             if rango not in agrupado:
                 continue
-            datos = agrupado[rango]
-            perfiles_lista = [
-                {
-                    'perfil': perfil,
-                    'cantidad': cant,
-                    'porcentaje': round(cant / datos['total'] * 100, 1) if datos['total'] > 0 else 0,
-                }
-                for perfil, cant in datos['perfiles'].items()
-            ]
-            resultado.append({
-                'rango_edad': rango,
-                'total': datos['total'],
-                'perfiles': sorted(perfiles_lista, key=lambda x: x['cantidad'], reverse=True),
-            })
-
+            total = agrupado[rango]['total']
+            perfiles = [{'perfil': p, 'cantidad': c, 'porcentaje': round(c / total * 100, 1)}
+                        for p, c in agrupado[rango]['perfiles'].items()]
+            resultado.append({'rango_edad': rango, 'total': total,
+                              'perfiles': sorted(perfiles, key=lambda x: -x['cantidad'])})
         return resultado
 
     @staticmethod
     def conteo_por_edad() -> list:
         """Conteo de estudiantes por rango de edad."""
-        campo_edad = CampoDemografico.query.filter_by(nombre='edad', activo=True).first()
-        if not campo_edad:
-            return []
-
-        rows = db.session.query(
-            DatoDemografico.valor.label('edad_raw'),
-            func.count(func.distinct(DatoDemografico.usuario_id)).label('cantidad'),
-        ).filter(
-            DatoDemografico.campo_id == campo_edad.id
-        ).group_by(DatoDemografico.valor).all()
-
-        def clasificar(val):
-            try:
-                e = int(val)
-            except (ValueError, TypeError):
-                return 'No especificado'
-            if e <= 14:
-                return '≤14 años'
-            elif e <= 15:
-                return '15 años'
-            elif e <= 16:
-                return '16 años'
-            elif e <= 17:
-                return '17 años'
-            elif e <= 18:
-                return '18 años'
-            else:
-                return '19+ años'
-
         agrupado = {}
-        for r in rows:
-            rango = clasificar(r.edad_raw)
-            agrupado[rango] = agrupado.get(rango, 0) + r.cantidad
-
-        orden_rangos = ['≤14 años', '15 años', '16 años', '17 años', '18 años', '19+ años', 'No especificado']
+        for fila in datos_escolares.por_usuario().values():
+            if fila.get('edad') in (None, ''):
+                continue
+            rango = datos_escolares.rango_edad(fila['edad'])
+            agrupado[rango] = agrupado.get(rango, 0) + 1
         total = sum(agrupado.values())
-        return [
-            {
-                'rango_edad': rango,
-                'cantidad': agrupado[rango],
-                'porcentaje': round(agrupado[rango] / total * 100, 1) if total > 0 else 0,
-            }
-            for rango in orden_rangos if rango in agrupado
-        ]
+        return [{'rango_edad': r, 'cantidad': agrupado[r], 'porcentaje': round(agrupado[r] / total * 100, 1)}
+                for r in datos_escolares.RANGOS_EDAD if r in agrupado]
 
     # ─── Resumen de evolución para listado admin ───────────────────────────── #
 

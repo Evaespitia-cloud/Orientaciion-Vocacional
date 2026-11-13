@@ -3,424 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Plataforma de Orientación Vocacional para Bachilleres — Descubre tu perfil Holland y explora tu futuro profesional.">
-    <title>Orientación Vocacional — Descubre tu Camino</title>
+    <meta name="description" content="Plataforma de Orientación Vocacional para bachilleres — descubre tu perfil Holland RIASEC.">
+    <title>Orientación Vocacional — Universidad de San Buenaventura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Red+Hat+Display:wght@400..900&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#f07f06">
     <style>
-        /* ── Landing overrides ───────────────────────── */
-        body { background: #fdfaf6; color: #171717; }
+        body { background: #ffffff; color: var(--text-primary); }
 
-        /* ── NAVBAR LANDING ─────────────────────────── */
+        /* Barra institucional superior */
+        .lp-topbar {
+            background: var(--accent); color: #fff;
+            font-size: 0.78rem; font-weight: 500;
+            padding: 6px 2rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        /* Nav */
         .lp-nav {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            position: sticky; top: 0; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 2.5rem; height: 68px;
-            background: rgba(255, 255, 255, 0.82);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid #ececec;
-            transition: background 0.3s;
+            padding: 0 2rem; height: 64px; background: #fff;
+            border-bottom: 1px solid var(--border);
         }
-        .lp-nav.scrolled { background: rgba(255, 255, 255, 0.97); box-shadow: 0 1px 12px rgba(17,17,17,0.07); }
-        .lp-nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.05rem; color: #171717; text-decoration: none; }
-        .lp-nav-brand .lp-logo { width: 36px; height: 36px; background: linear-gradient(135deg, #ef7d00, #ff9a3d); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .lp-nav-links { display: flex; align-items: center; gap: 0.5rem; }
-        .lp-btn-outline { padding: 8px 20px; border-radius: 8px; border: 1px solid #e0e0e0; color: #404040; font-size: 0.875rem; font-weight: 600; background: transparent; text-decoration: none; transition: all 0.2s; cursor: pointer; display: inline-flex; align-items: center; }
-        .lp-btn-outline:hover { background: #fff1e0; color: #a35200; border-color: #ef7d00; }
-        .lp-btn-solid { padding: 8px 20px; border-radius: 8px; background: linear-gradient(135deg, #ef7d00, #ff9a3d); color: white; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: all 0.2s; display: inline-flex; align-items: center; box-shadow: 0 4px 15px rgba(239, 125, 0,0.4); }
-        .lp-btn-solid:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(239, 125, 0,0.55); color: white; }
+        .lp-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; color: var(--primary); }
+        .lp-nav-links { display: flex; align-items: center; gap: 0.75rem; }
+        .lp-link { color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; padding: 0.5rem 0.25rem; }
+        .lp-link:hover { color: var(--accent-text); }
+        .lp-btn { padding: 0.55rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; }
+        .lp-btn-solid { background: var(--accent); color: #fff; }
+        .lp-btn-solid:hover { background: #d86f00; color: #fff; }
 
-        /* ── HERO ───────────────────────────────────── */
-        .hero {
-            min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            text-align: center; padding: 8rem 1.5rem 4rem;
-            position: relative; overflow: hidden;
-            background: radial-gradient(ellipse 120% 80% at 50% -10%, #fff1e0 0%, #fdfaf6 60%);
-        }
-        .hero-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
-        .hero-orb-1 { width: 600px; height: 600px; top: -150px; left: -150px; background: radial-gradient(circle, rgba(239, 125, 0,0.30) 0%, transparent 70%); }
-        .hero-orb-2 { width: 500px; height: 500px; bottom: -100px; right: -100px; background: radial-gradient(circle, rgba(255, 154, 61,0.26) 0%, transparent 70%); }
-        .hero-orb-3 { width: 350px; height: 350px; top: 30%; left: 60%; background: radial-gradient(circle, rgba(239, 125, 0,0.18) 0%, transparent 70%); }
+        /* Hero */
+        .lp-hero { max-width: 1080px; margin: 0 auto; padding: 5rem 1.5rem 4rem; text-align: center; }
+        .lp-eyebrow { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-text); background: var(--orange-soft); padding: 0.35rem 0.9rem; border-radius: 999px; margin-bottom: 1.5rem; }
+        .lp-hero h1 { font-family: var(--font-head); font-size: clamp(2.2rem, 5.5vw, 3.6rem); font-weight: 800; line-height: 1.12; letter-spacing: -0.02em; color: var(--primary); margin-bottom: 1.25rem; }
+        .lp-hero h1 .accent { color: var(--accent); }
+        .lp-hero p { font-size: 1.1rem; color: var(--text-secondary); line-height: 1.7; max-width: 620px; margin: 0 auto 2.25rem; }
+        .lp-cta { display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap; }
+        .lp-cta .lp-btn { padding: 0.85rem 1.6rem; font-size: 1rem; border-radius: 10px; }
+        .lp-btn-outline { background: #fff; color: var(--text-primary); border: 1px solid var(--border); }
+        .lp-btn-outline:hover { background: #f3f2f6; color: var(--text-primary); }
 
-        /* Floating shapes */
-        .hero-shapes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-        .shape { position: absolute; border-radius: 50%; opacity: 0.10; animation: float 8s ease-in-out infinite; }
-        .shape:nth-child(1) { width: 80px; height: 80px; background: #ef7d00; top: 15%; left: 8%; animation-delay: 0s; }
-        .shape:nth-child(2) { width: 50px; height: 50px; background: #b35c00; top: 70%; left: 15%; animation-delay: 1.5s; }
-        .shape:nth-child(3) { width: 100px; height: 100px; background: #ff9a3d; top: 25%; right: 10%; animation-delay: 3s; border-radius: 20px; transform: rotate(20deg); }
-        .shape:nth-child(4) { width: 60px; height: 60px; background: #ef7d00; bottom: 20%; right: 20%; animation-delay: 2s; }
-        .shape:nth-child(5) { width: 40px; height: 40px; background: #b35c00; top: 50%; left: 50%; animation-delay: 4s; }
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-22px) rotate(8deg); }
-        }
+        /* Cifras */
+        .lp-stats { display: flex; justify-content: center; gap: 3.5rem; flex-wrap: wrap; margin-top: 3.5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+        .lp-stat .n { font-family: var(--font-head); font-size: 1.9rem; font-weight: 800; color: var(--primary); }
+        .lp-stat .l { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
 
-        .hero-content { position: relative; z-index: 1; max-width: 780px; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(239, 125, 0,0.15); border: 1px solid rgba(239, 125, 0,0.35); border-radius: 50px; padding: 6px 18px; font-size: 0.8rem; font-weight: 600; color: #a35200; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 1.75rem; }
-        .hero-badge .dot { width: 7px; height: 7px; background: #ff9a3d; border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
-        @keyframes pulse { 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.4); opacity:0.6; } }
+        /* Secciones */
+        .lp-section { max-width: 1080px; margin: 0 auto; padding: 4.5rem 1.5rem; }
+        .lp-section.alt { background: var(--bg-main); max-width: none; }
+        .lp-section.alt .lp-section-inner { max-width: 1080px; margin: 0 auto; }
+        .lp-section-head { margin-bottom: 2.5rem; }
+        .lp-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-text); }
+        .lp-section h2 { font-family: var(--font-head); font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 800; color: var(--primary); margin: 0.5rem 0 0.6rem; letter-spacing: -0.01em; }
+        .lp-section .sub { color: var(--text-secondary); max-width: 560px; line-height: 1.7; }
 
-        .hero-title { font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; letter-spacing: -1px; }
-        .hero-title .highlight { background: linear-gradient(135deg, #ff9a3d, #ef7d00, #b35c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero-subtitle { font-size: 1.15rem; color: #525252; line-height: 1.7; max-width: 580px; margin: 0 auto 2.5rem; }
+        .lp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
+        .lp-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.75rem; }
+        .lp-num { width: 40px; height: 40px; border-radius: 10px; background: var(--orange-soft); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; margin-bottom: 1rem; }
+        .lp-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--orange-soft); color: var(--accent-text); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+        .lp-card h3 { font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 0.45rem; }
+        .lp-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.65; }
 
-        .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3.5rem; }
-        .cta-primary { padding: 16px 36px; border-radius: 12px; background: linear-gradient(135deg, #ef7d00, #ff9a3d); color: white; font-size: 1rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 8px 30px rgba(239, 125, 0,0.45); transition: all 0.25s; }
-        .cta-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(239, 125, 0,0.6); color: white; }
-        .cta-secondary { padding: 16px 36px; border-radius: 12px; border: 1.5px solid #e0e0e0; color: #171717; font-size: 1rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); transition: all 0.25s; }
-        .cta-secondary:hover { border-color: #ef7d00; background: #fff1e0; color: #a35200; transform: translateY(-2px); }
+        /* RIASEC */
+        .lp-riasec { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+        .lp-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+        .lp-chip { border: 1px solid var(--border); border-radius: 12px; padding: 1rem 0.75rem; text-align: center; background: #fff; }
+        .lp-chip .ltr { font-family: var(--font-head); font-size: 1.5rem; font-weight: 800; color: var(--accent); display: block; }
+        .lp-chip .nm { font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
 
-        .hero-stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; }
-        .hero-stat { text-align: center; }
-        .hero-stat .num { font-size: 1.9rem; font-weight: 900; background: linear-gradient(135deg, #ef7d00, #b35c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero-stat .lbl { font-size: 0.8rem; color: #525252; font-weight: 500; margin-top: 2px; }
-        .hero-divider { width: 1px; background: #e5e5e5; align-self: stretch; }
+        /* CTA final */
+        .lp-final { text-align: center; }
+        .lp-final h2 { margin-bottom: 0.75rem; }
 
-        /* ── HOW IT WORKS ────────────────────────────── */
-        .section { padding: 6rem 1.5rem; }
-        .section-inner { max-width: 1100px; margin: 0 auto; }
-        .section-label { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #a35200; margin-bottom: 0.75rem; }
-        .section-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 900; color: #111111; line-height: 1.2; margin-bottom: 1rem; }
-        .section-subtitle { color: #525252; font-size: 1rem; max-width: 560px; line-height: 1.7; }
-        .section-header { margin-bottom: 3.5rem; }
+        /* Footer */
+        .lp-footer { border-top: 1px solid var(--border); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; }
+        .lp-footer img { height: 40px; width: auto; margin-bottom: 0.9rem; }
 
-        .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-        .step-card {
-            background: #fff;
-            border: 1px solid #ececec;
-            box-shadow: 0 1px 3px rgba(17,17,17,0.05);
-            border-radius: 20px; padding: 2rem;
-            position: relative; overflow: hidden; transition: all 0.3s;
-        }
-        .step-card:hover { box-shadow: 0 10px 28px rgba(17,17,17,0.08); border-color: rgba(239, 125, 0,0.45); transform: translateY(-4px); }
-        .step-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #ef7d00, #ff9a3d); opacity: 0; transition: opacity 0.3s; }
-        .step-card:hover::before { opacity: 1; }
-        .step-num { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ef7d00, #ff9a3d); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 900; margin-bottom: 1.25rem; box-shadow: 0 6px 20px rgba(239, 125, 0,0.35); }
-        .step-card h3 { font-size: 1.1rem; font-weight: 700; color: #111111; margin-bottom: 0.6rem; }
-        .step-card p { font-size: 0.875rem; color: #525252; line-height: 1.7; }
-
-        /* ── FEATURES ────────────────────────────────── */
-        .features-section { background: #fffaf4; border-top: 1px solid #f0e6da; border-bottom: 1px solid #f0e6da; }
-        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .feature-card {
-            background: #fff; border: 1px solid #ececec; box-shadow: 0 1px 3px rgba(17,17,17,0.05);
-            border-radius: 20px; padding: 2rem; transition: all 0.3s;
-        }
-        .feature-card:hover { box-shadow: 0 10px 28px rgba(17,17,17,0.08); border-color: rgba(239, 125, 0,0.45); transform: translateY(-4px); }
-        .feature-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.25rem; }
-        /* Los nombres (purple, teal, blue…) quedaron del diseño anterior; hoy
-           todos son variaciones del naranja institucional sobre blanco. */
-        .fi-purple { background: linear-gradient(135deg, #ffe4c4, #fff1e0); }
-        .fi-teal   { background: linear-gradient(135deg, #ffd9ae, #ffeeda); }
-        .fi-orange { background: linear-gradient(135deg, #ffcf9a, #ffe9d0); }
-        .fi-blue   { background: linear-gradient(135deg, #f6e3cd, #fdf3e7); }
-        .fi-pink   { background: linear-gradient(135deg, #ffe0bb, #fff4e8); }
-        .fi-green  { background: linear-gradient(135deg, #f1e6da, #fbf5ee); }
-        .feature-card h3 { font-size: 1.05rem; font-weight: 700; color: #111111; margin-bottom: 0.6rem; }
-        .feature-card p { font-size: 0.85rem; color: #525252; line-height: 1.7; }
-
-        /* ── RIASEC VISUAL ───────────────────────────── */
-        .riasec-section { padding: 6rem 1.5rem; }
-        .riasec-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
-        .riasec-types { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
-        .riasec-chip { padding: 0.85rem 1rem; border-radius: 14px; text-align: center; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s; cursor: default; }
-        .riasec-chip:hover { transform: scale(1.06); }
-        .riasec-chip .chip-letter { color: #ef7d00; }
-        .rc-r, .rc-i, .rc-a, .rc-s, .rc-e, .rc-c {
-            background: #fff; border: 1px solid #f0d6b6; color: #8a4700;
-        }
-        .riasec-chip:hover { background: #fff1e0; border-color: #ef7d00; color: #a35200; }
-        .riasec-chip .chip-letter { font-size: 1.5rem; font-weight: 900; display: block; margin-bottom: 2px; }
-        .riasec-chip .chip-name { font-size: 0.7rem; font-weight: 600; opacity: 0.85; }
-
-        /* ── CTA BANNER ──────────────────────────────── */
-        .cta-section {
-            padding: 6rem 1.5rem; text-align: center;
-            background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(239, 125, 0,0.18) 0%, transparent 70%);
-        }
-        .cta-box { max-width: 680px; margin: 0 auto; }
-        .cta-box h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 1rem; color: #111111; }
-        .cta-box p { color: #525252; font-size: 1rem; margin-bottom: 2.5rem; line-height: 1.7; }
-        .cta-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-
-        /* ── FOOTER LANDING ──────────────────────────── */
-        .lp-usb { display:flex; align-items:center; line-height:0; flex-shrink:0;
-                  margin-right:0.25rem; }
-        .lp-usb img { display:block; height:26px; width:auto; }
-        .lp-usb .usb-marca { display:none; height:26px; width:26px; border-radius:4px; }
-        @media (max-width: 720px) {
-            .lp-usb { padding:4px; }
-            .lp-usb .usb-completo { display:none; }
-            .lp-usb .usb-marca { display:block; }
-        }
-
-        .lp-footer { padding: 2.5rem; text-align: center; border-top: 1px solid #ececec; color: #737373; font-size: 0.825rem; }
-        .lp-footer a { color: #a35200; text-decoration: none; }
-        .lp-footer a:hover { color: #ef7d00; }
-
-        /* ── RESPONSIVE ──────────────────────────────── */
         @media (max-width: 768px) {
+            .lp-topbar { padding: 6px 1.25rem; }
             .lp-nav { padding: 0 1.25rem; }
-            .hero-stats { gap: 1.5rem; }
-            .hero-divider { display: none; }
-            .riasec-inner { grid-template-columns: 1fr; gap: 2.5rem; }
-            .riasec-types { grid-template-columns: repeat(3, 1fr); }
-            .hero-title { font-size: 2.2rem; }
-            .lp-nav-links .lp-btn-outline { display: none; }
+            .lp-riasec { grid-template-columns: 1fr; gap: 2rem; }
+            .lp-stats { gap: 2rem; }
+            .lp-nav .lp-link { display: none; }
         }
     </style>
 </head>
 <body>
 
-<!-- ── NAV ─────────────────────────────────────────── -->
-<nav class="lp-nav" id="lpNav">
-    <a href="/" class="lp-nav-brand">
-        <img src="{{ url_for('static', filename='img/logo.svg') }}"
-             alt="" aria-hidden="true" width="36" height="36">
-        OrientaVoc
+<div class="lp-topbar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+    <span>Universidad de San Buenaventura &middot; Medellín</span>
+</div>
+
+<nav class="lp-nav">
+    <a href="/" class="lp-brand">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" aria-hidden="true" width="32" height="32">
+        Orientación Vocacional
     </a>
     <div class="lp-nav-links">
-        <span class="lp-usb">
-            <img class="usb-completo" src="{{ url_for('static', filename='img/logo-usb.png') }}"
-                 alt="Universidad de San Buenaventura">
-            <img class="usb-marca" src="{{ url_for('static', filename='img/logo-usb-marca.png') }}"
-                 alt="Universidad de San Buenaventura">
-        </span>
-        <a href="{{ url_for('auth.login') }}" class="lp-btn-outline">Iniciar sesión</a>
-        <a href="{{ url_for('auth.registro') }}" class="lp-btn-solid">Registrarse</a>
+        <a href="{{ url_for('auth.login') }}" class="lp-link">Iniciar sesión</a>
+        <a href="{{ url_for('auth.registro') }}" class="lp-btn lp-btn-solid">Crear cuenta</a>
     </div>
 </nav>
 
-<!-- ── HERO ────────────────────────────────────────── -->
-<section class="hero">
-    <div class="hero-orb hero-orb-1"></div>
-    <div class="hero-orb hero-orb-2"></div>
-    <div class="hero-orb hero-orb-3"></div>
-    <div class="hero-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
+<!-- Hero -->
+<section class="lp-hero">
+    <span class="lp-eyebrow">Plataforma de orientación vocacional</span>
+    <h1>Descubre tu <span class="accent">camino vocacional</span> con respaldo psicométrico</h1>
+    <p>
+        Conoce tus intereses y competencias con el modelo Holland RIASEC y toma
+        decisiones informadas sobre tu futuro profesional.
+    </p>
+    <div class="lp-cta">
+        <a href="{{ url_for('auth.registro') }}" class="lp-btn lp-btn-solid">Comenzar</a>
+        <a href="{{ url_for('auth.login') }}" class="lp-btn lp-btn-outline">Ya tengo cuenta</a>
     </div>
+    <div class="lp-stats">
+        <div class="lp-stat"><div class="n">6</div><div class="l">Dimensiones RIASEC</div></div>
+        <div class="lp-stat"><div class="n">2</div><div class="l">Pruebas: intereses y competencias</div></div>
+        <div class="lp-stat"><div class="n">Gratis</div><div class="l">Para bachilleres</div></div>
+    </div>
+</section>
 
-    <div class="hero-content">
-        <div class="hero-badge">
-            <span class="dot"></span>
-            Plataforma de Orientación Vocacional
+<!-- Cómo funciona -->
+<section class="lp-section">
+    <div class="lp-section-head">
+        <span class="lp-label">Proceso</span>
+        <h2>¿Cómo funciona?</h2>
+        <p class="sub">En tres pasos obtienes tu perfil vocacional completo.</p>
+    </div>
+    <div class="lp-grid">
+        <div class="lp-card">
+            <div class="lp-num">1</div>
+            <h3>Crea tu cuenta</h3>
+            <p>Regístrate con tu correo y completa tus datos básicos. Toma menos de dos minutos.</p>
         </div>
-
-        <h1 class="hero-title">
-            Descubre tu<br>
-            <span class="highlight">camino vocacional</span><br>
-            con ciencia
-        </h1>
-
-        <p class="hero-subtitle">
-            Usa el modelo Holland RIASEC para conocer tus fortalezas,
-            intereses y aptitudes. Toma decisiones informadas sobre tu
-            futuro profesional con respaldo psicométrico.
-        </p>
-
-        <div class="hero-cta">
-            <a href="{{ url_for('auth.registro') }}" class="cta-primary">
-                Comenzar gratis →
-            </a>
-            <a href="{{ url_for('auth.login') }}" class="cta-secondary">
-                Ya tengo cuenta
-            </a>
+        <div class="lp-card">
+            <div class="lp-num">2</div>
+            <h3>Responde el cuestionario</h3>
+            <p>Contesta las pruebas de intereses y competencias. Son breves y sin respuestas incorrectas.</p>
         </div>
+        <div class="lp-card">
+            <div class="lp-num">3</div>
+            <h3>Recibe tu perfil</h3>
+            <p>Obtén un informe con tus dimensiones dominantes, áreas de afinidad y carreras afines.</p>
+        </div>
+    </div>
+</section>
 
-        <div class="hero-stats">
-            <div class="hero-stat">
-                <div class="num">6</div>
-                <div class="lbl">Dimensiones RIASEC</div>
+<!-- Modelo RIASEC -->
+<section class="lp-section alt">
+    <div class="lp-section-inner">
+        <div class="lp-riasec">
+            <div>
+                <span class="lp-label">Fundamento</span>
+                <h2>El modelo Holland RIASEC</h2>
+                <p class="sub" style="margin-top:1rem;">
+                    John Holland clasifica los intereses vocacionales en seis dimensiones.
+                    Cada persona combina estas dimensiones en un perfil único que orienta
+                    hacia carreras y ambientes donde puede desarrollarse mejor.
+                </p>
+                <a href="{{ url_for('auth.registro') }}" class="lp-btn lp-btn-solid" style="margin-top:1.75rem;">Descubrir mi perfil</a>
             </div>
-            <div class="hero-divider"></div>
-            <div class="hero-stat">
-                <div class="num">100%</div>
-                <div class="lbl">Basado en ciencia</div>
-            </div>
-            <div class="hero-divider"></div>
-            <div class="hero-stat">
-                <div class="num">Gratis</div>
-                <div class="lbl">Para bachilleres</div>
+            <div class="lp-chips">
+                <div class="lp-chip"><span class="ltr">R</span><span class="nm">Realista</span></div>
+                <div class="lp-chip"><span class="ltr">I</span><span class="nm">Investigador</span></div>
+                <div class="lp-chip"><span class="ltr">A</span><span class="nm">Artístico</span></div>
+                <div class="lp-chip"><span class="ltr">S</span><span class="nm">Social</span></div>
+                <div class="lp-chip"><span class="ltr">E</span><span class="nm">Emprendedor</span></div>
+                <div class="lp-chip"><span class="ltr">C</span><span class="nm">Convencional</span></div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ── CÓMO FUNCIONA ────────────────────────────────── -->
-<section class="section">
-    <div class="section-inner">
-        <div class="section-header">
-            <span class="section-label">Proceso</span>
-            <h2 class="section-title">¿Cómo funciona?</h2>
-            <p class="section-subtitle">En tres pasos simples obtienes tu perfil vocacional completo.</p>
+<!-- Funcionalidades -->
+<section class="lp-section">
+    <div class="lp-section-head">
+        <span class="lp-label">Funcionalidades</span>
+        <h2>Todo lo que necesitas</h2>
+        <p class="sub">Herramientas para estudiantes, orientadores e instituciones.</p>
+    </div>
+    <div class="lp-grid">
+        <div class="lp-card">
+            <div class="lp-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="m9 14 2 2 4-4"/></svg></div>
+            <h3>Pruebas validadas</h3>
+            <p>Cuestionarios basados en el modelo Holland con guardado automático: continúa donde lo dejaste.</p>
         </div>
-        <div class="steps-grid">
-            <div class="step-card">
-                <div class="step-num">1</div>
-                <h3>Crea tu cuenta</h3>
-                <p>Regístrate con tu correo institucional y completa tus datos básicos. El proceso toma menos de 2 minutos.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-num">2</div>
-                <h3>Responde el cuestionario</h3>
-                <p>Contesta el test psicométrico Holland RIASEC. Es breve, sin respuestas incorrectas — solo tu opinión honesta.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-num">3</div>
-                <h3>Recibe tu perfil</h3>
-                <p>Obtén un informe detallado con tus dimensiones dominantes, áreas de afinidad y carreras afines a tu perfil.</p>
-            </div>
+        <div class="lp-card">
+            <div class="lp-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+            <h3>Resultados visuales</h3>
+            <p>Gráficas de tu perfil RIASEC con el nivel por dimensión y tu comparativa por área.</p>
+        </div>
+        <div class="lp-card">
+            <div class="lp-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+            <h3>Informe en PDF</h3>
+            <p>Descarga tu informe con perfil, interpretación y recomendaciones para compartir con tu orientador.</p>
+        </div>
+        <div class="lp-card">
+            <div class="lp-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22V12h6v10"/></svg></div>
+            <h3>Panel institucional</h3>
+            <p>Orientadores y directivos acceden a estadísticas agregadas, informes y datos demográficos.</p>
+        </div>
+        <div class="lp-card">
+            <div class="lp-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <h3>Privacidad</h3>
+            <p>Acceso con consentimiento informado y contraseñas cifradas. Tus datos son confidenciales.</p>
+        </div>
+        <div class="lp-card">
+            <div class="lp-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+            <h3>Exportación</h3>
+            <p>Los administradores exportan resultados en CSV o Excel para análisis institucional.</p>
         </div>
     </div>
 </section>
 
-<!-- ── MODELO RIASEC ────────────────────────────────── -->
-<section class="riasec-section">
-    <div class="riasec-inner">
-        <div>
-            <span class="section-label">Psicometría</span>
-            <h2 class="section-title">El modelo Holland RIASEC</h2>
-            <p style="color:#525252; font-size:0.95rem; line-height:1.8; margin-top:1rem;">
-                El modelo de John Holland clasifica los intereses vocacionales en seis dimensiones.
-                Cada persona tiene un perfil único que combina estas dimensiones, orientando
-                hacia ambientes laborales y carreras donde puede desarrollarse plenamente.
-            </p>
-            <p style="color:#737373; font-size:0.85rem; line-height:1.7; margin-top:1rem;">
-                Es uno de los modelos más validados científicamente en orientación vocacional,
-                utilizado en instituciones educativas a nivel mundial.
-            </p>
-            <a href="{{ url_for('auth.registro') }}" class="cta-primary" style="margin-top:2rem; display:inline-flex;">
-                Descubrir mi perfil →
-            </a>
-        </div>
-        <div>
-            <div class="riasec-types">
-                <div class="riasec-chip rc-r">
-                    <span class="chip-letter">R</span>
-                    <span class="chip-name">Realista</span>
-                </div>
-                <div class="riasec-chip rc-i">
-                    <span class="chip-letter">I</span>
-                    <span class="chip-name">Investigador</span>
-                </div>
-                <div class="riasec-chip rc-a">
-                    <span class="chip-letter">A</span>
-                    <span class="chip-name">Artístico</span>
-                </div>
-                <div class="riasec-chip rc-s">
-                    <span class="chip-letter">S</span>
-                    <span class="chip-name">Social</span>
-                </div>
-                <div class="riasec-chip rc-e">
-                    <span class="chip-letter">E</span>
-                    <span class="chip-name">Emprendedor</span>
-                </div>
-                <div class="riasec-chip rc-c">
-                    <span class="chip-letter">C</span>
-                    <span class="chip-name">Convencional</span>
-                </div>
-            </div>
+{% if cartas_ejemplo %}
+<!-- Cartas para compartir -->
+<section class="lp-section">
+    <div class="lp-section-head">
+        <span class="lp-label">Tu carta</span>
+        <h2>Al terminar, comparte tu perfil</h2>
+        <p class="sub">Cada perfil tiene su carta con tus seis campos y los programas de la USB que encajan contigo. La puedes subir a tus historias o mandar por WhatsApp.</p>
+    </div>
+    <div class="lp-cartas" tabindex="0" aria-label="Cartas de ejemplo, una por perfil">
+        {% for codigo in cartas_ejemplo %}
+        <img src="{{ url_for('main.carta_publica_png', codigo=codigo) }}" alt="Carta de ejemplo de un perfil" loading="lazy" width="270" height="480">
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA final -->
+<section class="lp-section alt">
+    <div class="lp-section-inner lp-final">
+        <h2>¿Listo para conocer tu perfil vocacional?</h2>
+        <p class="sub" style="margin: 0 auto 1.75rem;">Regístrate, responde las pruebas y descubre las áreas profesionales que más se alinean contigo.</p>
+        <div class="lp-cta">
+            <a href="{{ url_for('auth.registro') }}" class="lp-btn lp-btn-solid">Crear cuenta</a>
+            <a href="{{ url_for('auth.login') }}" class="lp-btn lp-btn-outline">Iniciar sesión</a>
         </div>
     </div>
 </section>
 
-<!-- ── FEATURES ─────────────────────────────────────── -->
-<section class="section features-section">
-    <div class="section-inner">
-        <div class="section-header">
-            <span class="section-label">Funcionalidades</span>
-            <h2 class="section-title">Todo lo que necesitas</h2>
-            <p class="section-subtitle">Herramientas pensadas para estudiantes, orientadores e instituciones.</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon fi-purple"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="m9 14 2 2 4-4"/></svg></div>
-                <h3>Test psicométrico validado</h3>
-                <p>Cuestionario basado en el modelo Holland con guardado automático. Continúa donde lo dejaste sin perder el avance.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-teal"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
-                <h3>Resultados visuales</h3>
-                <p>Gráficas interactivas de tu perfil RIASEC con nivel por dimensión y comparativa respecto al promedio.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-orange"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
-                <h3>Informe PDF personalizado</h3>
-                <p>Descarga tu informe completo con perfil, interpretación y recomendaciones para compartir con tu orientador.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-blue"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22V12h6v10"/><line x1="9" y1="6" x2="9.01" y2="6"/><line x1="15" y1="6" x2="15.01" y2="6"/><line x1="9" y1="10" x2="9.01" y2="10"/><line x1="15" y1="10" x2="15.01" y2="10"/></svg></div>
-                <h3>Panel institucional</h3>
-                <p>Los orientadores y directivos acceden a estadísticas agregadas, informes generales y datos demográficos.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-pink"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-                <h3>Seguridad y privacidad</h3>
-                <p>Tus datos son confidenciales. Acceso con consentimiento informado, tokens JWT y contraseñas cifradas.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-green"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
-                <h3>Exportación de datos</h3>
-                <p>Los administradores pueden exportar resultados en CSV o Excel para análisis e investigación institucional.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ── CTA FINAL ─────────────────────────────────────── -->
-<section class="cta-section">
-    <div class="cta-box">
-        <h2>¿Listo para conocer<br>tu perfil vocacional?</h2>
-        <p>Únete a la plataforma, responde el test y descubre las áreas profesionales que más se alinean contigo. Es gratis y toma solo unos minutos.</p>
-        <div class="cta-row">
-            <a href="{{ url_for('auth.registro') }}" class="cta-primary">
-                Crear cuenta gratis →
-            </a>
-            <a href="{{ url_for('auth.login') }}" class="cta-secondary">
-                Iniciar sesión
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- ── FOOTER ────────────────────────────────────────── -->
 <footer class="lp-footer">
-    <img src="{{ url_for('static', filename='img/logo-usb.png') }}"
-         alt="Universidad de San Buenaventura"
-         style="width:100%; max-width:260px; height:auto; margin-bottom:1rem;
-                background:#fff; padding:0.75rem 1rem; border-radius:10px;">
-    <p>© 2026 Plataforma de Orientación Vocacional · Bienestar Institucional</p>
+    <img src="{{ url_for('static', filename='img/logo-usb-marca.png') }}" alt="Universidad de San Buenaventura">
+    <p>© 2026 Plataforma de Orientación Vocacional · Universidad de San Buenaventura</p>
 </footer>
 
-<script>
-    // Navbar scroll effect
-    const nav = document.getElementById('lpNav');
-    window.addEventListener('scroll', () => {
-        nav.classList.toggle('scrolled', window.scrollY > 40);
-    });
-
-    // Animate stats on scroll
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (e.isIntersecting) {
-                e.target.style.opacity = '1';
-                e.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, { threshold: 0.15 });
-
-    document.querySelectorAll('.step-card, .feature-card, .riasec-chip').forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(28px)';
-        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        observer.observe(el);
-    });
-</script>
 </body>
 </html>

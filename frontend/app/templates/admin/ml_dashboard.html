@@ -70,13 +70,13 @@
 
     <div style="background:var(--bg-secondary);border-radius:8px;padding:1rem;margin-top:1rem;">
       <h4 style="margin:0 0 0.65rem;">Combinaciones de perfiles RIASEC</h4>
-      <div id="combinacionesRiasec" class="combination-grid">Cargando combinaciones…</div>
+      <div id="combinacionesRiasec" class="combination-grid"><span class="carga-fila" role="status" aria-live="polite"><span class="sr-only">Cargando combinaciones…</span><span class="skeleton skeleton-chip"></span><span class="skeleton skeleton-chip"></span><span class="skeleton skeleton-chip"></span></span></div>
     </div>
 
     <!-- Historial -->
     <h3 style="margin-top:1.5rem;">Historial de ejecuciones</h3>
     <div id="clusteringHistorial">
-      <p style="color:var(--text-secondary);font-size:0.875rem;">Cargando historial…</p>
+      <div class="carga" role="status" aria-live="polite"><span class="sr-only">Cargando historial…</span><div class="skeleton skeleton-text w-80"></div><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-40"></div></div>
     </div>
   </div>
 

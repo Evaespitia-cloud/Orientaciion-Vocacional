@@ -1,25 +1,26 @@
 """
 Pruebas de Integración — API REST
-Testea los endpoints HTTP contra el servidor real en localhost:5000
+Testea los endpoints HTTP contra los servidores aislados de servidor_pruebas.py
 Requiere que el backend esté corriendo con datos de seed disponibles.
 """
 
 import pytest
 import requests
 
-BASE = 'http://localhost:5000/api'
+from . import servidor_pruebas
+
+BASE = servidor_pruebas.API
 
 # ─── Credenciales de prueba ────────────────────────────────────────────────────
-ADMIN_TI   = {'email': 'admin@orientacion.edu.co',   'password': 'Admin123*'}
-BIENESTAR  = {'email': 'bienestar@orientacion.edu.co', 'password': 'Bienestar123*'}
-ESTUDIANTE_CREDS = {'email': 'sanny@orientacion.edu.co', 'password': 'Sanny123*'}
+ADMIN_TI = servidor_pruebas.ADMIN_TI
+BIENESTAR = servidor_pruebas.BIENESTAR
+ESTUDIANTE_CREDS = servidor_pruebas.ESTUDIANTE
 
 EMAIL_NUEVO = 'integ_test_nuevo@test.com'
 
 
 def get_token(creds):
-    r = requests.post(f'{BASE}/auth/login', json=creds)
-    return r.json().get('access_token', '')
+    return servidor_pruebas.token(creds) or ''
 
 def auth_header(token):
     return {'Authorization': f'Bearer {token}'}
@@ -155,7 +156,7 @@ class TestUsuariosAPI:
         email = f'creado_api_{int(time.time())}@test.com'
         r = requests.post(f'{BASE}/usuarios/', headers=auth_header(self.token_ti), json={
             'email': email,
-            'password': 'Nuevo123*',
+            'password': 'Nuevo12345*',
             'nombres': 'Creado',
             'apellidos': 'PorAPI',
             'rol': 'estudiante',

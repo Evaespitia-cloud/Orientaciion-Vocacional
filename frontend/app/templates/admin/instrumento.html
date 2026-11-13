@@ -17,7 +17,7 @@
     </div>
 
     <!-- Instrumentos -->
-    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;">Instrumentos Disponibles</h2>
+    <h2 style="color: var(--primary); margin-bottom: 1rem;">Instrumentos Disponibles</h2>
     {% for inst in instrumentos %}
     <div class="card" style="margin-bottom: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
@@ -39,7 +39,7 @@
         <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
             {% for dim in inst.dimensiones %}
             <div style="padding: 1rem; background: {% if loop.index == 1 %}#fff8f0{% else %}#fef3f2{% endif %}; border-radius: 10px; border-left: 4px solid {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %};">
-                <h4 style="font-size: 0.95rem; font-weight: 700; color: {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %}; margin-bottom: 0.5rem;">
+                <h4 style="color: {% if loop.index == 1 %}var(--primary){% else %}#e74c3c{% endif %}; margin-bottom: 0.5rem;">
                     Prueba {{ loop.index }}: {{ dim.nombre }}
                 </h4>
                 <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">{{ dim.descripcion or '' }}</p>
@@ -80,7 +80,7 @@
     {% endfor %}
 
     <!-- Configuraciones -->
-    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin: 2rem 0 1rem;">Configuraciones de Aplicación</h2>
+    <h2 style="color: var(--primary); margin: 2rem 0 1rem;">Configuraciones de Aplicación</h2>
     <div class="card">
         <div class="table-container">
             <table>
@@ -166,7 +166,7 @@ document.querySelectorAll('.btn-toggle-activa').forEach(function(btn) {
 <div id="modalNuevoInstrumento" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:2rem; max-width:460px; width:94%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 style="margin:0; font-size:1.2rem;">Nuevo Instrumento</h2>
+            <h2 style="margin:0;">Nuevo Instrumento</h2>
             <button onclick="document.getElementById('modalNuevoInstrumento').style.display='none'"
                     style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>

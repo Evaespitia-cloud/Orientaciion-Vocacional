@@ -20,6 +20,12 @@ de orientación vocacional serán tratados con las siguientes finalidades:
 3. Apoyar procesos de bienestar y orientación escolar.
 4. Realizar investigación institucional con datos anonimizados.
 
+Para el análisis institucional se piden también el colegio, la edad y la
+dirección de residencia. La dirección se ubica automáticamente en un mapa.
+Esa ubicación solo la consulta el equipo de Bienestar y se usa para
+estudiar, de forma agregada, de dónde vienen los estudiantes y qué colegios
+faltan por acompañar. Nunca se publica junto con el nombre.
+
 Los datos serán custodiados con medidas de seguridad adecuadas y no serán
 compartidos con terceros sin autorización previa.
 

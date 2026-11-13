@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, Response as FlaskResponse
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, Response as FlaskResponse
 from ..utils import api_request, api_requests_parallel, api_request_file, jwt_is_expired
 
 admin_bp = Blueprint('admin', __name__)
@@ -539,6 +539,43 @@ def consultas():
 def estadisticas_agregadas():
     """Vista de estadísticas agregadas según el rol."""
     return render_template('admin/estadisticas_agregadas.html')
+
+
+@admin_bp.route('/estadistica-avanzada')
+@admin_required
+def estadistica_avanzada():
+    """Hallazgos que se recalculan con cada encuesta, con el método detrás de un botón de ayuda."""
+    return render_template('admin/estadistica_avanzada.html')
+
+
+@admin_bp.route('/api/estadistica-avanzada')
+@admin_required
+def api_estadistica_avanzada():
+    data, status = api_request('GET', '/analitica/estadistica-avanzada',
+                               params={'simulados': request.args.get('simulados', '0')})
+    return jsonify(data), status
+
+
+@admin_bp.route('/mapa')
+@admin_required
+def mapa():
+    """Mapa de calor de estudiantes y colegios del Valle de Aburrá."""
+    return render_template('admin/mapa.html')
+
+
+@admin_bp.route('/api/mapa')
+@admin_required
+def api_mapa():
+    data, status = api_request('GET', '/analitica/mapa', params={'simulados': request.args.get('simulados', '0')})
+    return jsonify(data), status
+
+
+@admin_bp.route('/api/evolucion-agregada')
+@admin_required
+def api_evolucion_agregada():
+    """Puente para estadisticas_agregadas.html: el navegador no habla directo con el backend."""
+    data, status = api_request('GET', '/estadisticas/evolucion-agregada')
+    return jsonify(data), status
 
 
 @admin_bp.route('/exportar')

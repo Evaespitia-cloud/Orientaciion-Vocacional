@@ -52,19 +52,21 @@
             <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Distribución agregada de las 6 dimensiones Holland como perfil colectivo de la institución</p>
         </div>
         <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap; padding:0.5rem 0;">
-            <div style="flex:0 0 280px; height:280px; position:relative;"><canvas id="chartRadarRIASEC"></canvas></div>
+            <div style="flex:0 1 340px; min-width:260px; height:320px; position:relative;"><canvas id="chartRadarRIASEC" role="img" aria-label="Radar con el porcentaje de estudiantes por perfil dominante"></canvas></div>
             <div style="flex:1; min-width:200px; padding-top:0.5rem;">
                 {% set max_area = areas_interes|sort(attribute='cantidad',reverse=true)|first %}
                 {% set total_a = areas_interes|sum(attribute='cantidad') %}
                 <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.4rem;">Área con mayor representación:</p>
                 <div style="font-size:1.6rem; font-weight:800; color:var(--accent); margin-bottom:0.2rem;">{{ max_area.area }}</div>
                 <p style="color:var(--text-secondary); font-size:0.82rem; margin-bottom:1.5rem;">{{ max_area.cantidad }} estudiante(s) tienen este perfil como dominante.</p>
+                {% set color_area = {'Realista': '#eb6834', 'Investigador': '#2a78d6', 'Artístico': '#e87ba4',
+                                     'Social': '#1baf7a', 'Emprendedor': '#eda100', 'Convencional': '#4a3aa7'} %}
                 <div>
                     {% for a in areas_interes|sort(attribute='cantidad',reverse=true) %}
                     <div style="display:flex; align-items:center; margin-bottom:0.45rem; font-size:0.82rem; gap:0.5rem;">
                         <span style="width:115px; flex-shrink:0;">{{ a.area }}</span>
                         <div style="flex:1; height:8px; background:#e5e5e5; border-radius:4px; overflow:hidden;">
-                            <div style="width:{{ ((a.cantidad / total_a * 100) if total_a else 0)|round(0)|int }}%; height:100%; background:var(--accent); border-radius:4px;"></div>
+                            <div style="width:{{ ((a.cantidad / total_a * 100) if total_a else 0)|round(0)|int }}%; height:100%; background:{{ color_area.get(a.area, 'var(--accent)') }}; border-radius:4px;"></div>
                         </div>
                         <span style="font-weight:600; width:38px; text-align:right;">{{ ((a.cantidad / total_a * 100) if total_a else 0)|round(1) }}%</span>
                     </div>
@@ -108,7 +110,7 @@
                 <canvas id="chartTipoColegio"></canvas>
             </div>
             {% else %}
-            <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No hay datos demográficos registrados aún.</p>
+            <div class="empty-state"><p>No hay datos demográficos registrados aún.</p></div>
             {% endif %}
         </div>
 
@@ -143,7 +145,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No hay perfiles procesados aún.</p>
+            <div class="empty-state"><p>No hay perfiles procesados aún.</p></div>
             {% endif %}
         </div>
     </div>
@@ -213,7 +215,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin datos demográficos registrados.</p>
+            <div class="empty-state"><p>Sin datos demográficos registrados.</p></div>
             {% endif %}
         </div>
         <div class="card">
@@ -224,7 +226,7 @@
             {% if areas_interes %}
             <div class="chart-container"><canvas id="chartAreasDir"></canvas></div>
             {% else %}
-            <p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin datos disponibles.</p>
+            <div class="empty-state"><p>Sin datos disponibles.</p></div>
             {% endif %}
         </div>
     </div>
@@ -304,7 +306,7 @@
     {% if rol in ('investigador', 'ti', 'bienestar') or not rol %}
     <!-- ── Segmentación por Género ────────────────────────────────────────── -->
     <div class="page-header" style="margin-top: 2.5rem;">
-        <h2 style="font-size: 1.25rem;">Segmentación por Género</h2>
+        <h2>Segmentación por Género</h2>
         <p>Distribución de estudiantes y perfiles vocacionales según género</p>
     </div>
     <div class="grid-2">
@@ -313,7 +315,7 @@
             {% if seg_genero %}
             <div class="chart-container" style="height:240px;"><canvas id="chartGeneroInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
         <div class="card">
@@ -321,14 +323,14 @@
             {% if seg_genero_perfiles %}
             <div class="chart-container" style="height:240px;"><canvas id="chartPerfilesGeneroInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
     </div>
 
     <!-- ── Segmentación por Edad ──────────────────────────────────────────── -->
     <div class="page-header" style="margin-top: 2rem;">
-        <h2 style="font-size: 1.25rem;">Segmentación por Edad</h2>
+        <h2>Segmentación por Edad</h2>
         <p>Distribución de estudiantes y perfiles vocacionales según rango de edad</p>
     </div>
     <div class="grid-2">
@@ -337,7 +339,7 @@
             {% if seg_edad %}
             <div class="chart-container" style="height:240px;"><canvas id="chartEdadInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
         <div class="card">
@@ -345,7 +347,7 @@
             {% if seg_edad_perfiles %}
             <div class="chart-container" style="height:240px;"><canvas id="chartPerfilesEdadInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
     </div>
@@ -355,7 +357,7 @@
     <!-- ── Evolución Vocacional (investigador y bienestar; directivo la ve arriba) ── -->
     {% if rol != 'directivo' %}
     <div class="page-header" style="margin-top: 2.5rem;">
-        <h2 style="font-size: 1.25rem;">Evolución Vocacional Institucional</h2>
+        <h2>Evolución Vocacional Institucional</h2>
         <p>Cómo han cambiado los perfiles Holland en la institución a lo largo del tiempo</p>
     </div>
     <div class="card" style="margin-bottom: 2rem;">
@@ -603,34 +605,35 @@ new Chart(document.getElementById('chartEdadInforme'), {
 // ── Radar RIASEC institucional (investigador) ────────────────────────── //
 {% if areas_interes %}
 (function() {
+    // Ejes en el orden del hexágono Holland (R-I-A-S-E-C) y en porcentaje de
+    // estudiantes, igual que las barras de al lado. Sin números sobre los anillos:
+    // con un paso de 1 se apilaban decenas de etiquetas; el valor va en el tooltip.
     const areasRaw = {{ areas_interes | tojson }};
+    const ORDEN = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'];
+    const porArea = {};
+    areasRaw.forEach(a => { porArea[a.area] = a.cantidad; });
+    const total = areasRaw.reduce((s, a) => s + a.cantidad, 0) || 1;
+    const pct = ORDEN.map(a => Math.round((porArea[a] || 0) / total * 1000) / 10);
+    const tope = Math.max(10, Math.ceil(Math.max.apply(null, pct) / 10) * 10);
     new Chart(document.getElementById('chartRadarRIASEC'), {
         type: 'radar',
         data: {
-            labels: areasRaw.map(a => a.area),
-            datasets: [{
-                label: 'Distribución RIASEC',
-                data: areasRaw.map(a => a.cantidad),
-                backgroundColor: 'rgba(239, 125, 0, 0.15)',
-                borderColor: '#ef7d00',
-                borderWidth: 2,
-                pointBackgroundColor: '#ef7d00',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#ef7d00',
-                pointRadius: 5,
-            }]
+            labels: ORDEN,
+            datasets: [{ label: 'Estudiantes por perfil dominante', data: pct, tension: 0, pointRadius: 5, pointHoverRadius: 7 }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            layout: { padding: 4 },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: c => ' ' + c.parsed.r.toLocaleString('es-CO') + ' % (' + (porArea[c.label] || 0) + ' estudiantes)' } }
+            },
             scales: {
                 r: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1, font: { size: 10 } },
-                    pointLabels: { font: { size: 12 } },
-                    grid: { color: 'rgba(0,0,0,0.08)' },
+                    min: 0, max: tope,
+                    ticks: { display: false, stepSize: tope / 4 },
+                    pointLabels: { font: { size: 12, weight: '600' }, padding: 8 },
                 }
             }
         }

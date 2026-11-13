@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Estadística avanzada — Orientación Vocacional{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container ea">
+    <div class="ea-cabecera">
+        <img class="ea-fox" src="{{ url_for('static', filename='img/mascota/hallazgos.webp') }}" alt="" onerror="this.remove()">
+        <div class="ea-cabecera-texto">
+            <h1>Estadística avanzada</h1>
+            <p>Conclusiones que se recalculan solas a medida que llegan encuestas. El método de cada una está en el botón <span class="ea-ayuda-muestra" aria-hidden="true">?</span>.</p>
+        </div>
+        <div class="ea-controles">
+            <label class="ea-interruptor">
+                <input type="checkbox" id="incluirSimulados">
+                <span>Incluir datos simulados</span>
+            </label>
+            <span class="ea-estado" id="estadoDatos" aria-live="polite">Cargando…</span>
+        </div>
+    </div>
+
+    <div class="ea-aviso" id="avisoSimulados" hidden role="note">
+        Estás viendo datos simulados: una cohorte de prueba generada para revisar la página. No sirven para tomar decisiones.
+    </div>
+
+    <div class="ea-rejilla" id="tarjetas" aria-busy="true">
+        {% for _ in range(4) %}
+        <div class="card ea-tarjeta"><div class="skeleton skeleton-text w-40"></div><div class="skeleton skeleton-text w-80"></div><div class="skeleton skeleton-chart"></div></div>
+        {% endfor %}
+    </div>
+</div>
+
+<dialog class="ea-metodo" id="dialogoMetodo" aria-labelledby="metodoTitulo">
+    <form method="dialog" class="ea-metodo-cerrar"><button aria-label="Cerrar">×</button></form>
+    <p class="ea-metodo-kicker">Cómo se calculó</p>
+    <h2 id="metodoTitulo"></h2>
+    <ol id="metodoPasos"></ol>
+    <div id="metodoFormulas" class="ea-formulas"></div>
+    <h3>Supuestos</h3>
+    <p id="metodoSupuestos"></p>
+    <h3>Resultado</h3>
+    <p id="metodoResultado" class="ea-resultado"></p>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script>window.EA_URL = {{ url_for('admin.api_estadistica_avanzada')|tojson }};</script>
+<script src="{{ url_for('static', filename='js/estadistica_avanzada.js') }}"></script>
+{% endblock %}

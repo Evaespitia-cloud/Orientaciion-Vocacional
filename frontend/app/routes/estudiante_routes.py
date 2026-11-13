@@ -2,6 +2,11 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from ..utils import api_request, api_requests_parallel, api_request_file, jwt_is_expired
+from ..programas_usb import (
+    programas_recomendados, programas_para_mapa, definicion_perfil,
+    sesiones_distintas, recomendaciones_accionables, fortalezas_sin_porcentaje,
+    areas_por_porcentaje,
+)
 
 estudiante_routes = Blueprint('estudiante', __name__)
 
@@ -112,6 +117,20 @@ def datos_demograficos():
     return render_template('estudiante/datos_demograficos.html',
                            campos=campos,
                            datos_existentes=datos_existentes)
+
+
+# Escenas del zorro haciendo algo (estilo 16personalities). Solo se muestran las que ya
+# existen en static/img/mascota, así la página no cambia hasta que llega cada imagen.
+ESCENAS = ('realista-accion', 'investigador-accion', 'artistico-accion', 'social-accion',
+           'emprendedor-accion', 'convencional-accion', 'tus-areas', 'fortalezas', 'evolucion',
+           'selfie', 'mitad-cuestionario')
+
+
+def escenas_disponibles():
+    import os
+    from flask import current_app
+    carpeta = os.path.join(current_app.static_folder, 'img', 'mascota')
+    return {e for e in ESCENAS if os.path.exists(os.path.join(carpeta, f'{e}.webp'))}
 
 
 @estudiante_routes.route('/cuestionario/<int:config_id>')
@@ -252,6 +271,12 @@ def _unificar_puntajes_riasec(intereses_puntajes, competencias_puntajes, puntaje
             combined_score = int_val + com_val
             
         comparativo[area]['total'] = combined_max
+        # Porcentaje de cada prueba por separado, para las gráficas de resultados
+        # (None cuando el estudiante aún no ha hecho esa prueba).
+        comparativo[area]['interes_pct'] = (
+            round(min(100.0, int_val / int_max * 100), 1) if has_intereses and int_max else None)
+        comparativo[area]['competencia_pct'] = (
+            round(min(100.0, com_val / com_max * 100), 1) if has_competencias and com_max else None)
         normalizado = (combined_score / combined_max * 100) if combined_max > 0 else 0
         # Red de seguridad: un porcentaje nunca puede salirse de 0–100. Si pasa,
         # es señal de que el denominador está mal y hay que revisarlo.
@@ -323,14 +348,32 @@ def resultados(aplicacion_id):
     if perfil.get('datos_json'):
         perfil['datos_json']['puntajes_por_area'] = comparativo
 
+    # Evolución y predicción solo tienen sentido con dos sesiones en días
+    # distintos: las pruebas de Intereses y Competencias del mismo día no son
+    # dos momentos en el tiempo.
+    historial = evolucion_data.get('evolucion', {}).get('historial', [])
+    hay_sesiones = sesiones_distintas(historial) >= 2
+    # Perfiles antiguos sin puntajes: _unificar_puntajes_riasec devuelve todo en
+    # cero, y eso daría un falso "perfil equilibrado".
+    hay_puntajes = bool(puntajes_area or intereses_puntajes or competencias_puntajes)
+
     return render_template('estudiante/resultados.html',
+                           escenas=escenas_disponibles(),
                            perfil=perfil,
                            resultados_dimension=data.get('resultados_dimension', []),
                            aplicacion=data.get('aplicacion'),
                            estudiante=data.get('estudiante'),
-                           evolucion=evolucion_data.get('evolucion', {}).get('historial', []),
-                           mutaciones=evolucion_data.get('mutaciones', []),
-                           prediccion=evolucion_data.get('prediccion', {}))
+                           programas=programas_recomendados(perfil.get('perfil_principal'),
+                                                            perfil.get('perfil_secundario')),
+                           definicion=definicion_perfil(comparativo) if hay_puntajes else None,
+                           orden_areas=areas_por_porcentaje(
+                               comparativo, (perfil.get('datos_json') or {}).get('ranking_intereses')),
+                           fortalezas=fortalezas_sin_porcentaje(perfil.get('fortalezas')),
+                           recomendaciones=recomendaciones_accionables(
+                               perfil.get('recomendaciones'), perfil.get('descripcion')),
+                           evolucion=historial if hay_sesiones else [],
+                           mutaciones=evolucion_data.get('mutaciones', []) if hay_sesiones else [],
+                           prediccion=evolucion_data.get('prediccion', {}) if hay_sesiones else {})
 
 
 @estudiante_routes.route('/descargar-reporte/<int:aplicacion_id>')
@@ -361,6 +404,28 @@ def descargar_reporte(aplicacion_id):
         mimetype='application/pdf',
         headers={'Content-Disposition': filename},
     )
+
+
+@estudiante_routes.route('/carta/<int:aplicacion_id>.png')
+@login_required
+def carta_png(aplicacion_id):
+    """La carta del estudiante; con ?nombre=1 lleva su primer nombre (solo en la descarga)."""
+    resp = api_request_file('GET', f'/compartir/mio/{aplicacion_id}.png', params={
+        'nombre': '1' if request.args.get('nombre') == '1' else '0', 'sitio': request.host})
+    if resp is None or resp.status_code != 200:
+        return jsonify({'error': 'No se pudo generar la carta'}), 404
+    from flask import Response as FlaskResponse
+    return FlaskResponse(resp.content, mimetype='image/png', headers={'Cache-Control': 'no-store'})
+
+
+@estudiante_routes.route('/api/carta/<int:aplicacion_id>')
+@login_required
+def api_carta(aplicacion_id):
+    data, status = api_request('GET', f'/compartir/mio/{aplicacion_id}')
+    if status != 200:
+        return jsonify(data), status
+    return jsonify({'codigo': data['codigo'],
+                    'url': url_for('main.carta_publica', codigo=data['codigo'], _external=True)}), 200
 
 
 @estudiante_routes.route('/explorador/<int:aplicacion_id>')
@@ -425,6 +490,10 @@ def explorador(aplicacion_id):
     return render_template('estudiante/explorador.html',
                            perfil=perfil,
                            puntajes=comparativo,
+                           orden_areas=areas_por_porcentaje(
+                               comparativo, (perfil.get('datos_json') or {}).get('ranking_intereses')),
+                           programas=programas_para_mapa(perfil.get('perfil_principal'),
+                                                         perfil.get('perfil_secundario')),
                            aplicacion_id=aplicacion_id)
 
 

@@ -29,6 +29,8 @@ def app():
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     with app.app_context():
+        # create_all y drop_all corren sobre esta base: nunca debe ser la de desarrollo.
+        assert ':memory:' in str(_db.engine.url), f'Base de pruebas inesperada: {_db.engine.url}'
         _db.create_all()
         # Cada prueba recibe una base SQLite nueva y roles mínimos.
         for nombre, desc in [('estudiante', 'Estudiante del sistema'), ('ti', 'Administrador TI')]:
@@ -84,48 +86,38 @@ class TestRegistroUsuario:
             email = f'unit_test_{int(time.time())}@test.com'
             datos = {
                 'email': email,
-                'password': 'Test1234*',
+                'password': 'Test12345*',
                 'nombres': 'Juan',
                 'apellidos': 'Prueba',
             }
             u = AuthService.registrar_usuario(datos)
             assert u.id is not None
             assert u.email == email
-            assert u.password_hash != 'Test1234*'
+            assert u.password_hash != 'Test12345*'
 
-    def test_registro_estudiante_sin_password(self, app):
+    def test_registro_sin_password_se_rechaza(self, app):
+        """Toda cuenta nueva, también la de estudiante, necesita una contraseña propia."""
         with app.app_context():
-            email = f'estudiante_sin_password_{int(time.time())}@test.com'
-            datos = {
-                'email': email,
-                'nombres': 'Estudiante',
-                'apellidos': 'SinClave',
-                'rol': 'estudiante',
-            }
-            u = AuthService.registrar_usuario(datos)
-            assert u.id is not None
-            assert u.email == email
-            assert u.rol.nombre == 'estudiante'
-            assert u.password_hash
+            with pytest.raises(ValueError, match='requerida'):
+                AuthService.registrar_usuario({
+                    'email': f'sin_password_{int(time.time())}@test.com',
+                    'nombres': 'Estudiante', 'apellidos': 'SinClave', 'rol': 'estudiante',
+                })
 
-    def test_login_estudiante_sin_password(self, app):
+    def test_registro_password_corta_se_rechaza(self, app):
         with app.app_context():
-            email = f'estudiante_login_sin_password_{int(time.time())}@test.com'
-            AuthService.registrar_usuario({
-                'email': email,
-                'nombres': 'Estudiante',
-                'apellidos': 'SinClave',
-                'rol': 'estudiante',
-            })
-            u = AuthService.autenticar(email, '')
-            assert u.email == email
+            with pytest.raises(ValueError, match='10 caracteres'):
+                AuthService.registrar_usuario({
+                    'email': 'corta@test.com', 'password': 'Corta1*',
+                    'nombres': 'A', 'apellidos': 'B',
+                })
 
     def test_registro_email_duplicado(self, app):
         with app.app_context():
             email = f'duplicado_{int(time.time())}@test.com'
             datos = {
                 'email': email,
-                'password': 'Test1234*',
+                'password': 'Test12345*',
                 'nombres': 'A',
                 'apellidos': 'B',
             }
@@ -137,7 +129,7 @@ class TestRegistroUsuario:
         with app.app_context():
             datos = {
                 'email': 'rolmal@test.com',
-                'password': 'Test1234*',
+                'password': 'Test12345*',
                 'nombres': 'X',
                 'apellidos': 'Y',
                 'rol': 'rol_inexistente',
@@ -152,11 +144,11 @@ class TestAutenticacion:
         with app.app_context():
             AuthService.registrar_usuario({
                 'email': 'login_ok@test.com',
-                'password': 'Login123*',
+                'password': 'Login12345*',
                 'nombres': 'Login',
                 'apellidos': 'Test',
             })
-            u = AuthService.autenticar('login_ok@test.com', 'Login123*')
+            u = AuthService.autenticar('login_ok@test.com', 'Login12345*')
             assert u.email == 'login_ok@test.com'
 
     def test_login_email_incorrecto(self, app):
@@ -179,11 +171,11 @@ class TestAutenticacion:
         with app.app_context():
             u = AuthService.registrar_usuario({
                 'email': 'inactivo@test.com',
-                'password': 'Inact123*',
+                'password': 'Inact12345*',
                 'nombres': 'I',
                 'apellidos': 'N',
             })
             u.activo = False
             _db.session.commit()
             with pytest.raises(ValueError, match='inactiva'):
-                AuthService.autenticar('inactivo@test.com', 'Inact123*')
+                AuthService.autenticar('inactivo@test.com', 'Inact12345*')

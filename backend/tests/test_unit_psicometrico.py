@@ -42,7 +42,7 @@ def determinar_afinidades(puntajes_area: dict, umbral: float = 0.6):
 def test_cargar_banco_desde_excel_saca_30_intereses_y_30_competencias(tmp_path):
     from openpyxl import Workbook
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'maintenance'))
     from importar_banco_cliente import cargar_banco_desde_excel
 
     workbook = Workbook()
@@ -146,14 +146,15 @@ def test_filtrar_intereses_excel_acepta_variant_textos_del_seed_de_intereses():
 
 
 def test_cargar_banco_desde_pdfs_saca_30_intereses_y_30_competencias():
+    pytest.importorskip('pymupdf', reason='el lector de PDF es opcional (pip install pymupdf)')
     from pathlib import Path
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'maintenance'))
     from importar_banco_cliente import cargar_banco_desde_pdfs
 
     intereses, competencias = cargar_banco_desde_pdfs(
-        Path('Intereses.pdf'),
-        Path('Competencias.pdf'),
+        Path(__file__).resolve().parents[2] / 'references' / 'Intereses.pdf',
+        Path(__file__).resolve().parents[2] / 'references' / 'Competencias.pdf',
     )
 
     assert len(intereses) == 30

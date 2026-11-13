@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Mapa — Orientación Vocacional{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="mb">
+    <aside class="mb-panel" id="panelMapa" aria-label="Filtros del mapa">
+        <div class="mb-panel-cabeza">
+            <h1>Mapa</h1>
+            <button type="button" class="ea-ayuda" id="ayudaMapa" aria-label="Cómo se construye el mapa">?</button>
+        </div>
+        <p class="mb-resumen" id="resumenMapa" aria-live="polite">Cargando…</p>
+
+        <div class="mb-grupo">
+            <span class="mb-etiqueta">Capas</span>
+            <label class="mb-check"><input type="checkbox" id="capaCalor" checked> Calor de estudiantes</label>
+            <label class="mb-check"><input type="checkbox" id="capaPuntos" checked> Cada estudiante (al acercarse)</label>
+            <label class="mb-check"><input type="checkbox" id="capaColegios" checked> Colegios</label>
+            <label class="mb-check"><input type="checkbox" id="capaCalorColegios"> Calor por colegio (evaluados)</label>
+            <label class="mb-check"><input type="checkbox" id="capaSatelite"> Satélite</label>
+        </div>
+
+        <div class="mb-grupo">
+            <span class="mb-etiqueta">Color de los colegios</span>
+            <div class="mb-segmentos" role="radiogroup">
+                <label><input type="radio" name="modoColegio" value="evaluados" checked><span>Evaluados</span></label>
+                <label><input type="radio" name="modoColegio" value="dominante"><span>Perfil dominante</span></label>
+                <label><input type="radio" name="modoColegio" value="cobertura"><span>Cobertura</span></label>
+            </div>
+            <div class="mb-leyenda" id="leyendaColegios"></div>
+        </div>
+
+        <div class="mb-grupo">
+            <span class="mb-etiqueta">Perfil</span>
+            <div class="mb-chips" id="filtroPerfil"></div>
+        </div>
+        <div class="mb-grupo">
+            <span class="mb-etiqueta">Grado</span>
+            <div class="mb-chips" id="filtroGrado"></div>
+        </div>
+        <div class="mb-grupo">
+            <span class="mb-etiqueta">Sector del colegio</span>
+            <div class="mb-chips" id="filtroSector"></div>
+        </div>
+        <div class="mb-grupo">
+            <span class="mb-etiqueta">Estrato</span>
+            <div class="mb-chips" id="filtroEstrato"></div>
+        </div>
+        <div class="mb-grupo">
+            <label class="mb-etiqueta" for="filtroMunicipio">Municipio</label>
+            <select id="filtroMunicipio" class="form-control"><option value="">Todo el Valle de Aburrá</option></select>
+        </div>
+        <label class="ea-interruptor mb-simulados"><input type="checkbox" id="incluirSimulados"> <span>Incluir datos simulados</span></label>
+        <div class="ea-aviso" id="avisoSimulados" hidden>Datos simulados: solo para revisar el mapa.</div>
+    </aside>
+    <button type="button" class="mb-plegar" id="plegarPanel" aria-controls="panelMapa" aria-expanded="true">Filtros</button>
+    <div id="mapaBienestar" class="mb-mapa" role="region" aria-label="Mapa de estudiantes y colegios"></div>
+</div>
+
+<dialog class="ea-metodo" id="dialogoMapa" aria-labelledby="mapaMetodoTitulo">
+    <form method="dialog" class="ea-metodo-cerrar"><button aria-label="Cerrar">×</button></form>
+    <img class="mb-fox" src="{{ url_for('static', filename='img/mascota/mapa.webp') }}" alt="" onerror="this.remove()">
+    <p class="ea-metodo-kicker">Cómo se construye</p>
+    <h2 id="mapaMetodoTitulo">Mapa de estudiantes y colegios</h2>
+    <ol>
+        <li>Cada estudiante aparece en la ubicación de la dirección que escribió al registrarse. La dirección se ubica con el catastro de medidores del Valle de Aburrá (exacta o interpolada en la cuadra) y, si no aparece, con OpenStreetMap. Las direcciones que no se encuentran no se dibujan.</li>
+        <li>De lejos se ve el calor: una estimación de densidad de núcleo que suma, en cada píxel, una campana gaussiana por estudiante. Donde hay más casas cerca, más intenso.</li>
+        <li>Al acercarse, el calor se apaga y aparece cada estudiante como un punto del color de su perfil principal.</li>
+        <li>Los colegios salen del catálogo (Alcaldía de Medellín, Envigado y Ministerio de Educación). El tamaño del círculo crece con los estudiantes evaluados.</li>
+        <li>El calor por colegio es la misma estimación de densidad, pero cada colegio pesa según sus evaluados: muestra las zonas de colegios donde más se ha aplicado la prueba.</li>
+        <li>La cobertura es la proporción de la matrícula de 9° a 11° que ya hizo la prueba. Solo las sedes de Medellín traen matrícula.</li>
+    </ol>
+    <div class="ea-formulas" id="formulasMapa"></div>
+    <h3>Supuestos</h3>
+    <p>Las ventanas de los puntos no muestran nombres. La distancia casa-colegio es en línea recta.</p>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="{{ url_for('static', filename='js/mapa_base.js') }}"></script>
+<script>window.MB_URL = {{ url_for('admin.api_mapa')|tojson }};</script>
+<script src="{{ url_for('static', filename='js/mapa_bienestar.js') }}"></script>
+{% endblock %}

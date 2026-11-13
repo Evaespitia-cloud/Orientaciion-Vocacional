@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Plataforma de Orientación Vocacional para Bachilleres">
     <title>{% block title %}Orientación Vocacional{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Red+Hat+Display:wght@400..900&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo-usb-marca.png') }}">
     <meta name="theme-color" content="#ffffff">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% if request.path.startswith('/admin') %}<script src="{{ url_for('static', filename='js/graficas.js') }}"></script>{% endif %}
     {% block head %}{% endblock %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
@@ -85,6 +89,8 @@
                 <a href={{ url_for('admin.dashboard') }} class="menu-item {% if request.path.startswith('/admin/dashboard') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg><span>Panel admin</span></a>
                 <p class="menu-seccion">Análisis y datos</p>
                 <a href={{ url_for('admin.informe_general') }} class="menu-item {% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><span>Informes</span></a>
+                <a href={{ url_for('admin.estadistica_avanzada') }} class="menu-item {% if request.path.startswith('/admin/estadistica-avanzada') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>Estadística avanzada</span></a>
+                <a href={{ url_for('admin.mapa') }} class="menu-item {% if request.path.startswith('/admin/mapa') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M12 21s-6-5.33-6-10a6 6 0 0 1 12 0c0 4.67-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg><span>Mapa</span></a>
                 <a href={{ url_for('admin.exportar') }} class="menu-item {% if request.path.startswith('/admin/exportar') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg><span>Exportación anónima</span></a>
             {% elif session.get('rol') == 'bienestar' %}
                 <p class="menu-seccion">Panel</p>
@@ -95,6 +101,8 @@
                 <a href={{ url_for('admin.datos_estudiantes') }} class="menu-item {% if request.path.startswith('/admin/datos') or request.path.startswith('/admin/campos') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg><span>Demográficos</span></a>
                 <p class="menu-seccion">Análisis</p>
                 <a href={{ url_for('admin.informe_general') }} class="menu-item {% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><span>Informes</span></a>
+                <a href={{ url_for('admin.estadistica_avanzada') }} class="menu-item {% if request.path.startswith('/admin/estadistica-avanzada') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>Estadística avanzada</span></a>
+                <a href={{ url_for('admin.mapa') }} class="menu-item {% if request.path.startswith('/admin/mapa') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M12 21s-6-5.33-6-10a6 6 0 0 1 12 0c0 4.67-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg><span>Mapa</span></a>
                 <a href={{ url_for('admin.consultas') }} class="menu-item {% if request.path.startswith('/admin/consultas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Consultas</span></a>
                 <a href={{ url_for('admin.ml_dashboard') }} class="menu-item {% if request.path.startswith('/admin/ml-pln') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>ML / PLN</span></a>
                 <p class="menu-seccion">Datos</p>
@@ -111,6 +119,8 @@
                 <a href={{ url_for('admin.datos_estudiantes') }} class="menu-item {% if request.path.startswith('/admin/datos') or request.path.startswith('/admin/campos') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg><span>Demográficos</span></a>
                 <p class="menu-seccion">Análisis</p>
                 <a href={{ url_for('admin.informe_general') }} class="menu-item {% if request.path.startswith('/admin/informe') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><span>Informes</span></a>
+                <a href={{ url_for('admin.estadistica_avanzada') }} class="menu-item {% if request.path.startswith('/admin/estadistica-avanzada') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>Estadística avanzada</span></a>
+                <a href={{ url_for('admin.mapa') }} class="menu-item {% if request.path.startswith('/admin/mapa') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M12 21s-6-5.33-6-10a6 6 0 0 1 12 0c0 4.67-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg><span>Mapa</span></a>
                 <a href={{ url_for('admin.consultas') }} class="menu-item {% if request.path.startswith('/admin/consultas') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Consultas</span></a>
                 <a href={{ url_for('admin.ml_dashboard') }} class="menu-item {% if request.path.startswith('/admin/ml-pln') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>ML / PLN</span></a>
                 <p class="menu-seccion">Datos y sistema</p>
@@ -203,6 +213,28 @@
         setTimeout(showSessionWarning, SESSION_MS - WARN_BEFORE_MS);
     })();
     {% endif %}
+    </script>
+    <script>
+    // Entrada suave de las tarjetas al aparecer en pantalla (solo entrada; el
+    // hover lo maneja el CSS). Se saltan las tarjetas con gráfica para no
+    // interferir con el dibujo de Chart.js, y se respeta prefers-reduced-motion.
+    (function () {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const objetivos = Array.prototype.slice
+            .call(document.querySelectorAll('.container > .card, .container > .grid-2 > .card, .container > .stats-grid > .card'))
+            .filter(function (el) { return !el.querySelector('canvas'); });
+        if (!('IntersectionObserver' in window) || !objetivos.length) return;
+        const io = new IntersectionObserver(function (entradas) {
+            entradas.forEach(function (e, i) {
+                if (e.isIntersecting) {
+                    const el = e.target;
+                    setTimeout(function () { el.classList.add('in'); }, Math.min(i, 6) * 55);
+                    io.unobserve(el);
+                }
+            });
+        }, { threshold: 0.08 });
+        objetivos.forEach(function (el) { el.classList.add('reveal'); io.observe(el); });
+    })();
     </script>
     {% block scripts %}{% endblock %}
 </body>

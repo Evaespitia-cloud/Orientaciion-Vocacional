@@ -20,6 +20,11 @@ def create_app(config_name=None):
                 template_folder='templates',
                 static_folder='static')
     app.config.from_object(config_by_name[config_name])
+    if config_name == 'production':
+        # Render termina el HTTPS en su proxy: así url_for(..., _external=True) arma
+        # enlaces https y request.remote_addr es la IP del visitante, no la del proxy.
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
     Session(app)
 
@@ -46,7 +51,16 @@ def create_app(config_name=None):
         response.headers.setdefault('X-Frame-Options', 'DENY')
         response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
         response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-        response.headers.setdefault('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self'; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com")
+        # Los mapas (MapLibre) piden teselas a OpenFreeMap y a Esri y usan workers en blob:.
+        teselas = 'https://tiles.openfreemap.org https://server.arcgisonline.com'
+        response.headers.setdefault('Content-Security-Policy', (
+            "default-src 'self'; "
+            f"img-src 'self' data: blob: {teselas}; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "worker-src 'self' blob:; child-src blob:; "
+            f"connect-src 'self' {teselas}; "
+            "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com"))
         if config_name == 'production':
             response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
         return response

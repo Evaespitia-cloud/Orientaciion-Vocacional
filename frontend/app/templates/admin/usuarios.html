@@ -122,7 +122,7 @@
 <div id="modalCrearUsuario" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
     <div class="modal-box" style="background:#fff; border-radius:12px; padding:2rem; max-width:560px; width:100%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 style="margin:0; font-size:1.2rem;">Nuevo Usuario</h2>
+            <h2 style="margin:0;">Nuevo Usuario</h2>
             <button onclick="cerrarModalCrear()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">&#10005;</button>
         </div>
         <form method="POST" action="{{ url_for('admin.crear_usuario') }}" id="formCrear" novalidate>
@@ -258,7 +258,7 @@
 <div id="modalEditarUsuario" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
     <div class="modal-box" style="background:#fff; border-radius:12px; padding:2rem; max-width:560px; width:100%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 style="margin:0; font-size:1.2rem;">Editar Usuario</h2>
+            <h2 style="margin:0;">Editar Usuario</h2>
             <button onclick="cerrarModalEditar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">&#10005;</button>
         </div>
         <form id="formEditar" method="POST" action="" novalidate>

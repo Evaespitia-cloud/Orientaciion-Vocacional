@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% set titulo_carta = 'Mi perfil vocacional: ' ~ carta.principal %}
+    {% set descripcion = 'Código ' ~ carta.codigo_riasec ~ (' · Secundario: ' ~ carta.secundario if carta.secundario else '') ~ '. Descubre el tuyo con la prueba de orientación vocacional de la USB.' %}
+    <title>{{ titulo_carta }} — Orientación Vocacional</title>
+    <meta name="description" content="{{ descripcion }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Orientación Vocacional · USB Medellín">
+    <meta property="og:title" content="{{ titulo_carta }}">
+    <meta property="og:description" content="{{ descripcion }}">
+    <meta property="og:url" content="{{ url_for('main.carta_publica', codigo=codigo, _external=True) }}">
+    <meta property="og:image" content="{{ url_for('main.carta_publica_enlace', codigo=codigo, _external=True) }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Carta del perfil {{ carta.principal }} con los seis campos RIASEC">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Red+Hat+Display:wght@400..900&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
+    <meta name="theme-color" content="#f07f06">
+</head>
+<body class="cp">
+    <main class="cp-main">
+        <img class="cp-carta" src="{{ url_for('main.carta_publica_png', codigo=codigo) }}"
+             alt="Carta del perfil {{ carta.principal }}, código {{ carta.codigo_riasec }}" width="540" height="960">
+        <section class="cp-texto">
+            <p class="cp-kicker">Orientación Vocacional · Universidad de San Buenaventura</p>
+            <h1>Alguien te compartió su perfil: <span>{{ carta.principal }}</span></h1>
+            <p>Responde dos pruebas cortas, una de intereses y otra de competencias, y descubre cuál de los seis campos RIASEC se parece más a ti y qué programas de la USB encajan contigo.</p>
+            <div class="cp-acciones">
+                <a href="{{ url_for('auth.registro') }}" class="btn btn-primary btn-lg">Haz tu test</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Ya tengo cuenta</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

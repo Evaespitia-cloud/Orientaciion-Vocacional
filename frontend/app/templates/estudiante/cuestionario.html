@@ -2,48 +2,50 @@
 {% block title %}Cuestionario — Orientación Vocacional{% endblock %}
 
 {% block content %}
-<div class="container questionnaire">
-    <div class="progress-header">
-        <div class="progress-info">
-            <span>{{ instrumento.nombre or 'Cuestionario de Orientación Vocacional' }}</span>
-            <span id="progressText">0% completado</span>
-            <span class="saving-indicator" id="savingIndicator">Guardando...</span>
+<div class="container q-flow">
+
+    <div class="q-mitad" id="qMitad" role="status" aria-live="polite" hidden>
+        <img src="{{ url_for('static', filename='img/mascota/mitad-cuestionario.webp') }}" alt="" onerror="this.remove()">
+        <p><b>¡Vas por la mitad!</b><span>Respira, toma agua y sigue a tu ritmo.</span></p>
+    </div>
+
+    <!-- Barra de progreso superior -->
+    <div class="q-progress">
+        {# Seis puntos de avance: la prueba se recorre en seis tramos iguales.
+           Son neutros a propósito, no representan áreas (eso sesgaría la respuesta). #}
+        <div class="q-dots" id="qDots" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
         </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+        <div class="q-progress-track"><div class="q-progress-fill" id="qFill"></div></div>
+        <div class="q-progress-meta">
+            <span id="qPos">Pregunta 1</span>
+            <span class="q-saving" id="qSaving">Guardando…</span>
+            <span id="qCount">0 de 0</span>
         </div>
     </div>
 
-    <form id="cuestionarioForm">
-        {% set ns = namespace(counter=0) %}
-        {% for dimension in instrumento.get('dimensiones', []) %}
-        <div class="question-section">
-            <h2>{{ dimension.nombre }}</h2>
-            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                {{ dimension.descripcion or '' }}
-            </p>
-
+    <div class="q-stage">
+        <form id="cuestionarioForm">
+            {% set ns = namespace(counter=0) %}
+            {% for dimension in instrumento.get('dimensiones', []) %}
             {% for escala in dimension.get('escalas', []) %}
-            {# El nombre del campo RIASEC (Social, Emprendedor, …) se omite a
-               propósito: mostrarlo le revela al estudiante qué mide cada bloque
-               y puede sesgar su respuesta. #}
-
+            {# El nombre del campo RIASEC (Social, Emprendedor…) se omite a propósito
+               para no sesgar la respuesta. Sólo se muestra la dimensión general. #}
             {% for item in escala.get('items', []) %}
             {% set ns.counter = ns.counter + 1 %}
             <div class="question-card {% if item.id in respuestas_previas %}answered{% endif %}" id="question-{{ item.id }}">
+                <p class="q-eyebrow">{{ dimension.nombre }}</p>
+
                 {% if item.contexto %}
                 <p class="question-context">{{ item.contexto }}</p>
                 {% endif %}
-                <p class="question-text">{{ ns.counter }}. {{ item.texto }}</p>
+                <p class="question-text">{{ item.texto }}</p>
 
                 {% if item.tipo == 'comparacion_binaria' and item.opciones %}
-                {# ── Comparación binaria: dos actividades RIASEC, se elige una ── #}
+                {# ── Comparación binaria: dos actividades, se elige una ── #}
                 <div class="comparison-choice">
-                    <label class="comparison-option" id="opt_{{ item.id }}_0">
-                        <input type="radio"
-                               name="item_{{ item.id }}"
-                               value="0"
-                               data-item-id="{{ item.id }}"
+                    <label class="comparison-option">
+                        <input type="radio" name="item_{{ item.id }}" value="0" data-item-id="{{ item.id }}"
                                {% if respuestas_previas.get(item.id)|string == '0' %}checked{% endif %}
                                onchange="onAnswer({{ item.id }}, 0)">
                         <span class="comparison-card">
@@ -51,11 +53,8 @@
                             <span>{{ item.opciones.opcion_a.texto }}</span>
                         </span>
                     </label>
-                    <label class="comparison-option" id="opt_{{ item.id }}_1">
-                        <input type="radio"
-                               name="item_{{ item.id }}"
-                               value="1"
-                               data-item-id="{{ item.id }}"
+                    <label class="comparison-option">
+                        <input type="radio" name="item_{{ item.id }}" value="1" data-item-id="{{ item.id }}"
                                {% if respuestas_previas.get(item.id)|string == '1' %}checked{% endif %}
                                onchange="onAnswer({{ item.id }}, 1)">
                         <span class="comparison-card">
@@ -66,14 +65,11 @@
                 </div>
 
                 {% elif item.tipo == 'juicio_situacional' and item.opciones %}
-                {# ── Juicio situacional: 4 opciones graduadas, sin revelar el puntaje ── #}
-                <div class="multiple-choice" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                {# ── Juicio situacional: 4 opciones graduadas ── #}
+                <div class="multiple-choice">
                     {% for opcion in item.opciones.opciones %}
-                    <label class="mc-option" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                        <input type="radio"
-                               name="item_{{ item.id }}"
-                               value="{{ loop.index0 }}"
-                               data-item-id="{{ item.id }}"
+                    <label class="mc-option">
+                        <input type="radio" name="item_{{ item.id }}" value="{{ loop.index0 }}" data-item-id="{{ item.id }}"
                                {% if respuestas_previas.get(item.id)|string == loop.index0|string %}checked{% endif %}
                                onchange="onAnswer({{ item.id }}, {{ loop.index0 }})">
                         <span><strong>{{ opcion.letra }})</strong> {{ opcion.texto }}</span>
@@ -82,22 +78,16 @@
                 </div>
 
                 {% elif item.tipo == 'eleccion_forzada' %}
-                {# ── Elección forzada: Sí / No (binario 1/0) ── #}
-                <div class="binary-choice" style="display: flex; gap: 1rem; justify-content: center; margin-top: 0.75rem;">
-                    <label class="binary-option" id="opt_{{ item.id }}_1">
-                        <input type="radio"
-                               name="item_{{ item.id }}"
-                               value="1"
-                               data-item-id="{{ item.id }}"
+                {# ── Elección forzada: Sí / No ── #}
+                <div class="binary-choice">
+                    <label class="binary-option">
+                        <input type="radio" name="item_{{ item.id }}" value="1" data-item-id="{{ item.id }}"
                                {% if respuestas_previas.get(item.id)|string == '1' %}checked{% endif %}
                                onchange="onAnswer({{ item.id }}, 1)">
                         <span class="binary-btn yes-btn">Sí</span>
                     </label>
-                    <label class="binary-option" id="opt_{{ item.id }}_0">
-                        <input type="radio"
-                               name="item_{{ item.id }}"
-                               value="0"
-                               data-item-id="{{ item.id }}"
+                    <label class="binary-option">
+                        <input type="radio" name="item_{{ item.id }}" value="0" data-item-id="{{ item.id }}"
                                {% if respuestas_previas.get(item.id)|string == '0' %}checked{% endif %}
                                onchange="onAnswer({{ item.id }}, 0)">
                         <span class="binary-btn no-btn">No</span>
@@ -107,31 +97,24 @@
                 {% elif item.tipo == 'opcion_multiple' and item.opciones %}
                 {# ── Opción múltiple ── #}
                 {% set opciones_list = item.opciones.opciones if item.opciones.opciones is defined else item.opciones %}
-                <div class="multiple-choice" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                <div class="multiple-choice">
                     {% for opcion in opciones_list %}
                     {% set opcion_texto = opcion.texto if opcion is mapping else opcion %}
-                    {% set opcion_valor = loop.index0 %}
-                    <label class="mc-option" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                        <input type="radio"
-                               name="item_{{ item.id }}"
-                               value="{{ opcion_valor }}"
-                               data-item-id="{{ item.id }}"
-                               {% if respuestas_previas.get(item.id)|string == opcion_valor|string %}checked{% endif %}
-                               onchange="onAnswer({{ item.id }}, {{ opcion_valor }})">
+                    <label class="mc-option">
+                        <input type="radio" name="item_{{ item.id }}" value="{{ loop.index0 }}" data-item-id="{{ item.id }}"
+                               {% if respuestas_previas.get(item.id)|string == loop.index0|string %}checked{% endif %}
+                               onchange="onAnswer({{ item.id }}, {{ loop.index0 }})">
                         <span>{{ opcion_texto }}</span>
                     </label>
                     {% endfor %}
                 </div>
 
                 {% else %}
-                {# ── Likert 1-5 (fallback) ── #}
+                {# ── Escala de acuerdo (fallback) ── #}
                 <div class="likert-scale">
                     {% for valor in range(1, 6) %}
                     <div class="likert-option">
-                        <input type="radio"
-                               id="item_{{ item.id }}_{{ valor }}"
-                               name="item_{{ item.id }}"
-                               value="{{ valor }}"
+                        <input type="radio" id="item_{{ item.id }}_{{ valor }}" name="item_{{ item.id }}" value="{{ valor }}"
                                data-item-id="{{ item.id }}"
                                {% if respuestas_previas.get(item.id) == valor %}checked{% endif %}
                                onchange="onAnswer({{ item.id }}, {{ valor }})">
@@ -140,115 +123,66 @@
                     {% endfor %}
                 </div>
                 <div class="likert-labels">
-                    <span>Totalmente en desacuerdo</span>
-                    <span>Totalmente de acuerdo</span>
+                    <span>En desacuerdo</span>
+                    <span>De acuerdo</span>
                 </div>
                 {% endif %}
             </div>
             {% endfor %}
             {% endfor %}
-        </div>
-        {% endfor %}
+            {% endfor %}
+        </form>
 
-        <div style="text-align: center; margin: 2rem 0;">
-            <button type="button" class="btn btn-primary btn-lg" id="btnFinalizar" onclick="finalizarPrueba()">
-                Finalizar Prueba
-            </button>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">
-                Asegúrate de haber respondido todas las preguntas antes de finalizar
-            </p>
+        <!-- Panel de cierre -->
+        <div class="q-end" id="qEnd">
+            <img class="q-end-fox" src="{{ url_for('static', filename='img/mascota/mascota-listo.webp') }}" alt="" onerror="this.remove()">
+            <div class="q-end-badge">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <h2>Respondiste todas las preguntas</h2>
+            <p>Puedes revisar tus respuestas o finalizar para ver tu perfil vocacional.</p>
+            <button type="button" class="btn btn-primary btn-lg" id="btnFinalizar" onclick="finalizarPrueba()">Finalizar y ver resultados</button>
+            <div style="margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="goTo(0)">← Revisar desde el inicio</button>
+            </div>
         </div>
-    </form>
+    </div>
+
+    <!-- Navegación -->
+    <div class="q-nav" id="qNav">
+        <button type="button" class="btn btn-secondary btn-sm" id="qBack" onclick="prev()">← Atrás</button>
+        <span class="q-hint" id="qHint">Elige una opción para continuar</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="qNext" onclick="next()">Siguiente →</button>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<style>
-    .question-context {
-        background: #fafafa; border-left: 3px solid var(--primary, #ef7d00);
-        padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.9rem;
-        color: var(--text-secondary); margin-bottom: 0.5rem; font-style: italic;
-    }
-    .comparison-choice {
-        display: flex; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;
-    }
-    .comparison-option { flex: 1; min-width: 220px; }
-    .comparison-option input[type="radio"] { display: none; }
-    .comparison-card {
-        display: flex; align-items: center; gap: 0.75rem; height: 100%;
-        padding: 0.9rem 1rem; border: 2px solid var(--border); border-radius: 10px;
-        cursor: pointer; transition: all 0.2s;
-    }
-    .comparison-card strong {
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #fff8f0;
-        color: #ef7d00; font-size: 0.85rem; flex-shrink: 0;
-    }
-    .comparison-option input:checked + .comparison-card {
-        background: #f0fdf4; border-color: #059669;
-    }
-    /* Juicio situacional: la opción marcada se resalta con un anillo verde.
-       Se usa box-shadow y no border porque el borde viene en estilo en línea. */
-    .mc-option:has(input:checked),
-    .mc-option.seleccionada {
-        background: #f0fdf4;
-        box-shadow: inset 0 0 0 2px #059669;
-    }
-    .mc-option:hover {
-        background: #fafafa;
-    }
-    .mc-option:has(input:checked):hover,
-    .mc-option.seleccionada:hover {
-        background: #f0fdf4;
-    }
-    .binary-option input[type="radio"] { display: none; }
-    .binary-btn {
-        display: inline-flex; align-items: center; gap: 0.4rem;
-        padding: 0.7rem 2rem; border-radius: 12px; font-weight: 600;
-        font-size: 1rem; cursor: pointer; transition: all 0.2s;
-        border: 2px solid var(--border);
-    }
-    .binary-option input:checked + .yes-btn {
-        background: #059669; color: #fff; border-color: #059669;
-    }
-    .binary-option input:checked + .no-btn {
-        background: #dc2626; color: #fff; border-color: #dc2626;
-    }
-    .binary-btn:hover { transform: scale(1.05); }
-    .mc-option:has(input:checked) {
-        background: #fff8f0; border-color: #ef7d00;
-    }
-</style>
 <script>
 const aplicacionId = {{ aplicacion_id }};
 const configId = {{ config_id }};
-let respuestas = {};
+const cards = Array.from(document.querySelectorAll('.question-card'));
+const total = cards.length;
+const respuestas = {};
 let saveTimeout = null;
-let totalItems = document.querySelectorAll('.question-card').length;
+let idx = 0;
 
 // Cargar respuestas previas
 {% for item_id, valor in respuestas_previas.items() %}
 respuestas[{{ item_id }}] = {{ valor }};
 {% endfor %}
-updateProgress();
 
-function onAnswer(itemId, valor) {
-    respuestas[itemId] = valor;
+function idOf(card) { return parseInt(card.id.replace('question-', ''), 10); }
 
-    const card = document.getElementById('question-' + itemId);
-    if (card) {
-        card.classList.add('answered');
-        marcarSeleccion(card);
+function firstUnanswered() {
+    for (let i = 0; i < total; i++) {
+        if (!(idOf(cards[i]) in respuestas)) return i;
     }
-
-    updateProgress();
-
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(guardarRespuestas, 2000);
+    return total; // todo respondido → panel de cierre
 }
 
-/* Deja la clase .seleccionada solo en la opción marcada de esa pregunta.
-   Es el respaldo para navegadores que no soportan :has(). */
+/* Deja la marca de selección sólo en la opción elegida de esa pregunta.
+   Respaldo para navegadores sin :has(). */
 function marcarSeleccion(card) {
     card.querySelectorAll('.mc-option').forEach(function (label) {
         const radio = label.querySelector('input[type="radio"]');
@@ -256,79 +190,143 @@ function marcarSeleccion(card) {
     });
 }
 
-/* Al cargar, marcar las respuestas que ya venían guardadas */
-document.querySelectorAll('.question-card').forEach(marcarSeleccion);
-
+const qDots = document.querySelectorAll('#qDots span');
 function updateProgress() {
-    const respondidas = Object.keys(respuestas).length;
-    const porcentaje = totalItems > 0 ? Math.round(respondidas / totalItems * 100) : 0;
-    document.getElementById('progressBar').style.width = porcentaje + '%';
-    document.getElementById('progressText').textContent = porcentaje + '% completado (' + respondidas + '/' + totalItems + ')';
+    const answered = Object.keys(respuestas).length;
+    const frac = total > 0 ? answered / total : 0;
+    const pct = Math.round(frac * 100);
+    document.getElementById('qFill').style.width = pct + '%';
+    document.getElementById('qCount').textContent = answered + ' de ' + total;
+    document.getElementById('qPos').textContent = (idx >= total)
+        ? 'Completado' : ('Pregunta ' + (idx + 1) + ' de ' + total);
+    // Seis tramos: se llena el punto de cada sexto superado; el tramo en curso
+    // queda "en progreso".
+    if (!window.__mitadVista && frac >= 0.5 && frac < 1 && answered > 0) {
+        window.__mitadVista = true;
+        const aviso = document.getElementById('qMitad');
+        if (aviso) { aviso.hidden = false; setTimeout(() => { aviso.hidden = true; }, 4500); }
+    }
+    const llenos = Math.floor(frac * 6 + 1e-9);
+    qDots.forEach((d, i) => {
+        d.classList.toggle('done', i < llenos);
+        d.classList.toggle('now', i === llenos && frac < 1);
+    });
 }
 
+function render() {
+    cards.forEach(c => c.classList.remove('active'));
+    const end = document.getElementById('qEnd');
+    const nav = document.getElementById('qNav');
+
+    if (idx >= total) {
+        end.classList.add('active');
+        nav.style.display = 'none';
+        updateProgress();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+
+    end.classList.remove('active');
+    nav.style.display = '';
+    const card = cards[idx];
+    card.classList.add('active');
+    marcarSeleccion(card);
+
+    document.getElementById('qBack').disabled = (idx === 0);
+    const answeredHere = (idOf(card) in respuestas);
+    document.getElementById('qNext').style.visibility = answeredHere ? 'visible' : 'hidden';
+    document.getElementById('qHint').textContent = answeredHere
+        ? 'Puedes cambiar tu respuesta o seguir' : 'Elige una opción para continuar';
+
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function onAnswer(itemId, valor) {
+    respuestas[itemId] = valor;
+    const card = document.getElementById('question-' + itemId);
+    if (card) { card.classList.add('answered'); marcarSeleccion(card); }
+    updateProgress();
+
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(guardarRespuestas, 1200);
+
+    // Auto-avance con un pequeño retardo para que se vea la selección
+    setTimeout(function () {
+        if (idx < total && idOf(cards[idx]) === itemId) next();
+    }, 340);
+}
+
+function next() { if (idx < total) { idx++; render(); } }
+function prev() { if (idx > 0) { idx--; render(); } }
+function goTo(i) { idx = Math.max(0, Math.min(i, total)); render(); }
+
+// Navegación por teclado
+document.addEventListener('keydown', function (e) {
+    if (idx >= total) return;
+    const card = cards[idx];
+    if (!card) return;
+    if (e.key === 'ArrowLeft') { prev(); return; }
+    if (e.key === 'ArrowRight') { if (idOf(card) in respuestas) next(); return; }
+    if (/^[1-9]$/.test(e.key)) {
+        const inputs = card.querySelectorAll('input[type="radio"]');
+        const n = parseInt(e.key, 10) - 1;
+        if (n < inputs.length) {
+            inputs[n].checked = true;
+            inputs[n].dispatchEvent(new Event('change'));
+        }
+    }
+});
+
 function guardarRespuestas() {
-    const indicator = document.getElementById('savingIndicator');
+    const indicator = document.getElementById('qSaving');
     indicator.classList.add('show');
+    indicator.classList.remove('error');
+    indicator.textContent = 'Guardando…';
 
     const respuestasArray = Object.entries(respuestas).map(([id, val]) => ({
-        item_id: parseInt(id),
-        valor: val
+        item_id: parseInt(id), valor: val
     }));
 
     fetch('{{ url_for("estudiante.guardar_respuestas") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            aplicacion_id: aplicacionId,
-            respuestas: respuestasArray
-        })
+        body: JSON.stringify({ aplicacion_id: aplicacionId, respuestas: respuestasArray })
     })
     .then(r => r.json().then(data => {
-        // Antes solo se miraba si la petición llegaba, no si el servidor la
-        // aceptaba: un rechazo del backend igual mostraba "Guardado" y el
-        // estudiante seguía respondiendo creyendo que todo iba bien.
         if (!r.ok) throw new Error(data && data.error ? data.error : 'Error ' + r.status);
         return data;
     }))
-    .then(data => {
+    .then(() => {
         indicator.textContent = 'Guardado';
-        indicator.style.color = '';
-        setTimeout(() => { indicator.classList.remove('show'); indicator.textContent = 'Guardando...'; }, 1500);
+        setTimeout(() => indicator.classList.remove('show'), 1400);
     })
     .catch(err => {
         indicator.textContent = 'No se pudo guardar';
-        indicator.style.color = '#ef4444';
-        indicator.classList.add('show');   // se queda visible hasta que funcione
+        indicator.classList.add('show', 'error');
         console.error('Error guardando:', err);
-        // Reintento automático: así una caída momentánea no pierde respuestas
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(guardarRespuestas, 5000);
     });
 }
 
 function finalizarPrueba() {
-    if (Object.keys(respuestas).length < totalItems) {
-        const faltantes = totalItems - Object.keys(respuestas).length;
-        if (!confirm('Aún te faltan ' + faltantes + ' preguntas por responder. ¿Deseas intentar finalizar de todos modos?')) {
-            return;
-        }
+    if (Object.keys(respuestas).length < total) {
+        const faltan = total - Object.keys(respuestas).length;
+        if (!confirm('Aún te faltan ' + faltan + ' preguntas por responder. ¿Deseas finalizar de todos modos?')) return;
     }
-
-    // Deshabilitar aviso de beforeunload para que no interrumpa el envío
     window.__finalizando = true;
+    const btn = document.getElementById('btnFinalizar');
+    if (btn) { btn.disabled = true; btn.textContent = 'Procesando…'; }
 
     const respuestasArray = Object.entries(respuestas).map(([id, val]) => ({
-        item_id: parseInt(id),
-        valor: val
+        item_id: parseInt(id), valor: val
     }));
 
     fetch('{{ url_for("estudiante.guardar_respuestas") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            aplicacion_id: aplicacionId,
-            respuestas: respuestasArray
-        })
+        body: JSON.stringify({ aplicacion_id: aplicacionId, respuestas: respuestasArray })
     })
     .then(() => {
         const form = document.createElement('form');
@@ -344,16 +342,21 @@ function finalizarPrueba() {
     })
     .catch(() => {
         window.__finalizando = false;
+        if (btn) { btn.disabled = false; btn.textContent = 'Finalizar y ver resultados'; }
         alert('Error al guardar las respuestas. Revisa tu conexión e intenta nuevamente.');
     });
 }
 
-// Advertencia al intentar salir con respuestas sin guardar
-window.addEventListener('beforeunload', function(e) {
-    if (!window.__finalizando && Object.keys(respuestas).length > 0) {
+// Aviso al salir con respuestas sin guardar
+window.addEventListener('beforeunload', function (e) {
+    if (!window.__finalizando && Object.keys(respuestas).length > 0 && Object.keys(respuestas).length < total) {
         e.preventDefault();
         e.returnValue = '';
     }
 });
+
+// Inicio: continuar en la primera pregunta sin responder
+idx = firstUnanswered();
+render();
 </script>
 {% endblock %}

@@ -60,7 +60,7 @@
         {% for escala in dimension.get('escalas', []) %}
         <div style="margin-bottom: 1rem; padding: 1rem; background: #fafafa; border-radius: 8px; border-left: 4px solid {{ colores_riasec[loop.index0 % 6] }};">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <h3 style="font-size: 0.95rem; font-weight: 600; color: {{ colores_riasec[loop.index0 % 6] }}; margin: 0;">
+                <h3 style="color: {{ colores_riasec[loop.index0 % 6] }}; margin: 0;">
                     {{ escala.nombre }}
                 </h3>
                 <span style="font-size: 0.75rem; color: var(--text-light);">
@@ -99,7 +99,7 @@
 <div id="modalNuevaDimension" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:2rem; max-width:460px; width:94%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 style="margin:0; font-size:1.2rem;">Nueva Dimensión</h2>
+            <h2 style="margin:0;">Nueva Dimensión</h2>
             <button onclick="document.getElementById('modalNuevaDimension').style.display='none'"
                     style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>
@@ -136,7 +136,7 @@
 <div id="modalNuevaEscala" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:2rem; max-width:460px; width:94%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 style="margin:0; font-size:1.2rem;">Nueva Escala</h2>
+            <h2 style="margin:0;">Nueva Escala</h2>
             <button onclick="document.getElementById('modalNuevaEscala').style.display='none'"
                     style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>

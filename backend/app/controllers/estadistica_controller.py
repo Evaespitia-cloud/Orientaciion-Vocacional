@@ -201,7 +201,8 @@ def evolucion_agregada():
             if key not in periodos:
                 periodos[key] = {'periodo': key, 'perfiles': {}}
             periodos[key]['perfiles'][r.perfil_principal] = r.cantidad
-        return jsonify({'evolucion': list(periodos.values())}), 200
+        return jsonify({'evolucion': list(periodos.values()),
+                        'estadisticas': EstadisticaService.estadisticas_por_grado_area()}), 200
     else:
         return jsonify({'mensaje': 'Acceso denegado'}), 403
 

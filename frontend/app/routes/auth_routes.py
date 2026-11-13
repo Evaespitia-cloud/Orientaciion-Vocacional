@@ -5,6 +5,11 @@ from ..utils import api_request
 
 auth_routes = Blueprint('auth', __name__)
 
+# Municipios del Valle de Aburrá (clave que entiende el backend, nombre para mostrar).
+MUNICIPIOS = [('MEDELLIN', 'Medellín'), ('BELLO', 'Bello'), ('ITAGUI', 'Itagüí'), ('ENVIGADO', 'Envigado'),
+              ('SABANETA', 'Sabaneta'), ('LA ESTRELLA', 'La Estrella'), ('CALDAS', 'Caldas'),
+              ('COPACABANA', 'Copacabana'), ('GIRARDOTA', 'Girardota'), ('BARBOSA', 'Barbosa')]
+
 
 @auth_routes.route('/login', methods=['GET', 'POST'])
 def login():
@@ -66,7 +71,14 @@ def registro():
             'documento': request.form.get('documento'),
             'tipo_documento': request.form.get('tipo_documento', 'CC'),
             'telefono': request.form.get('telefono'),
-            'grado_id': request.form.get('grado_id', type=int),
+            'sede_codigo': request.form.get('sede_codigo') or None,
+            # Si escribió el colegio pero no lo eligió de la lista, se guarda el nombre tal cual.
+            'colegio_texto': None if request.form.get('sede_codigo') else (request.form.get('colegio_nombre') or '').strip() or None,
+            # Público o privado, tal como lo respondió: sirve si escribió el colegio a mano.
+            'colegio_sector': request.form.get('colegio_sector') or None,
+            'edad': request.form.get('edad') or None,
+            'municipio': request.form.get('municipio') or None,
+            'direccion': (request.form.get('direccion') or '').strip() or None,
             'semestre': request.form.get('semestre', type=int),
             'genero': request.form.get('genero') or None,
             'rol': rol,
@@ -80,7 +92,7 @@ def registro():
         password_confirm = request.form.get('password_confirm') or ''
         if password != password_confirm:
             flash('Las contraseñas no coinciden. Vuelve a escribirlas; el resto de tus datos se conservó.', 'error')
-            return render_template('auth/registro.html', form=form_previo)
+            return render_template('auth/registro.html', form=form_previo, municipios=MUNICIPIOS)
         datos['password'] = password
 
         data, status = api_request('POST', '/auth/registro', datos)
@@ -93,9 +105,9 @@ def registro():
         if 'contraseña' in error.lower():
             error += ' Vuelve a escribir la contraseña; el resto de tus datos se conservó.'
         flash(error, 'error')
-        return render_template('auth/registro.html', form=form_previo)
+        return render_template('auth/registro.html', form=form_previo, municipios=MUNICIPIOS)
 
-    return render_template('auth/registro.html', form={})
+    return render_template('auth/registro.html', form={}, municipios=MUNICIPIOS)
 
 
 @auth_routes.route('/consentimiento', methods=['GET', 'POST'])

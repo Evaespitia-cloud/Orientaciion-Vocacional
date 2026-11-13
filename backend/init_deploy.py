@@ -100,7 +100,10 @@ def main():
             db.session.add(Usuario(email=admin_email, password_hash=AuthService.hash_password(admin_password),
                                    nombres='Administrador', apellidos='Sistema', rol_id=rol.id, activo=True))
         db.session.commit()
-        print('OK: esquema, roles, instrumentos y configuraciones listos.')
+        # Catálogo de colegios del Valle de Aburrá (tabla nueva, se actualiza en cada arranque).
+        from app.services.escolar_service import cargar_catalogo
+        sedes = cargar_catalogo()
+        print(f'OK: esquema, roles, instrumentos, configuraciones y {sedes} colegios listos.')
 
 if __name__ == '__main__':
     main()

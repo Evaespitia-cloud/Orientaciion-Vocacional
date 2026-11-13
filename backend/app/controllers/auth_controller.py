@@ -6,9 +6,10 @@ from flask_jwt_extended import (
 )
 from ..services.auth_service import AuthService
 from ..services.demografico_service import guardar_genero
+from ..services.escolar_service import guardar_perfil, validar as validar_escolar
 from ..extensions import db
 from ..utils.audit import registrar_auditoria
-from ..utils.rate_limit import allow_request
+from ..utils.rate_limit import allow_request, ip_cliente
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -37,7 +38,7 @@ def registro():
 
     # El endpoint público nunca puede crear roles privilegiados.
     datos['rol'] = 'estudiante'
-    if not allow_request(f"registro:{request.remote_addr}", 5, 600):
+    if not allow_request(f"registro:{ip_cliente()}", 5, 600):
         return jsonify({'error': 'Demasiados intentos de registro. Intenta nuevamente más tarde.'}), 429
     password = str(datos.get('password') or '')
     try:
@@ -46,8 +47,11 @@ def registro():
         return jsonify({'error': str(exc)}), 400
 
     try:
+        validar_escolar(datos)  # antes de crear la cuenta, para no dejarla a medias
         usuario = AuthService.registrar_usuario(datos)
         guardar_genero(usuario.id, datos.get('genero'))
+        if any(datos.get(c) for c in ('sede_codigo', 'colegio_texto', 'edad', 'direccion')):
+            guardar_perfil(usuario.id, datos)
         registrar_auditoria(
             usuario.id, 'REGISTRO', 'auth',
             f'Nuevo usuario registrado: {usuario.email}',
@@ -74,7 +78,7 @@ def login():
     email = str(datos.get('email', '')).strip().lower()
     password = str(datos.get('password', ''))
 
-    if not allow_request(f"login:{request.remote_addr}:{email}", 10, 300):
+    if not allow_request(f"login:{ip_cliente()}:{email}", 10, 300):
         return jsonify({'error': 'Demasiados intentos de inicio de sesión. Intenta nuevamente en unos minutos.'}), 429
 
     try:

@@ -7,10 +7,13 @@
         <h1>Estadísticas Agregadas</h1>
         <p>Visualización de datos agregados según el rol: promedios, medianas y desviaciones estándar por grado y área (investigador), o mapa de calor por área y grado (directivo).</p>
     </div>
-    <div id="estadisticas-agregadas-cargando" style="text-align:center; padding:2.5rem; color:#525252;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4; display:block; margin:0 auto 0.75rem;"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
-        <p style="margin:0;">Cargando datos…</p>
-    </div>
+    <div id="estadisticas-agregadas-cargando" class="carga" role="status" aria-live="polite">
+            <span class="sr-only">Cargando datos…</span>
+            <div class="skeleton skeleton-text w-40"></div>
+            <div class="skeleton skeleton-chart"></div>
+            <div class="skeleton skeleton-text w-80"></div>
+            <div class="skeleton skeleton-text w-60"></div>
+        </div>
     <div id="estadisticas-agregadas-contenido" style="display:none;"></div>
     <div id="evolucion-vocacional-inst" style="display:none; margin-top:2.5rem;">
         <h3>Evolución Vocacional Institucional <span style="font-size:1rem;font-weight:400;color:#525252;">Tendencia de perfiles Holland mes a mes</span></h3>
@@ -45,7 +48,7 @@ function renderHeatmap(matriz, grados, areas) {
 }
 
 
-fetch('/estadisticas/evolucion-agregada')
+fetch('{{ url_for('admin.api_evolucion_agregada') }}')
     .then(r => r.json())
     .then(data => {
         document.getElementById('estadisticas-agregadas-cargando').style.display = 'none';
@@ -54,20 +57,22 @@ fetch('/estadisticas/evolucion-agregada')
         const alerta = document.getElementById('evolucion-vocacional-alerta');
         if (data.mensaje && data.mensaje.toLowerCase().includes('denegado')) {
             cont.innerHTML = '<div class="alert alert-danger" style="margin-top:2rem;">Acceso denegado</div>';
-        } else if (data.estadisticas) {
+        } else if (data.estadisticas && data.estadisticas.length) {
+            cont.style.display = '';
             cont.innerHTML = '<h3>Promedios, Mediana y Desviación por Grado y Área</h3>' + renderTablaEstadisticas(data.estadisticas);
         } else if (data.heatmap) {
             cont.innerHTML = '<h3>Mapa de calor de desempeño por área y grado</h3>' + renderHeatmap(data.heatmap, data.grados, data.areas);
         }
-        if (data.evolucion) {
+        if (data.evolucion && data.evolucion.length) {
             evolDiv.style.display = '';
             renderEvolucionVocacional(data.evolucion);
         } else if (evolDiv) {
             evolDiv.style.display = '';
             alerta.innerHTML = '<div style="text-align:center;padding:2.5rem 0;color:#525252;">Se necesitan pruebas completadas para mostrar la evolución vocacional.</div>';
         }
-        if (!data.estadisticas && !data.heatmap && !data.evolucion) {
-            cont.innerHTML = '<p>No hay datos disponibles.</p>';
+        if (!(data.estadisticas && data.estadisticas.length) && !data.heatmap && !(data.evolucion && data.evolucion.length)) {
+            cont.style.display = '';
+            cont.innerHTML = '<div class="empty-state"><p>No hay datos disponibles.</p></div>';
         }
     })
     .catch(() => {

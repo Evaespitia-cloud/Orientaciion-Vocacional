@@ -54,6 +54,54 @@ PERFILES_HOLLAND = {
 }
 
 
+# Pregrados de la Universidad de San Buenaventura Medellín (usbmed.edu.co/programas/pregrados).
+PROGRAMAS_USB = {
+    'Licenciatura en Educación Física y Deporte': 'https://usbmed.edu.co/programas/pregrados/licenciatura-en-educacion-fisica-y-deporte',
+    'Tecnología en Entrenamiento Deportivo': 'https://usbmed.edu.co/programas/pregrados/tecnologia-en-entrenamiento-deportivo',
+    'Licenciatura en Educación Infantil': 'https://usbmed.edu.co/programas/pregrados/licenciatura-en-educacion-infantil',
+    'Administración de Negocios': 'https://usbmed.edu.co/programas/pregrados/administracion-de-negocios',
+    'Contaduría Pública': 'https://usbmed.edu.co/programas/pregrados/contaduria-publica',
+    'Negocios Internacionales': 'https://usbmed.edu.co/programas/pregrados/negocios-internacionales',
+    'Arquitectura': 'https://usbmed.edu.co/programas/pregrados/arquitectura',
+    'Diseño de Modas': 'https://usbmed.edu.co/programas/pregrados/diseno-de-modas',
+    'Diseño Industrial': 'https://usbmed.edu.co/programas/pregrados/diseno-industrial',
+    'Creación de Contenidos Digitales': 'https://usbmed.edu.co/programas/pregrados/creacion-de-contenidos-digitales',
+    'Ingeniería Ambiental': 'https://usbmed.edu.co/programas/pregrados/ingenieria-ambiental',
+    'Ingeniería de Datos y Software': 'https://usbmed.edu.co/programas/pregrados/ingenieria-de-datos-y-software',
+    'Ingeniería de Sistemas Cibernéticos': 'https://usbmed.edu.co/programas/pregrados/ingenieria-de-sistemas-ciberneticos',
+    'Ingeniería de Sonido': 'https://usbmed.edu.co/programas/pregrados/ingenieria-de-sonido',
+    'Ingeniería Industrial': 'https://usbmed.edu.co/programas/pregrados/ingenieria-industrial',
+    'Ingeniería Multimedia': 'https://usbmed.edu.co/programas/pregrados/ingenieria-multimedia',
+    'Derecho': 'https://usbmed.edu.co/programas/pregrados/derecho',
+    'Psicología': 'https://usbmed.edu.co/programas/pregrados/psicologia',
+}
+
+# Programas de la USB afines a cada campo, del más al menos afín. Reemplazan la
+# lista de carreras genéricas (que incluía programas que la USB no ofrece).
+PROGRAMAS_POR_PERFIL = {
+    'Realista': ['Licenciatura en Educación Física y Deporte', 'Ingeniería Ambiental', 'Diseño Industrial',
+                 'Tecnología en Entrenamiento Deportivo', 'Ingeniería Industrial'],
+    'Investigador': ['Ingeniería de Datos y Software', 'Ingeniería de Sistemas Cibernéticos', 'Ingeniería Ambiental',
+                     'Ingeniería de Sonido', 'Psicología'],
+    'Artístico': ['Arquitectura', 'Diseño de Modas', 'Ingeniería de Sonido', 'Diseño Industrial',
+                  'Ingeniería Multimedia', 'Creación de Contenidos Digitales'],
+    'Social': ['Psicología', 'Licenciatura en Educación Infantil', 'Derecho',
+               'Licenciatura en Educación Física y Deporte'],
+    'Emprendedor': ['Negocios Internacionales', 'Administración de Negocios', 'Derecho',
+                    'Creación de Contenidos Digitales'],
+    'Convencional': ['Contaduría Pública', 'Administración de Negocios', 'Ingeniería Industrial',
+                     'Ingeniería de Datos y Software'],
+}
+
+for _perfil, _programas in PROGRAMAS_POR_PERFIL.items():
+    PERFILES_HOLLAND[_perfil]['carreras_afines'] = ', '.join(_programas)
+
+
+def programas_usb(perfil: str) -> list:
+    """Programas de la USB afines a un campo, con el enlace a su página."""
+    return [{'nombre': p, 'url': PROGRAMAS_USB.get(p)} for p in PROGRAMAS_POR_PERFIL.get(perfil, [])]
+
+
 class PsicometricoService:
     """Motor de procesamiento psicométrico parametrizable — Holland RIASEC."""
 
@@ -476,11 +524,11 @@ class PsicometricoService:
             info_perfil.get('descripcion', ''),
         ]
         if info_perfil.get('carreras_afines'):
-            recomendaciones_list.append(f"Carreras afines a tu perfil: {info_perfil['carreras_afines']}.")
+            recomendaciones_list.append(f"Programas de pregrado de la USB afines a tu perfil: {info_perfil['carreras_afines']}.")
         if perfil_secundario_nombre:
             info_sec = PERFILES_HOLLAND.get(perfil_secundario_nombre, {})
             recomendaciones_list.append(
-                f"Tu perfil secundario es {perfil_secundario_nombre}. También podrías explorar: {info_sec.get('carreras_afines', '')}."
+                f"Tu perfil secundario es {perfil_secundario_nombre}. En la USB también podrías explorar: {info_sec.get('carreras_afines', '')}."
             )
         if info_perfil.get('ambiente'):
             recomendaciones_list.append(f"Ambientes de trabajo ideales: {info_perfil['ambiente']}.")
@@ -507,12 +555,29 @@ class PsicometricoService:
             "por lo que debe interpretarse de forma preliminar."
         )
 
-        # Advertencia si no completó
-        total_posibles = sum(d.get('total', 0) for d in puntajes_por_area.values())
-        respondidas_reales = sum(e.get('respondidos', 0) for e in puntajes_escala.values())
+        # Advertencia si no completó. Se cuenta sobre la prueba de ESTA aplicación:
+        # antes se sumaban las preguntas posibles de ambas pruebas (Intereses +
+        # Competencias) pero sólo las respondidas de la actual, así que al terminar
+        # la segunda prueba siempre aparecía "No completaste todas las preguntas".
+        ids_items = [
+            fila[0] for fila in db.session.query(Item.id).join(
+                Escala, Item.escala_id == Escala.id
+            ).join(
+                Dimension, Escala.dimension_id == Dimension.id
+            ).filter(
+                Dimension.instrumento_id == aplicacion.configuracion.instrumento_id,
+                Item.activo == True,
+            ).all()
+        ]
+        total_posibles = len(ids_items)
+        respondidas_reales = Respuesta.query.filter(
+            Respuesta.aplicacion_id == aplicacion_id,
+            Respuesta.item_id.in_(ids_items),
+            Respuesta.valor.isnot(None),
+        ).count() if ids_items else 0
         if respondidas_reales < total_posibles:
             recomendaciones_list.insert(0,
-                f"⚠️ ADVERTENCIA: No completaste todas las preguntas ({respondidas_reales}/{total_posibles}). Los resultados pueden no ser completamente representativos."
+                f"Advertencia: no completaste todas las preguntas ({respondidas_reales}/{total_posibles}). Los resultados pueden no ser completamente representativos."
             )
 
         # Guardar o actualizar perfil
@@ -536,6 +601,9 @@ class PsicometricoService:
                 'campo_prioritario_3': campo_prioritario_3,
                 'interpretacion_generada': interpretacion_generada,
                 'carreras_afines': [c.strip() for c in info_perfil.get('carreras_afines', '').split(',') if c.strip()],
+                # Programas de la USB con enlace a su página (principal y secundario)
+                'programas_usb': programas_usb(perfil_principal_nombre),
+                'programas_usb_secundario': programas_usb(perfil_secundario_nombre) if perfil_secundario_nombre else [],
                 'ambiente_trabajo': info_perfil.get('ambiente', ''),
                 'resultados_dimension': [r.to_dict() for r in resultados_dim],
                 'formula_utilizada': formula,

@@ -14,7 +14,7 @@
         <div style="display: flex; align-items: center; gap: 1rem;">
             <div class="stat-icon" style="background: #fef3c7; color: #92400e;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
             <div>
-                <h3 style="font-size: 1rem; font-weight: 700; color: #92400e;">Completa tus datos demográficos</h3>
+                <h3 style="color: #92400e;">Completa tus datos demográficos</h3>
                 <p style="font-size: 0.85rem; color: var(--text-secondary);">
                     Debes completar tu información personal antes de iniciar cualquier prueba vocacional.
                 </p>
@@ -28,7 +28,7 @@
 
     <!-- Pruebas Disponibles -->
     {% if prueba_cards %}
-    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;">Pruebas Disponibles</h2>
+    <h2 style="color: var(--primary); margin-bottom: 1rem;">Pruebas Disponibles</h2>
     <div class="stats-grid">
         {% for card in prueba_cards %}
         {% set config = card.config %}
@@ -40,7 +40,7 @@
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
                 </div>
                 <div style="flex:1;">
-                    <h3 style="font-size:1rem; font-weight:700; color:var(--primary); margin:0 0 0.2rem;">{{ config.nombre }}</h3>
+                    <h3 style="color:var(--primary); margin:0 0 0.2rem;">{{ config.nombre }}</h3>
                     <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">
                         {{ config.descripcion or 'Prueba de orientación vocacional' }}
                     </p>
@@ -67,7 +67,7 @@
     {% endif %}
 
     <!-- Mis Aplicaciones (máx 3 — una por prueba disponible) -->
-    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin: 2rem 0 1rem;">Mis Aplicaciones</h2>
+    <h2 style="color: var(--primary); margin: 2rem 0 1rem;">Mis Aplicaciones</h2>
     {% if historial %}
     <div class="stats-grid">
         {% for app in historial %}
@@ -109,9 +109,12 @@
     {% else %}
     <div class="card">
         <div class="empty-state">
-            <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+            <div class="ev-fig">
+                <img src="{{ url_for('static', filename='img/mascota/mascota-saludo.webp') }}" alt="" onerror="this.remove()">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            </div>
             <h3>Aún no has iniciado ninguna prueba</h3>
-            <p>Cuando inicies una prueba, aparecerá aquí con su estado.</p>
+            <p>Empieza por una de las pruebas de arriba. Cuando la inicies, aparecerá aquí con su estado.</p>
         </div>
     </div>
     {% endif %}
@@ -127,7 +130,7 @@
         </svg>
       </div>
       <div>
-        <h2 style="font-size:1rem; font-weight:700; color:var(--primary); margin:0 0 0.25rem;">¿Qué te gusta hacer?</h2>
+        <h2 style="color:var(--primary); margin:0 0 0.25rem;">¿Qué te gusta hacer?</h2>
         <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
           Escribe tus actividades, intereses o pasatiempos favoritos separados por comas.
           El sistema identifica en cuáles áreas vocacionales encajan.
@@ -170,6 +173,14 @@ async function analizarIntereses() {
   const btn = document.getElementById('btnPln');
   btn.disabled = true;
   btn.textContent = 'Analizando…';
+
+  // Mientras llega la respuesta: esqueleto con la forma de las barras del resultado
+  const espera = document.getElementById('plnResultado');
+  espera.innerHTML = '<div class="carga" role="status" aria-live="polite"><span class="sr-only">Analizando tus intereses…</span>'
+    + '<div class="skeleton skeleton-chip"></div>'
+    + '<div class="skeleton skeleton-text w-80"></div><div class="skeleton skeleton-text w-60"></div>'
+    + '<div class="skeleton skeleton-text w-80"></div><div class="skeleton skeleton-text w-40"></div></div>';
+  espera.style.display = 'block';
 
   let data, ok;
   try {

@@ -1,23 +1,24 @@
 """
 Pruebas E2E — Flujos completos de usuario
 Simula los flujos reales de cada rol desde el primer endpoint hasta el resultado final.
-Requiere backend en localhost:5000 con seed completo.
+Corre contra los servidores aislados de servidor_pruebas.py.
 """
+
+import re
 
 import pytest
 import requests
+
+from . import servidor_pruebas
 import time
 
-BASE = 'http://localhost:5000/api'
-BASE_FRONT = 'http://localhost:5001'
+BASE = servidor_pruebas.API
+BASE_FRONT = servidor_pruebas.FRONT
 
-ADMIN_TI = {'email': 'admin@orientacion.edu.co', 'password': 'Admin123*'}
+ADMIN_TI = servidor_pruebas.ADMIN_TI
 
 def get_token(creds):
-    r = requests.post(f'{BASE}/auth/login', json=creds)
-    if r.status_code != 200:
-        return None
-    return r.json().get('access_token')
+    return servidor_pruebas.token(creds)
 
 def H(token):
     return {'Authorization': f'Bearer {token}'}
@@ -239,9 +240,12 @@ class TestE2EFrontend:
 
     def _session_con_login(self):
         s = requests.Session()
+        # El frontend exige el token CSRF que pone en el formulario de login.
+        token = re.search(r'name="_csrf_token" value="([^"]+)"', s.get(f'{BASE_FRONT}/auth/login').text).group(1)
         s.post(f'{BASE_FRONT}/auth/login', data={
             'email': ADMIN_TI['email'],
             'password': ADMIN_TI['password'],
+            '_csrf_token': token,
         }, allow_redirects=True)
         return s
 

@@ -2,21 +2,24 @@
 {% block title %}Error del servidor — Orientación Vocacional{% endblock %}
 
 {% block content %}
-<div class="container" style="text-align: center; padding: 4rem 1rem;">
-    <div style="margin-bottom: 1rem;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" viewBox="0 0 24 24" fill="none" stroke="#ef7d00" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+<div class="container">
+    <div class="card" style="max-width: 520px; margin: 2rem auto;">
+        <div class="empty-state">
+            <div class="ev-fig">
+                <img src="{{ url_for('static', filename='img/mascota/mascota-perdido.webp') }}" alt="" onerror="this.remove()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <h1 class="ev-codigo">500</h1>
+            <h3>Error interno del servidor</h3>
+            <p>Ocurrió un problema inesperado. Intenta de nuevo en unos momentos.</p>
+            {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">Ir al panel</a>
+            {% elif session.get('access_token') %}
+                <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-primary">Ir al inicio</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Iniciar sesión</a>
+            {% endif %}
+        </div>
     </div>
-    <h1 style="font-size: 3rem; font-weight: 800; color: var(--primary); margin: 1rem 0 0.5rem;">500</h1>
-    <h2 style="font-size: 1.4rem; color: var(--text-secondary); font-weight: 500;">Error interno del servidor</h2>
-    <p style="color: var(--text-light); margin: 1rem 0 2rem;">
-        Ocurrió un problema inesperado. Por favor intenta de nuevo en unos momentos.
-    </p>
-    {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
-        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-lg">← Ir al Dashboard</a>
-    {% elif session.get('access_token') %}
-        <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-primary btn-lg">← Ir al Inicio</a>
-    {% else %}
-        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">← Iniciar Sesión</a>
-    {% endif %}
 </div>
 {% endblock %}

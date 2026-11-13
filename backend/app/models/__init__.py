@@ -6,3 +6,4 @@ from .aplicacion import ConfiguracionAplicacion, Aplicacion, Respuesta
 from .resultado import ResultadoDimension, PerfilVocacional, Reporte
 from .auditoria import Auditoria, PoliticaRetencion
 from .demografico import CampoDemografico, DatoDemografico, FormulaCalculo
+from .escolar import SedeEducativa, PerfilEscolar

@@ -96,7 +96,7 @@
     {% if session.get('rol') == 'ti' %}
     <div style="margin-top:2.5rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h2 style="font-size:1.1rem; font-weight:700; color:var(--primary); margin:0;">Políticas de Retención de Datos</h2>
+            <h2 style="color:var(--primary); margin:0;">Políticas de Retención de Datos</h2>
             <button class="btn btn-primary" onclick="document.getElementById('modalCrearPolitica').style.display='flex'">+ Nueva Política</button>
         </div>
         <div class="card">
@@ -133,7 +133,7 @@
     <div id="modalCrearPolitica" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
         <div style="background:#fff; border-radius:12px; padding:2rem; max-width:480px; width:94%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h2 style="margin:0; font-size:1.2rem;">Nueva Política de Retención</h2>
+                <h2 style="margin:0;">Nueva Política de Retención</h2>
                 <button onclick="document.getElementById('modalCrearPolitica').style.display='none'"
                         style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
             </div>

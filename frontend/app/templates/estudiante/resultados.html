@@ -4,315 +4,326 @@
 {% block content %}
 <div class="container">
     {% if perfil %}
-    <!-- Hero de resultados -->
-    <div class="result-hero">
-        <p style="font-size: 0.9rem; opacity: 0.8;">Tu Perfil Vocacional Holland</p>
-        <h1>{{ perfil.perfil_principal }}</h1>
-        {% if perfil.perfil_secundario %}
-        <div class="profile-badge">
-            Perfil secundario: {{ perfil.perfil_secundario }}
-        </div>
-        {% endif %}
-        {% if perfil.datos_json and perfil.datos_json.codigo_riasec %}
-        <div style="margin-top: 0.75rem;">
-            <span style="background: rgba(255,255,255,0.2); padding: 0.4rem 1.2rem; border-radius: 20px; font-size: 1.1rem; font-weight: 700; letter-spacing: 3px;">
-                Código RIASEC: {{ perfil.datos_json.codigo_riasec }}
-            </span>
-        </div>
-        {% endif %}
-        {% if perfil.datos_json and perfil.datos_json.preliminar %}
-        <div style="margin-top: 1rem;">
-            <span style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600;">
-                Resultado preliminar — falta la prueba de Intereses
-            </span>
-        </div>
-        {% endif %}
-    </div>
+    {# Ilustración del perfil: el zorro USB vestido según el resultado. Cada perfil
+       muestra juntos todos los disfraces de sus programas USB afines. #}
+    {% set figuras = {
+        'Realista': ('realista', ['realista-1.webp', 'realista-2.webp', 'realista-3.webp']),
+        'Investigador': ('investigador', ['investigador-1.webp', 'investigador-2.webp', 'investigador-3.webp']),
+        'Artístico': ('artistico', ['artistico-1.webp', 'artistico-2.webp', 'artistico-3.webp']),
+        'Social': ('social', ['social-1.webp', 'social-2.webp', 'social-3.webp']),
+        'Emprendedor': ('emprendedor', ['emprendedor-1.webp', 'emprendedor-2.webp']),
+        'Convencional': ('convencional', ['convencional-1.webp']),
+    } %}
+    {% set fig = figuras.get(perfil.perfil_principal, ('neutro', ['mascota-default.webp'])) %}
+    {% set dj = perfil.datos_json or {} %}
+    {# Colores fijos por área (barra, texto oscuro legible, pista clara). #}
+    {% set colores = {
+        'Realista': ('#eb6834', '#b4441a', '#fbe3d9'),
+        'Investigador': ('#2a78d6', '#1c5cab', '#dbe8f8'),
+        'Artístico': ('#e87ba4', '#a83d6a', '#fbe5ee'),
+        'Social': ('#1baf7a', '#0b7552', '#d6f1e6'),
+        'Emprendedor': ('#eda100', '#855900', '#fbedcc'),
+        'Convencional': ('#4a3aa7', '#4a3aa7', '#e2dff4'),
+    } %}
 
-    {% if perfil.datos_json and perfil.datos_json.advertencia %}
-    <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {{ perfil.datos_json.advertencia }}
-    </div>
-    {% endif %}
+    <nav class="cap-nav" aria-label="Capítulos de tus resultados">
+        <a href="#cap-perfil">Tu perfil</a>
+        {% if dj.puntajes_por_area %}<a href="#cap-areas">Tus áreas</a>{% endif %}
+        {% if programas %}<a href="#cap-programas">Programas</a>{% endif %}
+        {% if fortalezas or recomendaciones %}<a href="#cap-fortalezas">Fortalezas</a>{% endif %}
+        <a href="#cap-sigue">Qué sigue</a>
+    </nav>
 
-    <div class="grid-2">
-        <!-- Descripción del perfil -->
-        <div class="card">
-            <div class="card-header">
-                <h2>Descripción de tu Perfil</h2>
-            </div>
-            <p style="color: var(--text-secondary); line-height: 1.8;">{{ perfil.descripcion }}</p>
-
-            {% if perfil.datos_json and perfil.datos_json.carreras_afines %}
-            <div style="margin-top: 1rem;">
-                <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">Carreras Afines</h4>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                    {% for carrera in perfil.datos_json.carreras_afines %}
-                    <span style="background: #fff8f0; color: #b35c00; padding: 0.3rem 0.7rem; border-radius: 16px; font-size: 0.8rem; font-weight: 500;">
-                        {{ carrera }}
-                    </span>
-                    {% endfor %}
+    <!-- 1. Tu perfil -->
+    <section id="cap-perfil" class="capitulo">
+        <div class="result-hero perfil-{{ fig[0] }}">
+            <div class="rh-texto">
+                {% if dj.ranking_intereses %}
+                <div class="rh-chips">
+                    {% for area in dj.ranking_intereses[:3] %}<span>{{ area }}</span>{% endfor %}
                 </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Gráfico radar Holland -->
-        <div class="card">
-            <div class="card-header">
-                <h2>Perfil Holland RIASEC</h2>
-            </div>
-            <div class="chart-container chart-radar">
-                <canvas id="chartHolland"></canvas>
-            </div>
-        </div>
-    </div>
-
-    {% if perfil.datos_json and perfil.datos_json.puntajes_por_area %}
-    <div class="grid-2" style="margin-top: 1.5rem;">
-        <!-- Puntajes por área Holland -->
-        <div class="card">
-            <div class="card-header">
-                <h2>Puntajes por Área Holland</h2>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Área</th>
-                            <th>Intereses</th>
-                            <th>Competencias</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for area, datos in perfil.datos_json.puntajes_por_area.items() %}
-                        {% set int_v = datos.get('Intereses Vocacionales', datos.get('Intereses', 0)) %}
-                        {% set com_v = datos.get('Competencias Vocacionales', datos.get('Competencias', 0)) %}
-                        {% set total_v = int_v + com_v %}
-                        {% set max_v = datos.get('total', 1) %}
-                        <tr>
-                            <td><strong>{{ area }}</strong></td>
-                            <td>{{ int_v }}</td>
-                            <td>{{ com_v }}</td>
-                            <td>
-                                <strong>{{ total_v }} <span style="font-weight: 500; font-size: 0.8rem; color: var(--text-secondary);">({{ datos.get('normalizado', 0)|round(0)|int }}%)</span></strong>
-                                <div class="progress-bar" style="width: 80px; height: 6px; display: inline-block; vertical-align: middle; margin-left: 6px;">
-                                    <div class="progress-fill" style="width: {{ datos.get('normalizado', 0)|int }}%"></div>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Fortalezas -->
-        <div class="card card-accent" style="border-left-color: #059669;">
-            <div class="card-header">
-                <h2>Fortalezas Identificadas</h2>
-            </div>
-            {% if perfil.fortalezas %}
-            {% for linea in perfil.fortalezas.split('\n') %}
-                {% if linea.strip() %}
-                <p style="color: var(--text-secondary); margin-bottom: 0.4rem;">{{ linea }}</p>
                 {% endif %}
-            {% endfor %}
-            {% endif %}
-
-            {% if perfil.datos_json and perfil.datos_json.ambiente_trabajo %}
-            <div style="margin-top: 1rem; padding: 0.75rem; background: #f0fdf4; border-radius: 8px;">
-                <strong style="color: #059669; font-size: 0.85rem;">Ambiente de trabajo ideal:</strong>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.3rem;">{{ perfil.datos_json.ambiente_trabajo }}</p>
+                <h1>{{ perfil.perfil_principal }}</h1>
+                <p class="rh-sub">
+                    {% if dj.codigo_riasec %}Código RIASEC {{ dj.codigo_riasec }}{% endif %}
+                    {% if perfil.perfil_secundario %} · Perfil secundario: {{ perfil.perfil_secundario }}{% endif %}
+                </p>
+                {% if perfil.descripcion %}
+                <p class="rh-lema">{{ perfil.descripcion.split('.')[0] }}.</p>
+                {% endif %}
+                {% if dj.preliminar %}
+                <span class="rh-nota">Resultado preliminar: falta la prueba de Intereses</span>
+                {% endif %}
+                {% if session.get('rol') == 'estudiante' %}
+                <button type="button" class="btn btn-secondary rh-compartir" data-abrir-carta>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Comparte tu carta
+                </button>
+                {% endif %}
+            </div>
+            {% set accion = fig[0] ~ '-accion' %}
+            {% if accion in escenas %}
+            <div class="rh-grupo n1 rh-accion">
+                <img class="rh-figura" src="{{ url_for('static', filename='img/mascota/' ~ accion ~ '.webp') }}" alt="">
+            </div>
+            {% else %}
+            <div class="rh-grupo n{{ fig[1]|length }}">
+                {% for archivo in fig[1] %}
+                <img class="rh-figura" src="{{ url_for('static', filename='img/mascota/' ~ archivo) }}" alt="">
+                {% endfor %}
             </div>
             {% endif %}
         </div>
-    </div>
-    {% endif %}
 
-    <!-- Detalle por Dimensión (Intereses / Competencias) -->
-    {% if resultados_dimension %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Detalle por Dimensión</h2>
+        {% if dj.advertencia %}
+        <div class="alert alert-warning">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {{ dj.advertencia }}
         </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Dimensión</th>
-                        <th>Puntaje Bruto</th>
-                        <th>Puntaje Normalizado</th>
-                        <th>Nivel</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in resultados_dimension %}
-                    <tr>
-                        <td><strong>{{ r.dimension_nombre }}</strong></td>
-                        <td>{{ r.puntaje_bruto }}</td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                {{ r.puntaje_normalizado }}%
-                                <div class="progress-bar" style="width: 100px; height: 6px;">
-                                    <div class="progress-fill" style="width: {{ r.puntaje_normalizado }}%"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            {% if r.nivel == 'muy_alto' %}<span class="badge badge-success">Muy Alto</span>
-                            {% elif r.nivel == 'alto' %}<span class="badge badge-info">Alto</span>
-                            {% elif r.nivel == 'medio' %}<span class="badge badge-warning">Medio</span>
-                            {% else %}<span class="badge badge-danger">Bajo</span>{% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Recomendaciones -->
-    {% if perfil.recomendaciones %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Recomendaciones</h2>
-        </div>
-        {% for linea in perfil.recomendaciones.split('\n') %}
-            {% if linea.strip() %}
-            <p style="color: var(--text-secondary); margin-bottom: 0.5rem; padding: 0.5rem; background: #fafafa; border-radius: 8px;">
-                {{ linea }}
-            </p>
+        {% if perfil.descripcion or dj.ambiente_trabajo %}
+        <div class="card perfil-texto">
+            {% if perfil.descripcion %}<p>{{ perfil.descripcion }}</p>{% endif %}
+            {% if dj.ambiente_trabajo %}
+            <h3 class="sub-titulo">Ambiente de trabajo ideal</h3>
+            <p>{{ dj.ambiente_trabajo }}</p>
             {% endif %}
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Predicción Vocacional — solo visible para el estudiante, no para rol TI -->
-    {% if session.get('rol') != 'ti' %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Predicción Vocacional</h2>
+            {% if not programas and dj.carreras_afines %}
+            {# Perfiles antiguos sin puntajes por área: se muestran las carreras guardadas #}
+            <h3 class="sub-titulo">Carreras afines</h3>
+            <div class="chips-carreras">
+                {% for carrera in dj.carreras_afines %}<span>{{ carrera }}</span>{% endfor %}
+            </div>
+            {% endif %}
         </div>
-        {% if prediccion and prediccion.tiene_prediccion %}
-        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1rem;">
-            Según la tendencia de tus resultados, tu próxima aplicación probablemente reforzará el perfil
-            <strong style="color: var(--primary);">{{ prediccion.perfil_predicho }}</strong>.
-        </p>
-        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start;">
-            <div style="flex: 1; min-width: 280px;">
-                <div class="chart-container" style="height: 260px;">
-                    <canvas id="chartPrediccion"></canvas>
+        {% endif %}
+    </section>
+
+    {% if dj.puntajes_por_area %}
+    <!-- 2. Tus áreas -->
+    <section id="cap-areas" class="capitulo">
+        {% if definicion %}
+        <div class="definicion definicion-{{ definicion.tipo }}">
+            {% if definicion.tipo == 'equilibrado' %}
+            <img src="{{ url_for('static', filename='img/mascota/mascota-equipo.webp') }}" alt="" onerror="this.remove()">
+            {% elif 'tus-areas' in escenas %}
+            <img src="{{ url_for('static', filename='img/mascota/tus-areas.webp') }}" alt="">
+            {% endif %}
+            <p>
+                {% if definicion.tipo == 'equilibrado' %}
+                <b>Tu perfil es equilibrado</b> entre {{ definicion.areas[:-1]|join(', ') }} y {{ definicion.areas[-1] }}:
+                están a menos de 10 puntos entre sí. No es un mal resultado, significa que tienes varias puertas abiertas;
+                el mapa vocacional te ayuda a compararlas.
+                {% elif definicion.areas|length == 2 %}
+                <b>Tu perfil está marcado</b> en dos campos: {{ definicion.areas[0] }} y {{ definicion.areas[1] }} se separan con claridad del resto.
+                {% else %}
+                <b>Tu perfil está marcado:</b> {{ definicion.areas[0] }} destaca con claridad sobre los demás campos.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+
+        <div class="grid-2 areas-grid">
+            <div class="card rasgos-card">
+                <div class="card-header">
+                    <h2>Tu perfil por área</h2>
+                    <span class="rasgos-ayuda">De mayor a menor &middot; % combinado de intereses y competencias</span>
+                </div>
+                <div class="rasgos">
+                    {% for area in orden_areas %}{% set datos = dj.puntajes_por_area.get(area, {}) %}
+                    {% set c = colores.get(area, ('#9a9fa9', '#52514e', '#ecebef')) %}
+                    {% set v = (datos.get('normalizado') or 0)|float %}
+                    {% set ip = datos.get('interes_pct') %}
+                    {% set cp = datos.get('competencia_pct') %}
+                    <div class="rasgo{% if loop.first %} rasgo-top{% endif %}" style="--c: {{ c[0] }}; --c-txt: {{ c[1] }}; --c-pista: {{ c[2] }}; --v: {{ v|round(1) }};">
+                        <div class="rasgo-etiqueta"><span><b>{{ v|round|int }}%</b> {{ area }}</span></div>
+                        <div class="rasgo-barra" role="img" aria-label="{{ area }}: {{ v|round|int }} por ciento">
+                            <div class="rasgo-relleno"></div>
+                            <span class="rasgo-perilla"></span>
+                        </div>
+                        <div class="rasgo-polos">
+                            <span{% if ip is not none and (cp is none or ip >= cp) %} class="gana"{% endif %}>Intereses {{ (ip|round|int ~ '%') if ip is not none else '—' }}</span>
+                            <span{% if cp is not none and (ip is none or cp > ip) %} class="gana"{% endif %}>Competencias {{ (cp|round|int ~ '%') if cp is not none else '—' }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <details class="rasgos-tabla">
+                    <summary>Ver tabla de puntajes</summary>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Área</th><th>Intereses</th><th>Competencias</th><th>Combinado</th></tr></thead>
+                            <tbody>
+                            {% for area in orden_areas %}{% set datos = dj.puntajes_por_area.get(area, {}) %}
+                            {% set ip = datos.get('interes_pct') %}{% set cp = datos.get('competencia_pct') %}
+                            <tr>
+                                <td><strong>{{ area }}</strong></td>
+                                <td>{{ (ip|round|int ~ '%') if ip is not none else '—' }}</td>
+                                <td>{{ (cp|round|int ~ '%') if cp is not none else '—' }}</td>
+                                <td>{{ (datos.get('normalizado') or 0)|round|int }}%</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h2>Intereses y competencias</h2></div>
+                <div class="chart-container chart-radar">
+                    <canvas id="chartHolland" aria-label="Gráfico radar de intereses y competencias por área RIASEC" role="img"></canvas>
                 </div>
             </div>
-            <div style="min-width: 220px;">
-                <table style="width:100%; font-size:0.85rem; border-collapse:collapse;">
-                    <thead><tr>
-                        <th style="text-align:left; padding:0.4rem 0.6rem; border-bottom:2px solid #e5e5e5;">Area</th>
-                        <th style="text-align:right; padding:0.4rem 0.6rem; border-bottom:2px solid #e5e5e5;">Actual</th>
-                        <th style="text-align:right; padding:0.4rem 0.6rem; border-bottom:2px solid #e5e5e5;">Predicción</th>
-                        <th style="text-align:center; padding:0.4rem 0.6rem; border-bottom:2px solid #e5e5e5;">Tendencia</th>
-                    </tr></thead>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if programas %}
+    <!-- 3. Programas -->
+    <section id="cap-programas" class="capitulo">
+        <div class="card">
+            <div class="card-header">
+                <h2>Programas en la USB</h2>
+                <span class="rasgos-ayuda">Pregrados de la San Buenaventura Medellín relacionados con tus campos más fuertes</span>
+            </div>
+            <div class="programas-grid">
+                {% for p in programas %}
+                <a class="programa{% if p.grupo == 'secundario' %} programa-sec{% endif %}" href="{{ p.url }}" target="_blank" rel="noopener">
+                    <span class="programa-nombre">{{ p.n }}</span>
+                    <span class="programa-meta">
+                        {% if p.grupo == 'principal' %}Perfil {{ perfil.perfil_principal }}{% else %}Perfil secundario {{ perfil.perfil_secundario }}{% endif %}
+                        · Ver programa <span aria-hidden="true">&#8599;</span>
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+            <a class="enlace-mapa" href="{{ url_for('estudiante.explorador', aplicacion_id=aplicacion.id) }}">Ver los 18 programas en el mapa vocacional <span aria-hidden="true">&rarr;</span></a>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if fortalezas or recomendaciones %}
+    <!-- 4. Fortalezas -->
+    <section id="cap-fortalezas" class="capitulo">
+        <div class="card">
+            <div class="card-header"><h2>Fortalezas</h2></div>
+            <div class="{% if 'fortalezas' in escenas %}con-escena{% endif %}">
+                <div>
+                    {% if fortalezas %}
+                    <ul class="lista-limpia">
+                    {% for area, texto in fortalezas %}
+                        <li>{% if area %}<b>{{ area }}:</b> {% endif %}{{ texto }}</li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% for r in recomendaciones %}
+                    <p class="nota-recomendacion">{{ r }}</p>
+                    {% endfor %}
+                </div>
+                {% if 'fortalezas' in escenas %}
+                <img class="escena" src="{{ url_for('static', filename='img/mascota/fortalezas.webp') }}" alt="">
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- 5. Qué sigue -->
+    <section id="cap-sigue" class="capitulo">
+        <div class="card">
+            <div class="card-header"><h2>Qué sigue</h2></div>
+            <div class="siguiente">
+                <img class="siguiente-fox" src="{{ url_for('static', filename='img/mascota/mascota-camino.webp') }}" alt="" onerror="this.remove()">
+                <ol class="siguiente-pasos">
+                    <li><a class="paso" href="{{ url_for('estudiante.explorador', aplicacion_id=aplicacion.id) }}">
+                        <b>Explora el mapa</b><span>Compara los 18 pregrados de la USB con tu perfil.</span></a></li>
+                    {% if programas %}
+                    <li><a class="paso" href="{{ programas[0].url }}" target="_blank" rel="noopener">
+                        <b>Conoce {{ programas[0].n }}</b><span>Un programa relacionado con tu perfil {{ perfil.perfil_principal }}: plan de estudios y requisitos en la página de la USB.</span></a></li>
+                    {% endif %}
+                    <li><div class="paso">
+                        <b>Habla con orientación</b><span>Lleva tu informe al orientador de tu colegio o a Bienestar de la USB.</span></div></li>
+                </ol>
+            </div>
+            {% if not evolucion %}
+            <p class="nota-repetir">Repite el test en unos meses para ver cómo cambian tus intereses.</p>
+            {% endif %}
+        </div>
+
+        {% if evolucion %}
+        <div class="card">
+            <div class="card-header">
+                <h2>Evolución vocacional</h2>
+                <span class="rasgos-ayuda">Tus perfiles a lo largo del tiempo</span>
+                {% if 'evolucion' in escenas %}<img class="escena-cabeza" src="{{ url_for('static', filename='img/mascota/evolucion.webp') }}" alt="">{% endif %}
+            </div>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="chartEvolucion"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 1rem;">
+                <table>
+                    <thead><tr><th>Fecha</th><th>Perfil principal</th><th>Perfil secundario</th><th>Código RIASEC</th></tr></thead>
                     <tbody>
-                    {% for t in prediccion.tendencias %}
+                    {% for h in evolucion %}
                     <tr>
-                        <td style="padding:0.4rem 0.6rem;"><strong>{{ t.area }}</strong></td>
-                        <td style="text-align:right; padding:0.4rem 0.6rem;">{{ t.puntaje_actual }}%</td>
-                        <td style="text-align:right; padding:0.4rem 0.6rem;">{{ t.prediccion_proxima }}%</td>
-                        <td style="text-align:center; padding:0.4rem 0.6rem;">
-                            {% if t.tendencia == 'creciente' %}<span style="color:#059669;">&#8593;</span>
-                            {% elif t.tendencia == 'decreciente' %}<span style="color:#ef4444;">&#8595;</span>
-                            {% else %}<span style="color:#f59e0b;">&#8594;</span>{% endif %}
-                        </td>
+                        <td>{{ h.fecha or '—' }}</td>
+                        <td><strong>{{ h.perfil_principal or '—' }}</strong></td>
+                        <td>{{ h.perfil_secundario or '—' }}</td>
+                        <td>{{ h.codigo_riasec or '—' }}</td>
                     </tr>
                     {% endfor %}
                     </tbody>
                 </table>
-                <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.75rem;">Basado en {{ prediccion.basado_en }} aplicaciones completadas.</p>
             </div>
         </div>
-        {% else %}
-        <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary);">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:0.75rem; opacity:0.4;" aria-hidden="true"><path d="M3 3l18 18M10.5 10.677a2 2 0 0 0 2.823 2.823"/><path d="M7.362 5.104a9.997 9.997 0 0 1 14.533 14.533M3 3l18 18"/></svg>
-            <p style="font-size: 0.9rem; margin:0;">Se necesitan al menos <strong>2 aplicaciones completadas</strong> para generar una predicción vocacional.</p>
-            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Completa más pruebas para desbloquear esta función.</p>
-        </div>
         {% endif %}
-    </div>
-    {% endif %}{# fin bloque prediccion visible solo para no-TI #}
 
-    <!-- Explorer CTA -->
-    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f2027 100%); border-radius: 16px; padding: 1.75rem 2rem; margin: 1.5rem 0; display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; box-shadow: 0 4px 24px rgba(239, 125, 0,0.18);">
-        <div style="flex:1; min-width: 220px;">
-            <div style="display:flex; align-items:center; gap: 0.6rem; margin-bottom: 0.4rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffb066" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                <span style="font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#ffb066;">Nuevo</span>
+        {% if prediccion and prediccion.tiene_prediccion and session.get('rol') != 'ti' %}
+        <div class="card">
+            <div class="card-header"><h2>Predicción vocacional</h2></div>
+            <p class="rasgos-ayuda">Según la tendencia de tus sesiones, la próxima probablemente reforzará el perfil <strong>{{ prediccion.perfil_predicho }}</strong>.</p>
+            <div class="chart-container" style="height: 260px;">
+                <canvas id="chartPrediccion"></canvas>
             </div>
-            <h3 style="font-size:1.05rem; font-weight:800; color:#e5e5e5; margin-bottom:0.3rem;">Mapa Vocacional Interactivo</h3>
-            <p style="font-size:0.82rem; color:#a3a3a3; line-height:1.5;">Explora ~45 carreras colombianas posicionadas en el hexágono Holland según tu perfil RIASEC. Ve en tiempo real qué tan compatible eres con cada una.</p>
-        </div>
-        <a href="{{ url_for('estudiante.explorador', aplicacion_id=aplicacion.id) }}"
-           style="display:inline-flex; align-items:center; gap:0.6rem; padding: 0.7rem 1.5rem; background: linear-gradient(135deg, #ef7d00, #b35c00); color:#fff; border-radius:10px; font-weight:700; font-size:0.88rem; text-decoration:none; white-space:nowrap; box-shadow: 0 2px 12px rgba(239, 125, 0,0.35); transition: transform 0.15s, box-shadow 0.15s;"
-           onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 20px rgba(239, 125, 0,0.5)'"
-           onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(239, 125, 0,0.35)'">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            Abrir Mapa Vocacional
-        </a>
-    </div>
-
-    <!-- Evolución Vocacional -->
-    {% if evolucion and evolucion | length >= 1 %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Evolución Vocacional</h2>
-            <span style="font-size:0.82rem; color:var(--text-secondary);">Tu historial de perfiles a lo largo del tiempo</span>
-        </div>
-        {% if evolucion | length > 1 %}
-        <div class="chart-container" style="height: 300px;">
-            <canvas id="chartEvolucion"></canvas>
         </div>
         {% endif %}
-        <!-- Tabla del historial de perfiles -->
-        <div class="table-container" style="margin-top: 1rem;">
-            <table style="font-size: 0.85rem;">
-                <thead><tr>
-                    <th>Fecha</th>
-                    <th>Perfil Principal</th>
-                    <th>Perfil Secundario</th>
-                    <th>Código RIASEC</th>
-                </tr></thead>
-                <tbody>
-                {% for h in evolucion %}
-                <tr>
-                    <td>{{ h.fecha or '—' }}</td>
-                    <td><strong>{{ h.perfil_principal or '—' }}</strong></td>
-                    <td>{{ h.perfil_secundario or '—' }}</td>
-                    <td><code style="background:#f5f5f5; padding:2px 6px; border-radius:4px;">{{ h.codigo_riasec or '—' }}</code></td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+
+        <div class="acciones-resultados">
+            <a href="{{ url_for('estudiante.descargar_reporte', aplicacion_id=aplicacion.id) }}" class="btn btn-primary btn-lg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Descargar informe PDF
+            </a>
+            {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
+            <a href="{{ url_for('admin.consultas') }}" class="btn btn-secondary btn-lg">&larr; Volver a consultas</a>
+            {% else %}
+            <button type="button" class="btn btn-secondary btn-lg" data-abrir-carta>Comparte tu carta</button>
+            <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-secondary btn-lg">&larr; Volver al inicio</a>
+            {% endif %}
         </div>
-    </div>
+    </section>
+
+    {% if session.get('rol') == 'estudiante' %}
+    <dialog class="cc" id="dialogoCarta" aria-labelledby="ccTitulo"
+            data-png="{{ url_for('estudiante.carta_png', aplicacion_id=aplicacion.id) }}"
+            data-enlace="{{ url_for('estudiante.api_carta', aplicacion_id=aplicacion.id) }}"
+            data-perfil="{{ perfil.perfil_principal }}">
+        <form method="dialog" class="ea-metodo-cerrar"><button aria-label="Cerrar">×</button></form>
+        <div class="cc-cabeza">
+            {% if 'selfie' in escenas %}<img src="{{ url_for('static', filename='img/mascota/selfie.webp') }}" alt="">{% endif %}
+            <h2 id="ccTitulo">Tu carta</h2>
+        </div>
+        <div class="cc-cuerpo">
+            <div class="cc-vista"><img id="ccImagen" alt="Tu carta con tu perfil {{ perfil.perfil_principal }}"></div>
+            <div class="cc-opciones">
+                <label class="mc-check"><input type="checkbox" id="ccNombre"> Poner mi primer nombre en la carta</label>
+                <button type="button" class="btn btn-primary" id="ccCompartir" hidden>Compartir</button>
+                <a class="btn btn-secondary" id="ccDescargar" download="mi-perfil-vocacional.png">Descargar imagen</a>
+                <button type="button" class="btn btn-secondary" id="ccCopiar">Copiar enlace</button>
+                <p class="mc-ayuda" id="ccEstado" aria-live="polite">El enlace muestra tu perfil y tus porcentajes, nunca tu nombre.</p>
+            </div>
+        </div>
+    </dialog>
     {% endif %}
-
-    <!-- Acciones -->
-    <div style="text-align: center; margin: 2rem 0;">
-        <a href="{{ url_for('estudiante.descargar_reporte', aplicacion_id=aplicacion.id) }}" class="btn btn-primary btn-lg">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Descargar Reporte PDF
-        </a>
-        {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
-        <a href="{{ url_for('admin.consultas') }}" class="btn btn-secondary btn-lg" style="margin-left: 1rem;">
-            ← Volver a Consultas
-        </a>
-        {% else %}
-        <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-secondary btn-lg" style="margin-left: 1rem;">
-            ← Volver al Inicio
-        </a>
-        {% endif %}
-    </div>
 
     {% else %}
     <div class="card">
@@ -321,9 +332,9 @@
             <h3>Resultados no disponibles</h3>
             <p>Los resultados de tu prueba aún no han sido procesados.</p>
             {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
-            <a href="{{ url_for('admin.consultas') }}" class="btn btn-primary" style="margin-top: 1rem;">← Volver a Consultas</a>
+            <a href="{{ url_for('admin.consultas') }}" class="btn btn-primary">&larr; Volver a consultas</a>
             {% else %}
-            <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-primary" style="margin-top: 1rem;">← Volver</a>
+            <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-primary">&larr; Volver</a>
             {% endif %}
         </div>
     </div>
@@ -332,128 +343,165 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/compartir_carta.js') }}"></script>
+<script>
+// Barra de capítulos: marca el capítulo visible y lo mantiene a la vista en el celular.
+(function () {
+    const nav = document.querySelector('.cap-nav');
+    if (!nav || !('IntersectionObserver' in window)) return;
+    const enlaces = {};
+    nav.querySelectorAll('a').forEach(function (a) { enlaces[a.getAttribute('href').slice(1)] = a; });
+    const obs = new IntersectionObserver(function (entradas) {
+        entradas.forEach(function (e) {
+            const a = enlaces[e.target.id];
+            if (!e.isIntersecting || !a) return;
+            nav.querySelectorAll('a').forEach(function (x) { x.classList.remove('activo'); x.removeAttribute('aria-current'); });
+            a.classList.add('activo');
+            a.setAttribute('aria-current', 'true');
+            nav.scrollTo({ left: a.offsetLeft - 16, behavior: 'smooth' });
+        });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    document.querySelectorAll('.capitulo').forEach(function (s) { obs.observe(s); });
+})();
+</script>
+<script>
+/* ── Estilo común de las gráficas de resultados ─────────────────────────
+   Tipografía del sitio, tinta para textos, rejilla en línea fina y sólida,
+   y un color fijo por área (el mismo de las barras del perfil). */
+Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#6f6b80';
+const TINTA = '#1c1b22', REJILLA = '#ecebf0', SUPERFICIE = '#ffffff';
+const AREAS = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'];
+const COLOR_AREA = {
+    'Realista': '#eb6834', 'Investigador': '#2a78d6', 'Artístico': '#e87ba4',
+    'Social': '#1baf7a', 'Emprendedor': '#eda100', 'Convencional': '#4a3aa7',
+};
+const SERIE_INTERESES = '#f07f06', SERIE_COMPETENCIAS = '#2a78d6';
+
+function pct(v) {
+    const n = Number(v);
+    return (v === null || v === undefined || !isFinite(n)) ? null : Math.min(100, Math.max(0, n));
+}
+function alfa(hex, a) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+}
+function etiquetaPct(c) {
+    const v = (c.parsed.r !== undefined) ? c.parsed.r : c.parsed.y;
+    return ' ' + c.dataset.label + ': ' + Math.round(v) + '%';
+}
+const TOOLTIP = {
+    backgroundColor: TINTA, titleColor: '#fff', bodyColor: '#fff',
+    padding: 10, cornerRadius: 8, usePointStyle: true, boxPadding: 4,
+    callbacks: { label: etiquetaPct },
+};
+const LEYENDA = {
+    position: 'bottom',
+    labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, color: '#52505e' },
+};
+const EJE_Y = {
+    min: 0, max: 100,
+    ticks: { stepSize: 25, callback: function (v) { return v + '%'; } },
+    grid: { color: REJILLA }, border: { display: false },
+};
+const EJE_X = { grid: { display: false }, border: { color: '#d9d7e0' } };
+
+function serieRadar(etiqueta, color, datos) {
+    return {
+        label: etiqueta, data: datos,
+        borderColor: color, backgroundColor: alfa(color, 0.10), borderWidth: 2,
+        pointBackgroundColor: color, pointBorderColor: SUPERFICIE, pointBorderWidth: 2,
+        pointRadius: 4, pointHoverRadius: 6, pointHitRadius: 14, spanGaps: true,
+    };
+}
+function escalaRadar() {
+    return {
+        r: {
+            min: 0, max: 100,
+            // Sin números en los anillos: se montaban sobre las líneas. Los valores
+            // exactos están en las barras del perfil, la tabla y el tooltip.
+            ticks: { stepSize: 25, display: false },
+            grid: { color: REJILLA }, angleLines: { color: REJILLA },
+            pointLabels: { color: TINTA, font: { size: 12, weight: '600' }, padding: 10 },
+        },
+    };
+}
+</script>
+
 {% if perfil and perfil.datos_json and perfil.datos_json.puntajes_por_area %}
 <script>
-const areas = {{ perfil.datos_json.puntajes_por_area | tojson }};
-const labels = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'];
-// El eje del radar va de 0 a 100. Si por cualquier motivo llega un valor
-// fuera de ese rango, el polígono se dibujaría fuera del área del gráfico
-// y aparecería cortado, así que se acota aquí.
-function aPorcentaje(v) {
-    const n = Number(v);
-    if (!isFinite(n)) return 0;
-    return Math.min(100, Math.max(0, n));
-}
+(function () {
+    const areas = {{ perfil.datos_json.puntajes_por_area | tojson }};
+    const valores = function (clave) { return AREAS.map(function (a) { return pct((areas[a] || {})[clave]); }); };
+    const intereses = valores('interes_pct'), competencias = valores('competencia_pct');
+    const hay = function (arr) { return arr.some(function (v) { return v !== null; }); };
 
-const afinidades = labels.map(l => aPorcentaje((areas[l] || {})['normalizado']));
+    // Dos series (intereses y competencias) cuando existen; si es un perfil
+    // antiguo sin ese desglose, se dibuja el puntaje combinado.
+    const series = [];
+    if (hay(intereses)) series.push(serieRadar('Intereses', SERIE_INTERESES, intereses));
+    if (hay(competencias)) series.push(serieRadar('Competencias', SERIE_COMPETENCIAS, competencias));
+    if (!series.length) series.push(serieRadar('Afinidad', SERIE_INTERESES, valores('normalizado')));
 
-const ctx = document.getElementById('chartHolland').getContext('2d');
-new Chart(ctx, {
-    type: 'radar',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Afinidad Vocacional (%)',
-            data: afinidades,
-            backgroundColor: 'rgba(239, 125, 0, 0.15)',
-            borderColor: '#ef7d00',
-            pointBackgroundColor: '#ef7d00',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            borderWidth: 2,
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: { padding: 6 },
-        scales: {
-            r: {
-                beginAtZero: true,
-                min: 0,
-                max: 100,
-                ticks: { stepSize: 20, font: { size: 10 }, backdropColor: 'transparent' },
-                pointLabels: { font: { size: 11, weight: '600' }, padding: 6 }
-            }
+    new Chart(document.getElementById('chartHolland'), {
+        type: 'radar',
+        data: { labels: AREAS, datasets: series },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: 4 },
+            scales: escalaRadar(),
+            plugins: { legend: Object.assign({}, LEYENDA, { display: series.length > 1 }), tooltip: TOOLTIP },
         },
-        plugins: { legend: { display: false } }
-    }
-});
+    });
+})();
 </script>
 {% elif resultados_dimension %}
 <script>
-const ctx = document.getElementById('chartHolland');
-if (ctx) {
-    new Chart(ctx.getContext('2d'), {
+(function () {
+    const el = document.getElementById('chartHolland');
+    if (!el) return;
+    new Chart(el, {
         type: 'radar',
         data: {
-            labels: [{% for r in resultados_dimension %}'{{ r.dimension_nombre }}'{% if not loop.last %},{% endif %}{% endfor %}],
-            datasets: [{
-                label: 'Puntaje Normalizado (%)',
-                data: [{% for r in resultados_dimension %}{{ r.puntaje_normalizado }}{% if not loop.last %},{% endif %}{% endfor %}]
-                    .map(v => Math.min(100, Math.max(0, Number(v) || 0))),
-                backgroundColor: 'rgba(239, 125, 0, 0.15)',
-                borderColor: '#ef7d00',
-                pointBackgroundColor: '#ef7d00',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                borderWidth: 2,
-            }]
+            labels: {{ resultados_dimension | map(attribute='dimension_nombre') | list | tojson }},
+            datasets: [serieRadar('Puntaje', SERIE_INTERESES, {{ resultados_dimension | map(attribute='puntaje_normalizado') | list | tojson }}.map(pct))],
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: 6 },
-            scales: {
-                r: {
-                    beginAtZero: true,
-                    min: 0,
-                    max: 100,
-                    ticks: { stepSize: 20, font: { size: 10 }, backdropColor: 'transparent' },
-                    pointLabels: { font: { size: 11, weight: '600' }, padding: 6 }
-                }
-            },
-            plugins: { legend: { display: false } }
-        }
+            responsive: true, maintainAspectRatio: false,
+            scales: escalaRadar(),
+            plugins: { legend: { display: false }, tooltip: TOOLTIP },
+        },
     });
-}
+})();
 </script>
 {% endif %}
 
 {% if evolucion and evolucion | length > 1 %}
 <script>
-(function() {
+(function () {
     const historial = {{ evolucion | tojson }};
-    const areas = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'];
-    const colores = ['#ef7d00','#b35c00','#f59e0b','#ef4444','#ffb066','#ffb066'];
-    const labels = historial.map(h => h.fecha || 'N/A');
-
-    const datasets = areas.map((area, i) => ({
-        label: area,
-        data: historial.map(h => h.puntajes ? (h.puntajes[area] || 0) : 0),
-        borderColor: colores[i],
-        backgroundColor: colores[i] + '22',
-        borderWidth: 2,
-        pointRadius: 5,
-        tension: 0.3,
-        fill: false,
-    }));
-
-    new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
+    const etiquetas = historial.map(function (h, i) { return 'Aplicación ' + (i + 1) + (h.fecha ? ' · ' + h.fecha : ''); });
+    const datasets = AREAS.map(function (area) {
+        return {
+            label: area,
+            data: historial.map(function (h) { return pct(h.puntajes ? h.puntajes[area] : null); }),
+            borderColor: COLOR_AREA[area], backgroundColor: COLOR_AREA[area],
+            borderWidth: 2, tension: 0.25, fill: false,
+            pointRadius: 4, pointHoverRadius: 6, pointHitRadius: 14,
+            pointBorderColor: SUPERFICIE, pointBorderWidth: 2,
+        };
+    });
+    new Chart(document.getElementById('chartEvolucion'), {
         type: 'line',
-        data: { labels, datasets },
+        data: { labels: etiquetas, datasets: datasets },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } },
-                tooltip: { mode: 'index', intersect: false },
-            },
-            scales: {
-                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Puntaje (%)' } },
-                x: { title: { display: true, text: 'Aplicación' } }
-            }
-        }
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: LEYENDA, tooltip: TOOLTIP },
+            scales: { y: EJE_Y, x: EJE_X },
+        },
     });
 })();
 </script>
@@ -461,41 +509,30 @@ if (ctx) {
 
 {% if prediccion and prediccion.tiene_prediccion %}
 <script>
-(function() {
+(function () {
     const tendencias = {{ prediccion.tendencias | tojson }};
-    const coloresTend = {'creciente': '#059669', 'decreciente': '#ef4444', 'estable': '#f59e0b'};
-
-    new Chart(document.getElementById('chartPrediccion').getContext('2d'), {
+    // Actual en gris (contexto) y predicción en el acento: lo que importa es lo que viene.
+    function barra(etiqueta, color, datos) {
+        return {
+            label: etiqueta, data: datos, backgroundColor: color,
+            maxBarThickness: 24, borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: 'bottom',
+            categoryPercentage: 0.62, barPercentage: 0.88,
+        };
+    }
+    new Chart(document.getElementById('chartPrediccion'), {
         type: 'bar',
         data: {
-            labels: tendencias.map(t => t.area),
+            labels: tendencias.map(function (t) { return t.area; }),
             datasets: [
-                {
-                    label: 'Puntaje Actual',
-                    data: tendencias.map(t => t.puntaje_actual),
-                    backgroundColor: '#4f46e540',
-                    borderColor: '#ef7d00',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                },
-                {
-                    label: 'Predicción Próxima',
-                    data: tendencias.map(t => t.prediccion_proxima),
-                    backgroundColor: tendencias.map(t => coloresTend[t.tendencia] + '55'),
-                    borderColor: tendencias.map(t => coloresTend[t.tendencia]),
-                    borderWidth: 2,
-                    borderRadius: 6,
-                }
-            ]
+                barra('Actual', '#c9c7d2', tendencias.map(function (t) { return pct(t.puntaje_actual); })),
+                barra('Predicción', SERIE_INTERESES, tendencias.map(function (t) { return pct(t.prediccion_proxima); })),
+            ],
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
-            scales: {
-                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Puntaje (%)' } }
-            }
-        }
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: LEYENDA, tooltip: TOOLTIP },
+            scales: { y: EJE_Y, x: EJE_X },
+        },
     });
 })();
 </script>

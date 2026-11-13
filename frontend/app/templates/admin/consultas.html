@@ -106,12 +106,16 @@
 <div id="modalEvolucion" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:2rem; max-width:780px; width:94%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 id="tituloEvolucion" style="margin:0; font-size:1.1rem;">Evolución vocacional</h2>
+            <h2 id="tituloEvolucion" style="margin:0;">Evolución vocacional</h2>
             <button onclick="cerrarEvolucion()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#525252;">✕</button>
         </div>
 
-        <div id="evolucionCargando" style="text-align:center; padding:2rem; color:#525252;">
-            <p>Cargando datos...</p>
+        <div id="evolucionCargando" class="carga" role="status" aria-live="polite">
+            <span class="sr-only">Cargando datos…</span>
+            <div class="skeleton skeleton-text w-40"></div>
+            <div class="skeleton skeleton-chart"></div>
+            <div class="skeleton skeleton-text w-80"></div>
+            <div class="skeleton skeleton-text w-60"></div>
         </div>
         <div id="evolucionContenido" style="display:none;">
             <canvas id="chartEvolucionEstudiante" style="max-height:280px;"></canvas>

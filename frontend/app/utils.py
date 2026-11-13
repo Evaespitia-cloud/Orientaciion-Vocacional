@@ -6,7 +6,7 @@ import time
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.adapters import HTTPAdapter
-from flask import current_app, session
+from flask import current_app, session, request, has_request_context
 
 
 def jwt_is_expired(token: str) -> bool:
@@ -46,11 +46,16 @@ def _build_http_session():
 _http = _build_http_session()
 
 
+def _ip_visitante():
+    """IP del visitante, para que el backend aplique sus límites por persona y no a todo el sitio."""
+    return {'X-Cliente-IP': request.remote_addr or ''} if has_request_context() else {}
+
+
 def api_request(method, endpoint, data=None, params=None):
     """Realizar una petición al backend API."""
     base_url = current_app.config['BACKEND_API_URL']
     url = f"{base_url}{endpoint}"
-    headers = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json', **_ip_visitante()}
 
     token = session.get('access_token')
     if token:
@@ -84,6 +89,7 @@ def api_requests_parallel(calls):
     # Extraer contexto Flask ANTES de crear hilos (los hilos no tienen acceso a proxies locales)
     base_url = current_app.config['BACKEND_API_URL']
     token = session.get('access_token')
+    ip = _ip_visitante()
 
     def _fetch(call):
         key      = call[0]
@@ -93,7 +99,7 @@ def api_requests_parallel(calls):
         params   = call[4] if len(call) > 4 else None
 
         url = f"{base_url}{endpoint}"
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json', **ip}
         if token:
             headers['Authorization'] = f'Bearer {token}'
 
@@ -131,7 +137,7 @@ def api_request_file(method, endpoint, data=None, params=None):
     """
     base_url = current_app.config['BACKEND_API_URL']
     url = f"{base_url}{endpoint}"
-    headers = {}
+    headers = dict(_ip_visitante())
 
     token = session.get('access_token')
     if token:

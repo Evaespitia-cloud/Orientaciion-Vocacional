@@ -72,7 +72,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state">
                     <p>No se encontraron datos institucionales</p>
                 </div>
                 {% endif %}
@@ -98,7 +98,7 @@
             {% for inst in por_instrumento %}
             <div class="card" style="border-top: 4px solid {% if inst.get('obligatoria') %}var(--primary){% else %}var(--accent){% endif %};">
                 <div class="card-header">
-                    <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); flex:1;">
+                    <h3 style="color: var(--primary); flex:1;">
                         {{ inst.config_nombre }}
                     </h3>
                     <span class="badge {% if inst.get('obligatoria') %}badge-info{% else %}badge-success{% endif %}">
@@ -336,7 +336,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state">
                     <p>Sin datos disponibles</p>
                 </div>
                 {% endif %}
@@ -351,7 +351,7 @@
                     <canvas id="chartDimensiones"></canvas>
                 </div>
                 {% else %}
-                <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state">
                     <p>Sin datos disponibles</p>
                 </div>
                 {% endif %}
@@ -368,7 +368,7 @@
             {% for inst in por_instrumento %}
             <div class="card" style="border-top: 4px solid {% if inst.get('obligatoria') %}#ef7d00{% else %}#b35c00{% endif %};">
                 <div class="card-header">
-                    <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); flex:1;">
+                    <h3 style="color: var(--primary); flex:1;">
                         {{ inst.config_nombre }}
                     </h3>
                     <div style="display:flex; gap:0.35rem; flex-shrink:0;">
@@ -420,7 +420,7 @@
                     <canvas id="chartPerfilesInst{{ loop.index }}"></canvas>
                 </div>
                 {% else %}
-                <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state">
                     <p>Sin perfiles generados aún</p>
                 </div>
                 {% endif %}
@@ -444,7 +444,7 @@
                     <canvas id="chartPerfilesGenero"></canvas>
                 </div>
                 {% else %}
-                <div class="empty-state" style="padding:2rem;"><p>Sin datos de género disponibles</p></div>
+                <div class="empty-state"><p>Sin datos de género disponibles</p></div>
                 {% endif %}
             </div>
 
@@ -457,7 +457,7 @@
                     <canvas id="chartPerfilesEdad"></canvas>
                 </div>
                 {% else %}
-                <div class="empty-state" style="padding:2rem;"><p>Sin datos de edad disponibles</p></div>
+                <div class="empty-state"><p>Sin datos de edad disponibles</p></div>
                 {% endif %}
             </div>
         </div>
