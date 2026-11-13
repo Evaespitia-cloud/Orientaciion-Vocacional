@@ -74,6 +74,8 @@ def registro():
             'sede_codigo': request.form.get('sede_codigo') or None,
             # Si escribió el colegio pero no lo eligió de la lista, se guarda el nombre tal cual.
             'colegio_texto': None if request.form.get('sede_codigo') else (request.form.get('colegio_nombre') or '').strip() or None,
+            # Público o privado, tal como lo respondió: sirve si escribió el colegio a mano.
+            'colegio_sector': request.form.get('colegio_sector') or None,
             'edad': request.form.get('edad') or None,
             'municipio': request.form.get('municipio') or None,
             'direccion': (request.form.get('direccion') or '').strip() or None,

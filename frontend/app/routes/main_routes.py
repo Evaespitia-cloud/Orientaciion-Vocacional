@@ -89,6 +89,8 @@ def colegios_publicos():
     """Proxy público del buscador de colegios (lo usa también el registro, sin sesión)."""
     data, status = api_request('GET', '/escolar/colegios', params={
         'q': request.args.get('q', '')[:80], 'municipio': request.args.get('municipio', ''),
+        # Oficial o privado: es lo que filtra la lista del registro.
+        'sector': request.args.get('sector', ''),
     })
     return jsonify(data), status
 

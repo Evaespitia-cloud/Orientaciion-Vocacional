@@ -7,6 +7,7 @@ existe sin tocar las demás, así que no hace falta una migración en Render.
 from datetime import datetime
 
 from ..extensions import db
+from ..utils import nombres_colegios as nombres
 
 
 class SedeEducativa(db.Model):
@@ -36,15 +37,29 @@ class SedeEducativa(db.Model):
         return None if all(v is None for v in valores) else sum(v or 0 for v in valores)
 
     @property
+    def nombre_limpio(self):
+        """El nombre como se muestra: sin abreviaturas ni mayúsculas sostenidas."""
+        return nombres.limpiar_nombre(self.nombre)
+
+    @property
+    def sede_etiqueta(self):
+        """"Sede Municipal Kennedy" cuando no es la sede principal; None si lo es."""
+        return nombres.etiqueta_sede(self.nombre, self.sede)
+
+    @property
+    def municipio_nombre(self):
+        return nombres.nombre_municipio(self.municipio)
+
+    @property
     def nombre_visible(self):
-        if self.sede and self.sede != self.nombre:
-            return f'{self.nombre} — {self.sede}'
-        return self.nombre
+        return nombres.nombre_con_sede(self.nombre, self.sede)
 
     def to_dict(self):
         return {
-            'codigo': self.codigo, 'nombre': self.nombre, 'sede': self.sede, 'nombre_visible': self.nombre_visible,
-            'sector': self.sector, 'municipio': self.municipio, 'comuna': self.comuna, 'barrio': self.barrio,
+            'codigo': self.codigo, 'nombre': self.nombre_limpio, 'sede': self.sede,
+            'sede_etiqueta': self.sede_etiqueta, 'nombre_visible': self.nombre_visible,
+            'sector': self.sector, 'municipio': self.municipio, 'municipio_nombre': self.municipio_nombre,
+            'comuna': self.comuna, 'barrio': self.barrio,
             'direccion': self.direccion, 'lat': self.lat, 'lon': self.lon,
             'matricula_media': self.matricula_media, 'fuente': self.fuente,
         }

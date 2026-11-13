@@ -11,6 +11,8 @@ from .geo.direcciones import municipio_canonico, sin_tildes
 
 RUTA_CATALOGO = os.path.join(os.path.dirname(__file__), '..', 'recursos', 'geo', 'colegios_valle_aburra.json')
 EDAD_MIN, EDAD_MAX = 12, 25
+# En el catálogo el sector es "Oficial" o "Privado"; el estudiante responde "público" o "privado".
+SECTORES = {'OFICIAL': 'Oficial', 'PUBLICO': 'Oficial', 'PRIVADO': 'Privado'}
 
 
 def cargar_catalogo(ruta=RUTA_CATALOGO):
@@ -33,21 +35,49 @@ def _plano(texto):
     return re.sub(r'[^A-Z0-9 ]', ' ', sin_tildes(texto or '').upper())
 
 
-def buscar_colegios(consulta, municipio=None, limite=12):
-    """Busca por palabras sueltas en el nombre o la sede ("javiera", "ie san jose bello")."""
+def sector_canonico(valor):
+    """"público" y "oficial" son lo mismo en el catálogo. Devuelve None si no se reconoce."""
+    return SECTORES.get(sin_tildes(valor or '').strip().upper())
+
+
+def buscar_colegios(consulta, municipio=None, sector=None, limite=12):
+    """Busca por palabras sueltas en el nombre o la sede ("javiera", "ie san jose bello").
+
+    Sin texto escrito pero con sector (o municipio) devuelve la lista completa de ese
+    grupo, que es lo que se despliega en el registro cuando el estudiante responde si
+    su colegio es público o privado.
+    """
     palabras = [p for p in _plano(consulta).split() if len(p) >= 2]
-    if not palabras:
+    sec = sector_canonico(sector)
+    mpio = municipio_canonico(municipio)
+    if not palabras and not sec and not mpio:
         return []
     q = SedeEducativa.query
-    mpio = municipio_canonico(municipio)
+    if sec:
+        q = q.filter(SedeEducativa.sector == sec)
     if mpio:
         q = q.filter(SedeEducativa.municipio == mpio)
+    # Se busca en el nombre del catálogo y en el nombre ya limpio, para que "institución
+    # educativa" encuentre también a los que el catálogo abrevia como "IE".
     hallados = [s for s in q.all()
-                if all(p in _plano(f'{s.nombre} {s.sede} {s.municipio} {s.barrio or ""}') for p in palabras)]
+                if all(p in _plano(f'{s.nombre} {s.nombre_limpio} {s.sede} {s.municipio} {s.barrio or ""}')
+                       for p in palabras)]
     # Primero los que empiezan por la primera palabra y, dentro de cada colegio, la sede principal.
-    hallados.sort(key=lambda s: (not _plano(s.nombre).startswith(palabras[0]), s.sede != s.nombre,
-                                 s.nombre, s.sede or ''))
+    empieza = (lambda s: not _plano(s.nombre_limpio).startswith(palabras[0])) if palabras else (lambda s: False)
+    hallados.sort(key=lambda s: (empieza(s), s.sede != s.nombre, _plano(s.nombre_limpio), s.sede or ''))
     return [s.to_dict() for s in hallados[:limite]]
+
+
+def contar_colegios(sector=None, municipio=None):
+    """Cuántas sedes hay en ese grupo (para avisar que la lista viene recortada)."""
+    q = SedeEducativa.query
+    sec = sector_canonico(sector)
+    mpio = municipio_canonico(municipio)
+    if sec:
+        q = q.filter(SedeEducativa.sector == sec)
+    if mpio:
+        q = q.filter(SedeEducativa.municipio == mpio)
+    return q.count()
 
 
 def perfil_de(usuario_id):
@@ -83,8 +113,9 @@ def guardar_perfil(usuario_id, datos):
             sede = SedeEducativa.query.filter_by(codigo=codigo).first()
             perfil.sede_codigo, perfil.colegio_texto, perfil.sector = codigo, None, sede.sector
         elif texto:
-            # Colegio escrito a mano: el sector no se conoce.
-            perfil.sede_codigo, perfil.colegio_texto, perfil.sector = None, texto, None
+            # Colegio escrito a mano: el sector es el que respondió el estudiante, si respondió.
+            perfil.sede_codigo, perfil.colegio_texto = None, texto
+            perfil.sector = sector_canonico(datos.get('colegio_sector'))
 
     if datos.get('edad') not in (None, ''):
         perfil.edad = int(datos['edad'])
